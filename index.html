@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GR管理画面</title>
+<style>
+  :root{ --gr-orange:#F39800; --gr-green:#7FBA00; }
+  *{ box-sizing:border-box; }
+  body{ margin:0; font-family:"BIZ UDGothic","Meiryo",sans-serif; color:#333; background:#f6f6f6; }
+  header{ background:var(--gr-orange); color:#fff; padding:10px 14px; display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+  header .title{ font-weight:700; font-size:17px; }
+  header .right{ margin-left:auto; display:flex; align-items:center; gap:8px; font-size:13px; }
+  header select,#refresh,#logout{ padding:5px 8px; border-radius:6px; border:0; }
+  #refresh{ background:var(--gr-green); color:#fff; cursor:pointer; }
+  #logout{ background:rgba(255,255,255,.25); color:#fff; cursor:pointer; }
+  .lock{ background:rgba(255,255,255,.25); padding:3px 9px; border-radius:6px; }
+  /* プロジェクトタブ */
+  .ptabs{ display:flex; flex-wrap:wrap; gap:2px; background:#333; padding:0 6px; }
+  .ptab{ padding:10px 16px; color:#ccc; cursor:pointer; font-size:14px; }
+  .ptab.active{ background:#fff; color:var(--gr-orange); font-weight:700; border-radius:8px 8px 0 0; margin-top:5px; }
+  .ptab.disabled{ color:#888; cursor:default; }
+  .ptab .soon{ font-size:10px; }
+  /* サブタブ */
+  .stabs{ display:flex; flex-wrap:wrap; background:#f3faea; border-bottom:2px solid #eee; }
+  .stab{ padding:9px 16px; color:#888; cursor:pointer; font-size:13px; }
+  .stab.active{ background:#fff; color:#5a8a00; font-weight:700; border-bottom:3px solid var(--gr-green); }
+  main{ padding:14px; }
+  .panel{ background:#fff; border:1px solid #e3e3e3; border-radius:8px; padding:14px; overflow-x:auto; }
+  .soon-box{ color:#888; text-align:center; padding:40px 10px; }
+  .gate{ max-width:340px; margin:60px auto; background:#fff; border:1px solid #e3e3e3; border-radius:10px; padding:24px; text-align:center; }
+  .gate input{ padding:8px; width:70%; font-size:16px; }
+  .gate button{ margin-top:12px; padding:8px 18px; background:var(--gr-orange); color:#fff; border:0; border-radius:6px; cursor:pointer; }
+  .err{ color:#c0392b; font-size:13px; margin-top:8px; }
+  table{ border-collapse:collapse; font-size:13px; white-space:nowrap; }
+  th,td{ border:1px solid #e6e6e6; padding:5px 8px; text-align:left; }
+  thead th{ background:#eef3e3; position:sticky; top:0; }
+  .total-row{ font-weight:700; background:#fcfce8; }
+  .note{ font-size:12px; color:#999; margin:6px 0; }
+  .hidden{ display:none; }
+  .badge{ display:inline-block; min-width:18px; padding:0 6px; margin-left:4px; border-radius:10px; background:var(--gr-green); color:#fff; font-size:11px; text-align:center; }
+  .anken-card{ border:1px solid #e6e6e6; border-radius:8px; padding:10px 12px; margin:8px 0; }
+  .anken-card .k{ font-weight:700; color:var(--gr-orange); }
+  .anken-card .meta{ font-size:12px; color:#666; margin-top:4px; }
+  .anken-card .money{ font-size:12px; color:#5a8a00; margin-top:4px; }
+  .co-head{ font-weight:700; font-size:15px; color:#fff; background:var(--gr-orange); padding:6px 10px; border-radius:6px; margin:14px 0 6px; }
+  .bu-head{ font-weight:700; font-size:13px; color:#5a8a00; border-left:4px solid var(--gr-green); padding:3px 8px; margin:10px 0 4px; }
+  .badge2{ display:inline-block; min-width:16px; padding:0 5px; margin-left:4px; border-radius:9px; background:var(--gr-green); color:#fff; font-size:10px; }
+  /* Task5: 名前列固定（モバイルで日列を横スクロールしても名前が見える） */
+  #view td:first-child, #view th:first-child{ position:sticky; left:0; background:#fff; }
+</style>
+</head>
+<body>
+
+<!-- 設定（GAS側と合わせる） -->
+<script>
+  var CONFIG = {
+    GAS_URL: "https://script.google.com/macros/s/AKfycbxtP7pC8jSWHaG_o_qHoIiV_6oGG50jTPFp86OJGvaApGjA41HCQ1TfjpuaxxSqxvd-/exec",
+    STORE_KEY: "gr_admin_token"   // 合言葉は端末(localStorage)にだけ保存。HTMLには鍵を埋め込まない。
+  };
+  var AUTH = { token: "" };       // 合言葉。初回入力→端末に保存→次回は自動。
+</script>
+
+<!-- PINゲート -->
+<div id="gate" class="gate">
+  <div style="font-weight:700;margin-bottom:10px;">GR管理画面</div>
+  <input id="pin" type="password" placeholder="合言葉" autocomplete="current-password">
+  <div><button id="enter">入る</button></div>
+  <div id="gate-err" class="err"></div>
+  <div style="font-size:11px;color:#999;margin-top:10px;">※管理者から共有された合言葉を入力。次回からこの端末では省略されます。</div>
+</div>
+
+<!-- 本体（PIN通過後に表示） -->
+<div id="app" class="hidden">
+  <header>
+    <span class="title">GR管理画面</span>
+    <span class="right">
+      <span class="lock">管理者</span>
+      月：<select id="month"></select>
+      <button id="refresh">更新</button>
+      <button id="logout" title="この端末から合言葉を消す">ログアウト</button>
+    </span>
+  </header>
+
+  <div class="ptabs" id="ptabs">
+    <div class="ptab active" data-proj="yotei">予定管理</div>
+    <div class="ptab" data-proj="anken">📁案件</div>
+    <div class="ptab disabled" data-proj="vehicle">車両 <span class="soon">準備中</span></div>
+    <div class="ptab disabled" data-proj="keiri">経理 <span class="soon">準備中</span></div>
+    <div class="ptab disabled" data-proj="staff">社員 <span class="soon">準備中</span></div>
+  </div>
+
+  <!-- 予定管理プロジェクト -->
+  <div id="proj-yotei">
+    <div class="stabs">
+      <div class="stab active" data-view="tsukibetsu">月別確認表（給料・人工）</div>
+      <div class="stab" data-view="motouke">元請別 請求集計</div>
+    </div>
+    <main><div id="view" class="panel">読み込み中…</div></main>
+  </div>
+
+  <!-- 案件プロジェクト -->
+  <div id="proj-anken" class="hidden">
+    <div class="stabs">
+      <div class="stab active" data-aview="shinkou">進行中 <span class="badge" id="badge-shinkou"></span></div>
+      <div class="stab" data-aview="seikyuMachi">請求待ち <span class="badge" id="badge-seikyuMachi"></span></div>
+      <div class="stab" data-aview="kanryo">完了(請求済) <span class="badge" id="badge-kanryo"></span></div>
+    </div>
+    <main><div id="anken-view" class="panel">読み込み中…</div></main>
+  </div>
+
+  <!-- 準備中プロジェクト共通 -->
+  <div id="proj-soon" class="hidden"><main><div class="panel soon-box">このプロジェクトは準備中です。</div></main></div>
+</div>
+
+<!-- ロジック（Task4：取得・描画・タブ切替） -->
+<script>
+  var state = { month: "", view: "tsukibetsu", aview: "shinkou", anken: null };
+
+  function yen(n){ return (typeof n === 'number') ? '¥' + n.toLocaleString('ja-JP') : '—'; }
+
+  // 事業部(ICT/INF/MSC/GRB)はグローライズ専用。事業部が付いていればグローライズ案件。
+  var BU_ORDER = ['ICT','INF','MSC','GRB'];
+  function companyOfBu(bu){ return (BU_ORDER.indexOf(bu) >= 0) ? 'グローライズ' : 'その他（会社未設定）'; }
+
+  function ankenCardHtml(a){
+    return '<div class="anken-card">'
+      + '<div><span class="k">' + esc(a.kouban || '(工番なし)') + '</span> ' + esc(a.ankenName) + '</div>'
+      + '<div class="meta">元請：' + esc(a.motouke || '—') + ' ／ 現場：' + esc(a.genba || '—')
+      + ' ／ 担当：' + esc(a.tantou || '—') + ' ／ 状態：' + esc(a.status) + '</div>'
+      + '<div class="meta">受注：' + esc(a.juchuBi || '—') + ' ／ 完了予定：' + esc(a.kanryoYotei || '—') + '</div>'
+      + '<div class="money">売上見込：' + yen(a.uriage) + ' ／ 粗利見込：' + yen(a.arari) + '</div>'
+      + (a.genba ? '<div class="meta">📅 予定は「予定管理」タブで現場「' + esc(a.genba) + '」を確認</div>' : '')
+      + (a.kouban ? '<div class="meta">📷 工事写真：工事写真/' + esc(a.kouban) + '_' + esc(a.ankenName) + '/</div>' : '')
+      + '</div>';
+  }
+
+  function renderAnken(){
+    var el = document.getElementById('anken-view');
+    if (!state.anken){ el.innerHTML = '<div class="note">読み込み中…</div>'; return; }
+    var list = state.anken[state.aview] || [];
+    if (!list.length){ el.innerHTML = '<div class="note">該当する案件はありません。</div>'; return; }
+    // 会社 → 事業部 でグループ化
+    var groups = {};
+    list.forEach(function(a){
+      var co = companyOfBu(a.bu);
+      var bu = a.bu || '(事業部なし)';
+      groups[co] = groups[co] || {};
+      (groups[co][bu] = groups[co][bu] || []).push(a);
+    });
+    var coOrder = ['グローライズ','その他（会社未設定）'];
+    var html = '';
+    coOrder.forEach(function(co){
+      if (!groups[co]) return;
+      var buMap = groups[co];
+      var coCount = Object.keys(buMap).reduce(function(s,k){ return s + buMap[k].length; }, 0);
+      html += '<div class="co-head">🏢 ' + esc(co) + ' <span class="badge">' + coCount + '</span></div>';
+      var buKeys = Object.keys(buMap).sort(function(x,y){
+        var ix = BU_ORDER.indexOf(x), iy = BU_ORDER.indexOf(y);
+        return (ix < 0 ? 99 : ix) - (iy < 0 ? 99 : iy);
+      });
+      buKeys.forEach(function(bu){
+        var items = buMap[bu];
+        html += '<div class="bu-head">' + esc(bu) + ' <span class="badge2">' + items.length + '</span></div>';
+        html += items.map(ankenCardHtml).join('');
+      });
+    });
+    el.innerHTML = html;
+  }
+
+  function loadAnken(){
+    document.getElementById('anken-view').innerHTML = '読み込み中…';
+    api('anken').then(function(res){
+      if (!res.ok){ document.getElementById('anken-view').innerHTML = '<div class="err">読み込めませんでした（' + esc(res.error) + '）。</div>'; return; }
+      state.anken = res.anken;
+      var c = res.anken.counts || {};
+      document.getElementById('badge-shinkou').textContent = c.shinkou || 0;
+      document.getElementById('badge-seikyuMachi').textContent = c.seikyuMachi || 0;
+      document.getElementById('badge-kanryo').textContent = c.kanryo || 0;
+      renderAnken();
+    }).catch(function(){ document.getElementById('anken-view').innerHTML = '<div class="err">通信に失敗しました。</div>'; });
+  }
+
+  function api(action, extra){
+    var qs = "?action=" + action + "&token=" + encodeURIComponent(AUTH.token) + (extra || "");
+    return fetch(CONFIG.GAS_URL + qs).then(function(r){ return r.json(); });
+  }
+
+  // 2次元配列 block を表に。先頭行をヘッダ、「合計」を含む行は強調。
+  function renderTable(block){
+    if (!block || !block.length) return '<div class="note">この月のデータはありません。</div>';
+    var head = block[0], body = block.slice(1);
+    var html = '<table><thead><tr>';
+    head.forEach(function(h){ html += '<th>' + esc(h) + '</th>'; });
+    html += '</tr></thead><tbody>';
+    body.forEach(function(row){
+      var isTotal = row.some(function(c){ return String(c).indexOf('合計') >= 0; });
+      html += '<tr class="' + (isTotal ? 'total-row' : '') + '">';
+      row.forEach(function(c){ html += '<td>' + esc(c) + '</td>'; });
+      html += '</tr>';
+    });
+    return html + '</tbody></table>';
+  }
+  function esc(s){ return String(s==null?'':s).replace(/[&<>]/g, function(m){ return ({'&':'&amp;','<':'&lt;','>':'&gt;'})[m]; }); }
+
+  function loadView(){
+    var el = document.getElementById('view');
+    el.innerHTML = '読み込み中…';
+    api(state.view, "&month=" + encodeURIComponent(state.month)).then(function(res){
+      if (!res.ok){ el.innerHTML = '<div class="err">読み込めませんでした（' + esc(res.error) + '）。更新で再試行してください。</div>'; return; }
+      var caption = state.view === 'tsukibetsu'
+        ? '<div class="note">' + esc(state.month) + ' ／ 名前×日の人工（給料・人工の確認用）</div>'
+        : '<div class="note">' + esc(state.month) + ' ／ 元請ごとの集計</div>';
+      el.innerHTML = caption + renderTable(res.block);
+    }).catch(function(){ el.innerHTML = '<div class="err">通信に失敗しました。更新で再試行してください。</div>'; });
+  }
+
+  function initApp(){
+    api('months').then(function(res){
+      var sel = document.getElementById('month');
+      var months = (res.ok && res.months) || [];
+      sel.innerHTML = months.map(function(m){ return '<option value="' + m + '">' + m.replace(/^(\d{4})-0?(\d+)$/, '$1年$2') + '月</option>'; }).join('');
+      state.month = months[0] || "";
+      loadView();
+    }).catch(function(){ document.getElementById('view').innerHTML = '<div class="err">月一覧の取得に失敗しました。更新ボタンで再試行してください。</div>'; });
+
+    document.getElementById('month').onchange = function(e){ state.month = e.target.value; loadView(); };
+    document.getElementById('refresh').onclick = loadView;
+
+    // 予定管理サブタブ切替
+    document.querySelectorAll('#proj-yotei .stab').forEach(function(t){
+      t.onclick = function(){
+        document.querySelectorAll('#proj-yotei .stab').forEach(function(x){ x.classList.remove('active'); });
+        t.classList.add('active');
+        state.view = t.getAttribute('data-view');
+        loadView();
+      };
+    });
+
+    // 案件サブタブ切替
+    document.querySelectorAll('#proj-anken .stab').forEach(function(t){
+      t.onclick = function(){
+        document.querySelectorAll('#proj-anken .stab').forEach(function(x){ x.classList.remove('active'); });
+        t.classList.add('active');
+        state.aview = t.getAttribute('data-aview');
+        renderAnken();
+      };
+    });
+
+    // プロジェクトタブ切替（予定管理 / 案件 が中身、車両/経理/社員は準備中）
+    document.querySelectorAll('.ptab').forEach(function(t){
+      t.onclick = function(){
+        document.querySelectorAll('.ptab').forEach(function(x){ x.classList.remove('active'); });
+        t.classList.add('active');
+        var proj = t.getAttribute('data-proj');
+        document.getElementById('proj-yotei').classList.add('hidden');
+        document.getElementById('proj-anken').classList.add('hidden');
+        document.getElementById('proj-soon').classList.add('hidden');
+        if (proj === 'yotei'){ document.getElementById('proj-yotei').classList.remove('hidden'); }
+        else if (proj === 'anken'){ document.getElementById('proj-anken').classList.remove('hidden'); if (!state.anken) loadAnken(); }
+        else { document.getElementById('proj-soon').classList.remove('hidden'); }
+      };
+    });
+  }
+
+  // 合言葉ログイン（合言葉はHTMLに埋めない＝Git公開先に鍵を出さない。サーバー(GAS)に照合→通れば端末に保存）
+  function showApp(){
+    document.getElementById('gate').classList.add('hidden');
+    document.getElementById('app').classList.remove('hidden');
+    initApp();
+  }
+  function tryLogin(token, fromStore){
+    AUTH.token = token;
+    var errEl = document.getElementById('gate-err');
+    errEl.textContent = '確認中…';
+    return api('ping').then(function(res){
+      if (res && res.ok){
+        localStorage.setItem(CONFIG.STORE_KEY, token);
+        errEl.textContent = '';
+        showApp();
+      } else {
+        AUTH.token = '';
+        if (fromStore) localStorage.removeItem(CONFIG.STORE_KEY);
+        errEl.textContent = '合言葉が違います';
+      }
+    }).catch(function(){ AUTH.token = ''; errEl.textContent = '通信に失敗しました。再試行してください。'; });
+  }
+  document.getElementById('enter').onclick = function(){
+    var v = document.getElementById('pin').value.trim();
+    if (!v){ document.getElementById('gate-err').textContent = '合言葉を入力してください'; return; }
+    tryLogin(v, false);
+  };
+  document.getElementById('pin').addEventListener('keydown', function(e){
+    if (e.key === 'Enter') document.getElementById('enter').click();
+  });
+  document.getElementById('logout').onclick = function(){
+    localStorage.removeItem(CONFIG.STORE_KEY);
+    AUTH.token = '';
+    location.reload();
+  };
+  // 端末に保存済みの合言葉があれば自動ログイン
+  (function(){
+    var saved = localStorage.getItem(CONFIG.STORE_KEY);
+    if (saved) tryLogin(saved, true);
+  })();
+</script>
+</body>
+</html>

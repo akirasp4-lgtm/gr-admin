@@ -109,6 +109,7 @@
       <div class="stab" data-aview="seikyuMachi">請求待ち <span class="badge" id="badge-seikyuMachi"></span></div>
       <div class="stab" data-aview="kanryo">完了(請求済) <span class="badge" id="badge-kanryo"></span></div>
     </div>
+    <div style="padding:8px 14px;"><button id="sync-yotei" style="padding:6px 14px;border:0;border-radius:6px;background:var(--gr-green);color:#fff;cursor:pointer;">🔄 予定管理から取り込む</button> <span id="sync-msg" class="note"></span></div>
     <main><div id="anken-view" class="panel">読み込み中…</div></main>
   </div>
 
@@ -197,6 +198,16 @@
     }).catch(function(){ alert('通信に失敗しました'); });
   }
 
+  function syncYotei(){
+    if (!confirm('予定管理の現場をNotion案件へ取り込みます（事業部・現場・元請を反映。状態・金額は変えません）。実行しますか？')) return;
+    var msg = document.getElementById('sync-msg');
+    msg.textContent = '取り込み中…';
+    api('sync_yotei').then(function(res){
+      if (res && res.ok){ msg.textContent = '完了：新規' + res.created + '件／更新' + res.updated + '件' + (res.skipped ? '／未取込' + res.skipped + '件(もう一度押してください)' : '') + (res.errorCount ? '／エラー' + res.errorCount + '件' : ''); loadAnken(); }
+      else { msg.textContent = '取り込めませんでした（' + ((res && res.error) || '不明') + '）'; }
+    }).catch(function(){ msg.textContent = '通信に失敗しました'; });
+  }
+
   function api(action, extra){
     var qs = "?action=" + action + "&token=" + encodeURIComponent(AUTH.token) + (extra || "");
     return fetch(CONFIG.GAS_URL + qs).then(function(r){ return r.json(); });
@@ -269,6 +280,9 @@
       if (!btn) return;
       setStatus(btn.getAttribute('data-id'), btn.getAttribute('data-status'));
     });
+
+    var syncBtn = document.getElementById('sync-yotei');
+    if (syncBtn) syncBtn.onclick = syncYotei;
 
     // プロジェクトタブ切替（予定管理 / 案件 が中身、車両/経理/社員は準備中）
     document.querySelectorAll('.ptab').forEach(function(t){

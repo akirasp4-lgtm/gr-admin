@@ -49,6 +49,9 @@
   .status-row{ margin-top:8px; display:flex; gap:6px; }
   .status-btn{ padding:4px 12px; border:1px solid #ccc; border-radius:6px; background:#f7f7f7; cursor:pointer; font-size:12px; }
   .status-btn.on{ background:var(--gr-orange); color:#fff; border-color:var(--gr-orange); font-weight:700; }
+  .anken-bar{ display:flex; flex-wrap:wrap; gap:8px; align-items:center; padding:8px 14px; font-size:12px; background:#fbfbf5; border-bottom:1px solid #eee; }
+  .anken-bar input, .anken-bar select{ padding:4px 6px; border:1px solid #ccc; border-radius:6px; font-size:12px; }
+  .anken-bar #anken-q{ min-width:220px; }
   /* Task5: 名前列固定（モバイルで日列を横スクロールしても名前が見える） */
   #view td:first-child, #view th:first-child{ position:sticky; left:0; background:#fff; }
 </style>
@@ -110,6 +113,19 @@
       <div class="stab" data-aview="kanryo">完了(請求済) <span class="badge" id="badge-kanryo"></span></div>
     </div>
     <div style="padding:8px 14px;"><button id="sync-yotei" style="padding:6px 14px;border:0;border-radius:6px;background:var(--gr-green);color:#fff;cursor:pointer;">🔄 予定管理から取り込む</button> <span id="sync-msg" class="note"></span></div>
+    <div class="anken-bar">
+      <input id="anken-q" type="search" placeholder="工番・案件名・現場・元請・担当で検索">
+      <label>並び替え <select id="anken-sort">
+        <option value="juchu_desc">受注日(新しい順)</option>
+        <option value="juchu_asc">受注日(古い順)</option>
+        <option value="kouban">工番</option>
+        <option value="ankenName">案件名</option>
+        <option value="uriage_desc">売上見込(高い順)</option>
+      </select></label>
+      <label>事業部 <select id="anken-bu"><option value="">全部</option><option>ICT</option><option>INF</option><option>MSC</option><option>GRB</option></select></label>
+      <label>元請 <select id="anken-motouke"><option value="">全部</option></select></label>
+      <span id="anken-count" class="note"></span>
+    </div>
     <main><div id="anken-view" class="panel">読み込み中…</div></main>
   </div>
 
@@ -119,7 +135,7 @@
 
 <!-- ロジック（Task4：取得・描画・タブ切替） -->
 <script>
-  var state = { month: "", view: "tsukibetsu", aview: "shinkou", anken: null };
+  var state = { month: "", view: "tsukibetsu", aview: "shinkou", anken: null, q: "", sort: "juchu_desc", fbu: "", fmotouke: "" };
 
   function yen(n){ return (typeof n === 'number') ? '¥' + n.toLocaleString('ja-JP') : '—'; }
 
@@ -143,10 +159,35 @@
       + '</div>';
   }
 
+  function applyAnkenFilters(list){
+    var q = (state.q || '').toLowerCase();
+    return (list || []).filter(function(a){
+      if (state.fbu && a.bu !== state.fbu) return false;
+      if (state.fmotouke && a.motouke !== state.fmotouke) return false;
+      if (q){
+        var hay = [a.kouban, a.ankenName, a.genba, a.motouke, a.tantou].join(' ').toLowerCase();
+        if (hay.indexOf(q) < 0) return false;
+      }
+      return true;
+    });
+  }
+  function sortAnken(arr){
+    var s = state.sort || 'juchu_desc';
+    var c = (arr || []).slice();
+    if (s === 'juchu_desc') c.sort(function(x,y){ return (y.juchuBi||'').localeCompare(x.juchuBi||''); });
+    else if (s === 'juchu_asc') c.sort(function(x,y){ return (x.juchuBi||'￿').localeCompare(y.juchuBi||'￿'); });
+    else if (s === 'kouban') c.sort(function(x,y){ return (x.kouban||'').localeCompare(y.kouban||''); });
+    else if (s === 'ankenName') c.sort(function(x,y){ return (x.ankenName||'').localeCompare(y.ankenName||'', 'ja'); });
+    else if (s === 'uriage_desc') c.sort(function(x,y){ return (y.uriage==null?-Infinity:y.uriage) - (x.uriage==null?-Infinity:x.uriage); });
+    return c;
+  }
+
   function renderAnken(){
     var el = document.getElementById('anken-view');
     if (!state.anken){ el.innerHTML = '<div class="note">読み込み中…</div>'; return; }
-    var list = state.anken[state.aview] || [];
+    var list = applyAnkenFilters(state.anken[state.aview] || []);
+    var cntEl = document.getElementById('anken-count');
+    if (cntEl) cntEl.textContent = '該当 ' + list.length + '件';
     if (!list.length){ el.innerHTML = '<div class="note">該当する案件はありません。</div>'; return; }
     // 会社 → 事業部 でグループ化
     var groups = {};
@@ -168,12 +209,24 @@
         return (ix < 0 ? 99 : ix) - (iy < 0 ? 99 : iy);
       });
       buKeys.forEach(function(bu){
-        var items = buMap[bu];
+        var items = sortAnken(buMap[bu]);
         html += '<div class="bu-head">' + esc(bu) + ' <span class="badge2">' + items.length + '</span></div>';
         html += items.map(ankenCardHtml).join('');
       });
     });
     el.innerHTML = html;
+  }
+
+  function fillMotoukeOptions(){
+    var sel = document.getElementById('anken-motouke');
+    if (!sel || !state.anken) return;
+    var set = {};
+    ['shinkou','seikyuMachi','kanryo'].forEach(function(g){
+      (state.anken[g] || []).forEach(function(a){ if (a.motouke) set[a.motouke] = true; });
+    });
+    var cur = sel.value;
+    sel.innerHTML = ['<option value="">全部</option>'].concat(Object.keys(set).sort().map(function(m){ return '<option>' + esc(m) + '</option>'; })).join('');
+    sel.value = cur;
   }
 
   function loadAnken(){
@@ -185,6 +238,7 @@
       document.getElementById('badge-shinkou').textContent = c.shinkou || 0;
       document.getElementById('badge-seikyuMachi').textContent = c.seikyuMachi || 0;
       document.getElementById('badge-kanryo').textContent = c.kanryo || 0;
+      fillMotoukeOptions();
       renderAnken();
     }).catch(function(){ document.getElementById('anken-view').innerHTML = '<div class="err">通信に失敗しました。</div>'; });
   }
@@ -283,6 +337,15 @@
 
     var syncBtn = document.getElementById('sync-yotei');
     if (syncBtn) syncBtn.onclick = syncYotei;
+
+    var elQ = document.getElementById('anken-q');
+    if (elQ) elQ.oninput = function(){ state.q = elQ.value; renderAnken(); };
+    var elS = document.getElementById('anken-sort');
+    if (elS) elS.onchange = function(){ state.sort = elS.value; renderAnken(); };
+    var elB = document.getElementById('anken-bu');
+    if (elB) elB.onchange = function(){ state.fbu = elB.value; renderAnken(); };
+    var elM = document.getElementById('anken-motouke');
+    if (elM) elM.onchange = function(){ state.fmotouke = elM.value; renderAnken(); };
 
     // プロジェクトタブ切替（予定管理 / 案件 が中身、車両/経理/社員は準備中）
     document.querySelectorAll('.ptab').forEach(function(t){

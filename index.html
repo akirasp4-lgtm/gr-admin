@@ -296,7 +296,7 @@
     });
     return html + '</tbody></table>';
   }
-  function esc(s){ return String(s==null?'':s).replace(/[&<>]/g, function(m){ return ({'&':'&amp;','<':'&lt;','>':'&gt;'})[m]; }); }
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, function(m){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[m]; }); }
 
   function loadView(){
     var el = document.getElementById('view');
@@ -331,12 +331,12 @@
     var g = state.grb, view = document.getElementById('grb-view');
     if (!g){ view.innerHTML = ''; return; }
     if (!g.tasks.length){ view.innerHTML = '<div class="note">' + esc(g.date) + ' の事務所案件はありません。</div>'; return; }
-    var cur = {}; (g.data.current || []).forEach(function(c){ cur[c.content] = c.assignee; });
+    var cur = {}; (g.data.current || []).forEach(function(c){ cur[(c.name||'') + '|' + c.content] = c.assignee; });
     var names = []; g.tasks.forEach(function(t){ if (names.indexOf(t.name) < 0) names.push(t.name); });
     var opts = '<option value="">（割当先を選ぶ）</option>' + names.map(function(n){ return '<option value="' + esc(n) + '">' + esc(n) + '</option>'; }).join('');
     var html = '<table><thead><tr><th>元の担当</th><th>業務内容</th><th>現在の割当</th><th>割り当てる</th></tr></thead><tbody>';
     g.tasks.forEach(function(t, i){
-      var assigned = cur[t.content] || '';
+      var assigned = cur[(t.name||'') + '|' + t.content] || '';
       html += '<tr><td>' + esc(t.name) + '</td><td>' + esc(t.content) + '</td>'
         + '<td>' + (assigned ? '<b>' + esc(assigned) + '</b>' : '<span class="note">未</span>') + '</td>'
         + '<td><select class="grb-sel" data-idx="' + i + '">' + opts + '</select> '

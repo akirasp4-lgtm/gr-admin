@@ -443,7 +443,7 @@
         else if (proj === 'grb'){
           document.getElementById('proj-grb').classList.remove('hidden');
           var gd = document.getElementById('grb-date');
-          if (!gd.value){ var t = new Date(); gd.value = t.getFullYear() + '-' + ('0'+(t.getMonth()+1)).slice(-2) + '-' + ('0'+t.getDate()).slice(-2); }
+          if (!gd.value){ var now = new Date(); gd.value = now.getFullYear() + '-' + ('0'+(now.getMonth()+1)).slice(-2) + '-' + ('0'+now.getDate()).slice(-2); }
           if (!state.grb) loadGrb();
         }
         else { document.getElementById('proj-soon').classList.remove('hidden'); }

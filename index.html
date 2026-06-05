@@ -91,6 +91,7 @@
   <div class="ptabs" id="ptabs">
     <div class="ptab active" data-proj="yotei">予定管理</div>
     <div class="ptab" data-proj="anken">📁案件</div>
+    <div class="ptab" data-proj="grb">🗂GRB割当</div>
     <div class="ptab disabled" data-proj="vehicle">車両 <span class="soon">準備中</span></div>
     <div class="ptab disabled" data-proj="keiri">経理 <span class="soon">準備中</span></div>
     <div class="ptab disabled" data-proj="staff">社員 <span class="soon">準備中</span></div>
@@ -129,13 +130,26 @@
     <main><div id="anken-view" class="panel">読み込み中…</div></main>
   </div>
 
+  <!-- GRB割当プロジェクト（事務所案件の業務に「誰がやるか」を割当＋履歴） -->
+  <div id="proj-grb" class="hidden">
+    <main><div class="panel">
+      <div class="note">事務所案件の業務に「誰がやるか」を割り当て（変更は履歴に残ります）。</div>
+      <div style="margin:10px 0;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        日付：<input type="date" id="grb-date">
+        操作者：<input type="text" id="grb-by" value="舟田" style="width:90px;">
+        <button id="grb-load">読み込む</button>
+      </div>
+      <div id="grb-view" class="panel">日付を選んで「読み込む」を押してください。</div>
+    </div></main>
+  </div>
+
   <!-- 準備中プロジェクト共通 -->
   <div id="proj-soon" class="hidden"><main><div class="panel soon-box">このプロジェクトは準備中です。</div></main></div>
 </div>
 
 <!-- ロジック（Task4：取得・描画・タブ切替） -->
 <script>
-  var state = { month: "", view: "tsukibetsu", aview: "shinkou", anken: null, q: "", sort: "juchu_desc", fbu: "", fmotouke: "" };
+  var state = { month: "", view: "tsukibetsu", aview: "shinkou", anken: null, q: "", sort: "juchu_desc", fbu: "", fmotouke: "", grb: null };
 
   function yen(n){ return (typeof n === 'number') ? '¥' + n.toLocaleString('ja-JP') : '—'; }
 
@@ -296,6 +310,63 @@
     }).catch(function(){ el.innerHTML = '<div class="err">通信に失敗しました。更新で再試行してください。</div>'; });
   }
 
+  // ---- GRB割当（事務所案件の業務に担当を割当・履歴つき） ----
+  function loadGrb(){
+    var d = document.getElementById('grb-date').value;
+    var view = document.getElementById('grb-view');
+    if (!d){ view.innerHTML = '<div class="note">日付を選んでください。</div>'; return; }
+    view.innerHTML = '読み込み中…';
+    Promise.all([
+      api('office_tasks', '&date=' + encodeURIComponent(d)),
+      api('grb_assignments', '&date=' + encodeURIComponent(d))
+    ]).then(function(rs){
+      var tasks = (rs[0] && rs[0].ok && rs[0].tasks) || [];
+      var data = (rs[1] && rs[1].ok && rs[1].data) || { current: [], history: [] };
+      state.grb = { date: d, tasks: tasks, data: data };
+      renderGrb();
+    }).catch(function(){ view.innerHTML = '<div class="err">通信に失敗しました。更新で再試行してください。</div>'; });
+  }
+
+  function renderGrb(){
+    var g = state.grb, view = document.getElementById('grb-view');
+    if (!g){ view.innerHTML = ''; return; }
+    if (!g.tasks.length){ view.innerHTML = '<div class="note">' + esc(g.date) + ' の事務所案件はありません。</div>'; return; }
+    var cur = {}; (g.data.current || []).forEach(function(c){ cur[c.content] = c.assignee; });
+    var names = []; g.tasks.forEach(function(t){ if (names.indexOf(t.name) < 0) names.push(t.name); });
+    var opts = '<option value="">（割当先を選ぶ）</option>' + names.map(function(n){ return '<option value="' + esc(n) + '">' + esc(n) + '</option>'; }).join('');
+    var html = '<table><thead><tr><th>元の担当</th><th>業務内容</th><th>現在の割当</th><th>割り当てる</th></tr></thead><tbody>';
+    g.tasks.forEach(function(t, i){
+      var assigned = cur[t.content] || '';
+      html += '<tr><td>' + esc(t.name) + '</td><td>' + esc(t.content) + '</td>'
+        + '<td>' + (assigned ? '<b>' + esc(assigned) + '</b>' : '<span class="note">未</span>') + '</td>'
+        + '<td><select class="grb-sel" data-idx="' + i + '">' + opts + '</select> '
+        + '<button class="grb-assign-btn" data-idx="' + i + '">割当</button></td></tr>';
+    });
+    html += '</tbody></table>';
+    var hist = (g.data.history || []).slice().reverse();
+    html += '<div class="note" style="margin-top:14px;font-weight:700;">割り当て履歴（新しい順）</div>';
+    if (!hist.length){ html += '<div class="note">まだありません。</div>'; }
+    else {
+      html += '<table><thead><tr><th>日時</th><th>業務内容</th><th>割当先</th><th>割当者</th></tr></thead><tbody>';
+      hist.forEach(function(h){ html += '<tr><td>' + esc(h.ts) + '</td><td>' + esc(h.content) + '</td><td>' + esc(h.assignee) + '</td><td>' + esc(h.by) + '</td></tr>'; });
+      html += '</tbody></table>';
+    }
+    view.innerHTML = html;
+  }
+
+  function assignGrb(idx, btn){
+    var g = state.grb; if (!g) return;
+    var t = g.tasks[idx]; if (!t) return;
+    var sel = document.querySelector('.grb-sel[data-idx="' + idx + '"]');
+    var assignee = sel ? sel.value : '';
+    if (!assignee){ alert('割当先を選んでください。'); return; }
+    var by = (document.getElementById('grb-by').value || '舟田').trim();
+    btn.disabled = true; btn.textContent = '…';
+    api('grb_assign', '&date=' + encodeURIComponent(g.date) + '&name=' + encodeURIComponent(t.name) + '&content=' + encodeURIComponent(t.content) + '&assignee=' + encodeURIComponent(assignee) + '&by=' + encodeURIComponent(by))
+      .then(function(res){ if (res && res.ok){ loadGrb(); } else { alert('保存できませんでした（' + ((res && res.error) || '') + '）'); btn.disabled = false; btn.textContent = '割当'; } })
+      .catch(function(){ alert('通信に失敗しました。'); btn.disabled = false; btn.textContent = '割当'; });
+  }
+
   function initApp(){
     api('months').then(function(res){
       var sel = document.getElementById('month');
@@ -338,6 +409,16 @@
     var syncBtn = document.getElementById('sync-yotei');
     if (syncBtn) syncBtn.onclick = syncYotei;
 
+    // GRB割当：読み込みボタン＋割当ボタン（委譲）
+    var grbLoad = document.getElementById('grb-load');
+    if (grbLoad) grbLoad.onclick = loadGrb;
+    var grbView = document.getElementById('grb-view');
+    if (grbView) grbView.addEventListener('click', function(e){
+      var btn = e.target.closest ? e.target.closest('.grb-assign-btn') : null;
+      if (!btn) return;
+      assignGrb(Number(btn.getAttribute('data-idx')), btn);
+    });
+
     var elQ = document.getElementById('anken-q');
     if (elQ) elQ.oninput = function(){ state.q = elQ.value; renderAnken(); };
     var elS = document.getElementById('anken-sort');
@@ -355,9 +436,16 @@
         var proj = t.getAttribute('data-proj');
         document.getElementById('proj-yotei').classList.add('hidden');
         document.getElementById('proj-anken').classList.add('hidden');
+        document.getElementById('proj-grb').classList.add('hidden');
         document.getElementById('proj-soon').classList.add('hidden');
         if (proj === 'yotei'){ document.getElementById('proj-yotei').classList.remove('hidden'); }
         else if (proj === 'anken'){ document.getElementById('proj-anken').classList.remove('hidden'); if (!state.anken) loadAnken(); }
+        else if (proj === 'grb'){
+          document.getElementById('proj-grb').classList.remove('hidden');
+          var gd = document.getElementById('grb-date');
+          if (!gd.value){ var t = new Date(); gd.value = t.getFullYear() + '-' + ('0'+(t.getMonth()+1)).slice(-2) + '-' + ('0'+t.getDate()).slice(-2); }
+          if (!state.grb) loadGrb();
+        }
         else { document.getElementById('proj-soon').classList.remove('hidden'); }
       };
     });

@@ -46,6 +46,9 @@
   .co-head{ font-weight:700; font-size:15px; color:#fff; background:var(--gr-orange); padding:6px 10px; border-radius:6px; margin:14px 0 6px; }
   .bu-head{ font-weight:700; font-size:13px; color:#5a8a00; border-left:4px solid var(--gr-green); padding:3px 8px; margin:10px 0 4px; }
   .badge2{ display:inline-block; min-width:16px; padding:0 5px; margin-left:4px; border-radius:9px; background:var(--gr-green); color:#fff; font-size:10px; }
+  .status-row{ margin-top:8px; display:flex; gap:6px; }
+  .status-btn{ padding:4px 12px; border:1px solid #ccc; border-radius:6px; background:#f7f7f7; cursor:pointer; font-size:12px; }
+  .status-btn.on{ background:var(--gr-orange); color:#fff; border-color:var(--gr-orange); font-weight:700; }
   /* Task5: 名前列固定（モバイルで日列を横スクロールしても名前が見える） */
   #view td:first-child, #view th:first-child{ position:sticky; left:0; background:#fff; }
 </style>
@@ -132,6 +135,10 @@
       + '<div class="money">売上見込：' + yen(a.uriage) + ' ／ 粗利見込：' + yen(a.arari) + '</div>'
       + (a.genba ? '<div class="meta">📅 予定は「予定管理」タブで現場「' + esc(a.genba) + '」を確認</div>' : '')
       + (a.kouban ? '<div class="meta">📷 工事写真：工事写真/' + esc(a.kouban) + '_' + esc(a.ankenName) + '/</div>' : '')
+      + '<div class="status-row">'
+      +   '<button class="status-btn' + (a.status === '進行中' ? ' on' : '') + '" data-id="' + esc(a.id) + '" data-status="進行中">進行中</button>'
+      +   '<button class="status-btn' + (a.status === '完了' ? ' on' : '') + '" data-id="' + esc(a.id) + '" data-status="完了">完了</button>'
+      + '</div>'
       + '</div>';
   }
 
@@ -179,6 +186,15 @@
       document.getElementById('badge-kanryo').textContent = c.kanryo || 0;
       renderAnken();
     }).catch(function(){ document.getElementById('anken-view').innerHTML = '<div class="err">通信に失敗しました。</div>'; });
+  }
+
+  function setStatus(id, status){
+    if (!id) return;
+    if (!confirm('この案件を「' + status + '」にしますか？')) return;
+    api('set_status', '&id=' + encodeURIComponent(id) + '&status=' + encodeURIComponent(status)).then(function(res){
+      if (res && res.ok){ loadAnken(); }
+      else { alert('更新できませんでした（' + ((res && res.error) || '不明') + '）'); }
+    }).catch(function(){ alert('通信に失敗しました'); });
   }
 
   function api(action, extra){
@@ -245,6 +261,13 @@
         state.aview = t.getAttribute('data-aview');
         renderAnken();
       };
+    });
+
+    // 状態ボタン（委譲）
+    document.getElementById('anken-view').addEventListener('click', function(e){
+      var btn = e.target.closest ? e.target.closest('.status-btn') : null;
+      if (!btn) return;
+      setStatus(btn.getAttribute('data-id'), btn.getAttribute('data-status'));
     });
 
     // プロジェクトタブ切替（予定管理 / 案件 が中身、車両/経理/社員は準備中）

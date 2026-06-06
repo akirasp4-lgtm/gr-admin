@@ -106,7 +106,7 @@
     <div class="ptab" data-proj="grb">🗂GRB割当</div>
     <div class="ptab" data-proj="yotei-input">🗓予定入力</div>
     <div class="ptab disabled" data-proj="vehicle">車両 <span class="soon">準備中</span></div>
-    <div class="ptab disabled" data-proj="keiri">経理 <span class="soon">準備中</span></div>
+    <div class="ptab" data-proj="keiri">💰経理</div>
     <div class="ptab disabled" data-proj="staff">社員 <span class="soon">準備中</span></div>
   </div>
 
@@ -175,6 +175,11 @@
       </div>
       <div id="yi-view" class="panel">氏名を選んで「読み込む」を押してください。</div>
     </div></main>
+  </div>
+
+  <!-- 経理プロジェクト（売上見込・粗利見込・請求待ちを集計＝見込みベースv1） -->
+  <div id="proj-keiri" class="hidden">
+    <main><div id="keiri-view" class="panel">読み込み中…</div></main>
   </div>
 
   <!-- 準備中プロジェクト共通 -->
@@ -288,6 +293,7 @@
       document.getElementById('badge-kanryo').textContent = c.kanryo || 0;
       fillMotoukeOptions();
       renderAnken();
+      if (activeProj() === 'keiri') renderKeiri();   // 経理タブ表示中なら集計も更新
     }).catch(function(){ document.getElementById('anken-view').innerHTML = '<div class="err">通信に失敗しました。</div>'; });
   }
 
@@ -521,6 +527,46 @@
       .catch(function(){ alert('通信に失敗しました。'); btn.disabled = false; btn.textContent = '割当'; });
   }
 
+  // ===== 経理タブ v1（見込みベース：案件Notionの売上見込・粗利見込・請求済を集計） =====
+  function renderKeiri(){
+    var v = document.getElementById('keiri-view');
+    if (!v) return;
+    if (!state.anken){ v.innerHTML = '<div class="note">読み込み中…</div>'; return; }
+    function sum(list, key){ return (list||[]).reduce(function(s,a){ return s + (typeof a[key]==='number'?a[key]:0); }, 0); }
+    var G = { shinkou:'進行中', seikyuMachi:'請求待ち', kanryo:'完了(請求済)' };
+    var html = '<div class="note">💰 経理（見込みベース）｜案件の売上見込・粗利見込・請求待ちを集計。実績(請求/入金/原価)はv2。</div>';
+    html += '<div style="display:flex;gap:10px;flex-wrap:wrap;margin:10px 0;">';
+    Object.keys(G).forEach(function(k){
+      var list = state.anken[k] || [];
+      html += '<div style="flex:1;min-width:170px;border:1px solid #e6e6e6;border-radius:8px;padding:10px;">'
+        + '<div style="font-weight:700;color:var(--gr-orange);">' + G[k] + '</div>'
+        + '<div style="font-size:12px;color:#666;">' + list.length + '件</div>'
+        + '<div>売上見込 ' + yen(sum(list,'uriage')) + '</div>'
+        + '<div style="color:#5a8a00;">粗利見込 ' + yen(sum(list,'arari')) + '</div>'
+        + '</div>';
+    });
+    html += '</div>';
+    var all = (state.anken.shinkou||[]).concat(state.anken.seikyuMachi||[], state.anken.kanryo||[]);
+    var u = sum(all,'uriage'), a = sum(all,'arari');
+    html += '<div class="total-row" style="border-radius:8px;padding:10px;margin-bottom:12px;">全体：売上見込 ' + yen(u) + ' ／ 粗利見込 ' + yen(a) + ' ／ 粗利率 ' + (u ? Math.round(a/u*100) : 0) + '%</div>';
+    html += '<div class="bu-head">事業部別</div><table><thead><tr><th>事業部</th><th>件数</th><th>売上見込</th><th>粗利見込</th></tr></thead><tbody>';
+    ['ICT','INF','MSC','GRB'].forEach(function(bu){
+      var list = all.filter(function(x){ return x.bu === bu; });
+      if (!list.length) return;
+      html += '<tr><td>' + esc(bu) + '</td><td>' + list.length + '</td><td>' + yen(sum(list,'uriage')) + '</td><td>' + yen(sum(list,'arari')) + '</td></tr>';
+    });
+    html += '</tbody></table>';
+    var sm = state.anken.seikyuMachi || [];
+    html += '<div class="bu-head" style="margin-top:14px;">🔔 請求待ち（完了・未請求）' + sm.length + '件</div>';
+    if (!sm.length){ html += '<div class="note">なし</div>'; }
+    else {
+      html += '<table><thead><tr><th>工番</th><th>案件名</th><th>元請</th><th>完了予定</th><th>売上見込</th></tr></thead><tbody>';
+      sm.forEach(function(x){ html += '<tr><td>' + esc(x.kouban||'') + '</td><td>' + esc(x.ankenName||'') + '</td><td>' + esc(x.motouke||'') + '</td><td>' + esc(x.kanryoYotei||'') + '</td><td>' + yen(x.uriage) + '</td></tr>'; });
+      html += '</tbody></table>';
+    }
+    v.innerHTML = html;
+  }
+
   function initApp(){
     api('months').then(function(res){
       var sel = document.getElementById('month');
@@ -595,6 +641,7 @@
         document.getElementById('proj-anken').classList.add('hidden');
         document.getElementById('proj-grb').classList.add('hidden');
         document.getElementById('proj-yotei-input').classList.add('hidden');
+        document.getElementById('proj-keiri').classList.add('hidden');
         document.getElementById('proj-soon').classList.add('hidden');
         if (proj === 'yotei'){ document.getElementById('proj-yotei').classList.remove('hidden'); }
         else if (proj === 'anken'){ document.getElementById('proj-anken').classList.remove('hidden'); if (!state.anken) loadAnken(); }
@@ -608,6 +655,11 @@
           document.getElementById('proj-yotei-input').classList.remove('hidden');
           if (!state.yiBase) state.yiBase = new Date();
           initYoteiInput();
+        }
+        else if (proj === 'keiri'){
+          document.getElementById('proj-keiri').classList.remove('hidden');
+          if (!state.anken){ loadAnken(); }   // 案件未読込なら取得（取得後にrenderKeiriも走る）
+          renderKeiri();
         }
         else { document.getElementById('proj-soon').classList.remove('hidden'); }
       };

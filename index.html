@@ -107,6 +107,7 @@
     <div class="ptab" data-proj="yotei-input">🗓予定入力</div>
     <div class="ptab disabled" data-proj="vehicle">車両 <span class="soon">準備中</span></div>
     <div class="ptab" data-proj="keiri">💰経理</div>
+    <div class="ptab" data-proj="kokyaku">🏢顧客</div>
     <div class="ptab disabled" data-proj="staff">社員 <span class="soon">準備中</span></div>
   </div>
 
@@ -180,6 +181,11 @@
   <!-- 経理プロジェクト（売上見込・粗利見込・請求待ちを集計＝見込みベースv1） -->
   <div id="proj-keiri" class="hidden">
     <main><div id="keiri-view" class="panel">読み込み中…</div></main>
+  </div>
+
+  <!-- 顧客（元請）プロジェクト：案件を元請別に集計（建設の下請＝元請が顧客） -->
+  <div id="proj-kokyaku" class="hidden">
+    <main><div id="kokyaku-view" class="panel">読み込み中…</div></main>
   </div>
 
   <!-- 準備中プロジェクト共通 -->
@@ -294,6 +300,7 @@
       fillMotoukeOptions();
       renderAnken();
       if (activeProj() === 'keiri') renderKeiri();   // 経理タブ表示中なら集計も更新
+      if (activeProj() === 'kokyaku') renderKokyaku();
     }).catch(function(){ document.getElementById('anken-view').innerHTML = '<div class="err">通信に失敗しました。</div>'; });
   }
 
@@ -567,6 +574,31 @@
     v.innerHTML = html;
   }
 
+  // ===== 顧客（元請）タブ：案件Notionを元請別に集計 =====
+  function renderKokyaku(){
+    var v = document.getElementById('kokyaku-view'); if (!v) return;
+    if (!state.anken){ v.innerHTML = '<div class="note">読み込み中…</div>'; return; }
+    var all = (state.anken.shinkou||[]).concat(state.anken.seikyuMachi||[], state.anken.kanryo||[]);
+    var m = {};
+    all.forEach(function(a){
+      var k = a.motouke || '(元請なし)';
+      var o = m[k] || (m[k] = { count:0, uriage:0, arari:0, machi:0 });
+      o.count++;
+      if (typeof a.uriage === 'number') o.uriage += a.uriage;
+      if (typeof a.arari === 'number') o.arari += a.arari;
+    });
+    (state.anken.seikyuMachi||[]).forEach(function(a){ var k = a.motouke || '(元請なし)'; if (m[k]) m[k].machi++; });
+    var keys = Object.keys(m).sort(function(x,y){ return m[y].uriage - m[x].uriage; });
+    var html = '<div class="note">🏢 顧客（元請）別｜案件数・売上見込・粗利見込・請求待ちを集計（売上見込の多い順）。建設の下請＝元請が顧客。</div>';
+    html += '<table><thead><tr><th>元請（顧客）</th><th>案件数</th><th>売上見込</th><th>粗利見込</th><th>粗利率</th><th>請求待ち</th></tr></thead><tbody>';
+    keys.forEach(function(k){
+      var o = m[k];
+      html += '<tr><td>' + esc(k) + '</td><td>' + o.count + '</td><td>' + yen(o.uriage) + '</td><td>' + yen(o.arari) + '</td><td>' + (o.uriage ? Math.round(o.arari/o.uriage*100) : 0) + '%</td><td>' + (o.machi || '') + '</td></tr>';
+    });
+    html += '</tbody></table>';
+    v.innerHTML = html;
+  }
+
   function initApp(){
     api('months').then(function(res){
       var sel = document.getElementById('month');
@@ -642,6 +674,7 @@
         document.getElementById('proj-grb').classList.add('hidden');
         document.getElementById('proj-yotei-input').classList.add('hidden');
         document.getElementById('proj-keiri').classList.add('hidden');
+        document.getElementById('proj-kokyaku').classList.add('hidden');
         document.getElementById('proj-soon').classList.add('hidden');
         if (proj === 'yotei'){ document.getElementById('proj-yotei').classList.remove('hidden'); }
         else if (proj === 'anken'){ document.getElementById('proj-anken').classList.remove('hidden'); if (!state.anken) loadAnken(); }
@@ -660,6 +693,11 @@
           document.getElementById('proj-keiri').classList.remove('hidden');
           if (!state.anken){ loadAnken(); }   // 案件未読込なら取得（取得後にrenderKeiriも走る）
           renderKeiri();
+        }
+        else if (proj === 'kokyaku'){
+          document.getElementById('proj-kokyaku').classList.remove('hidden');
+          if (!state.anken){ loadAnken(); }   // 取得後にrenderKokyakuも走る
+          renderKokyaku();
         }
         else { document.getElementById('proj-soon').classList.remove('hidden'); }
       };

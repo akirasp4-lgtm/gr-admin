@@ -114,7 +114,7 @@
 
   <!-- 共通ツールバー（どのタブでも：期限しぼり＋Excel出力） -->
   <div id="toolbar">
-    <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:13px;">
+    <div id="dl-wrap" style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:13px;">
       <span class="note" style="margin:0;">📅 期限（案件）：</span>
       <button class="dl-btn on" data-dl="all">全部</button>
       <button class="dl-btn" data-dl="week">今週</button>
@@ -176,7 +176,7 @@
   <!-- 予定入力プロジェクト（事務所の予定を画面から入力＝裏のシートに書き戻し） -->
   <div id="proj-yotei-input" class="hidden">
     <main><div class="panel">
-      <div class="note">事務所の予定を画面から入力します（保存すると裏の予定表に反映＝朝のLINE配信にも出ます）。</div>
+      <div class="note">GRB（事務）の人が「自分の予定」を入力する画面です。①氏名を選ぶ → ②各日に作業を入れる → ③「保存」。裏の予定表に反映され、朝のLINE配信にも出ます。</div>
       <div style="margin:10px 0;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
         氏名：<select id="yi-name"></select>
         <button id="yi-prev">← 前の週</button>
@@ -371,9 +371,17 @@
   function currentExportData(){
     var proj = activeProj();
     if (proj === 'anken'){
-      var list = sortAnken(applyAnkenFilters(filterByDeadline((state.anken && state.anken[state.aview]) || [])));
-      var rows = [['工番','案件名','元請','現場','担当','状態','受注日','完了予定','売上見込','粗利見込']];
-      list.forEach(function(a){ rows.push([a.kouban||'', a.ankenName||'', a.motouke||'', a.genba||'', a.tantou||'', a.status||'', a.juchuBi||'', a.kanryoYotei||'', (typeof a.uriage==='number'?a.uriage:''), (typeof a.arari==='number'?a.arari:'')]); });
+      // 画面と同じ「会社 → 事業部」の並びで出す（見た目を揃える）
+      var src = applyAnkenFilters(filterByDeadline((state.anken && state.anken[state.aview]) || []));
+      var groups = {};
+      src.forEach(function(a){ var co=companyOfBu(a.bu), bu=a.bu||'(事業部なし)'; groups[co]=groups[co]||{}; (groups[co][bu]=groups[co][bu]||[]).push(a); });
+      var rows = [['会社','事業部','工番','案件名','元請','現場','担当','状態','受注日','完了予定','売上見込','粗利見込']];
+      ['グローライズ','その他（会社未設定）'].forEach(function(co){
+        if(!groups[co]) return;
+        Object.keys(groups[co]).sort(function(x,y){ var ix=BU_ORDER.indexOf(x),iy=BU_ORDER.indexOf(y); return (ix<0?99:ix)-(iy<0?99:iy); }).forEach(function(bu){
+          sortAnken(groups[co][bu]).forEach(function(a){ rows.push([co, bu, a.kouban||'', a.ankenName||'', a.motouke||'', a.genba||'', a.tantou||'', a.status||'', a.juchuBi||'', a.kanryoYotei||'', (typeof a.uriage==='number'?a.uriage:''), (typeof a.arari==='number'?a.arari:'')]); });
+        });
+      });
       return { sheet:'案件_'+state.aview, file:'案件一覧_'+todayStamp(), rows: rows };
     }
     if (proj === 'grb'){
@@ -391,6 +399,14 @@
   }
   function onExportClick(){ var d = currentExportData(); if (!d){ alert('このタブは出力対象がありません。'); return; } exportXlsx(d.rows, d.sheet, d.file); }
   function rerenderActive(){ if (activeProj() === 'anken') renderAnken(); }
+  // ツールバーをタブに合わせて出し分け（期限しぼりは案件だけ／出力はデータのあるタブだけ）
+  function updateToolbar(proj){
+    var tb=document.getElementById('toolbar'), wrap=document.getElementById('dl-wrap'), bx=document.getElementById('btn-export');
+    var hasExport=(proj==='yotei'||proj==='anken'||proj==='grb');
+    if(tb) tb.style.display=hasExport?'flex':'none';
+    if(bx) bx.style.display=hasExport?'':'none';
+    if(wrap) wrap.style.display=(proj==='anken')?'':'none';
+  }
 
   // ===== Phase2: 予定入力（PC週ビュー / スマホ日リスト・レスポンシブ） =====
   function weekRangeOf(base){
@@ -405,7 +421,8 @@
   function initYoteiInput(){
     var sel = document.getElementById('yi-name'); if (!sel) return;
     if (!sel.options.length){
-      var mon = state.month ? (Number(state.month.split('-')[1]) + '月') : ((new Date().getMonth()+1) + '月');
+      var base = state.yiBase || new Date();
+      var mon = (base.getMonth()+1) + '月';  // 予定表の月タブは "6月" 等。今日(表示中の週)の月で氏名を出す
       api('office_names','&month='+encodeURIComponent(mon)).then(function(res){
         var names = (res.ok && res.names) || [];
         sel.innerHTML = '<option value="">（氏名を選ぶ）</option>' + names.map(function(n){ return '<option>'+esc(n)+'</option>'; }).join('');
@@ -591,6 +608,7 @@
         document.querySelectorAll('.ptab').forEach(function(x){ x.classList.remove('active'); });
         t.classList.add('active');
         var proj = t.getAttribute('data-proj');
+        updateToolbar(proj);
         document.getElementById('proj-yotei').classList.add('hidden');
         document.getElementById('proj-anken').classList.add('hidden');
         document.getElementById('proj-grb').classList.add('hidden');
@@ -633,6 +651,7 @@
     var yiReload = document.getElementById('yi-reload'); if (yiReload) yiReload.onclick = loadYoteiInput;
     var yiPrev = document.getElementById('yi-prev'); if (yiPrev) yiPrev.onclick = function(){ shiftYiWeek(-1); };
     var yiNext = document.getElementById('yi-next'); if (yiNext) yiNext.onclick = function(){ shiftYiWeek(1); };
+    updateToolbar('yotei'); // 初期タブ(予定管理)に合わせる
   }
 
   // 合言葉ログイン（合言葉はHTMLに埋めない＝Git公開先に鍵を出さない。サーバー(GAS)に照合→通れば端末に保存）

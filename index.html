@@ -4,6 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>GR管理画面</title>
+<!-- Excel出力ライブラリ(SheetJS) -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
   :root{ --gr-orange:#F39800; --gr-green:#7FBA00; }
   *{ box-sizing:border-box; }
@@ -54,6 +56,11 @@
   .anken-bar #anken-q{ min-width:220px; }
   /* Task5: 名前列固定（モバイルで日列を横スクロールしても名前が見える） */
   #view td:first-child, #view th:first-child{ position:sticky; left:0; background:#fff; }
+  /* Phase1: 共通ツールバー（期限フィルタ＋Excel出力） */
+  #toolbar{ display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap; padding:8px 14px; background:#fafafa; border-bottom:1px solid #eee; }
+  #toolbar .dl-btn{ padding:4px 12px; border:1px solid #ccc; border-radius:14px; background:#fff; cursor:pointer; font-size:12px; }
+  #toolbar .dl-btn.on{ background:var(--gr-orange); color:#fff; border-color:var(--gr-orange); font-weight:700; }
+  #btn-export{ background:#1d7a46; color:#fff; border:0; border-radius:7px; padding:7px 16px; font-weight:700; cursor:pointer; }
 </style>
 </head>
 <body>
@@ -95,6 +102,21 @@
     <div class="ptab disabled" data-proj="vehicle">車両 <span class="soon">準備中</span></div>
     <div class="ptab disabled" data-proj="keiri">経理 <span class="soon">準備中</span></div>
     <div class="ptab disabled" data-proj="staff">社員 <span class="soon">準備中</span></div>
+  </div>
+
+  <!-- 共通ツールバー（どのタブでも：期限しぼり＋Excel出力） -->
+  <div id="toolbar">
+    <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:13px;">
+      <span class="note" style="margin:0;">📅 期限（案件）：</span>
+      <button class="dl-btn on" data-dl="all">全部</button>
+      <button class="dl-btn" data-dl="week">今週</button>
+      <button class="dl-btn" data-dl="month">今月</button>
+      <button class="dl-btn" data-dl="range">期間</button>
+      <input type="date" id="dl-from" style="display:none">
+      <span id="dl-sep" style="display:none">〜</span>
+      <input type="date" id="dl-to" style="display:none">
+    </div>
+    <button id="btn-export" type="button">⬇ Excel出力</button>
   </div>
 
   <!-- 予定管理プロジェクト -->
@@ -149,7 +171,7 @@
 
 <!-- ロジック（Task4：取得・描画・タブ切替） -->
 <script>
-  var state = { month: "", view: "tsukibetsu", aview: "shinkou", anken: null, q: "", sort: "juchu_desc", fbu: "", fmotouke: "", grb: null };
+  var state = { month: "", view: "tsukibetsu", aview: "shinkou", anken: null, q: "", sort: "juchu_desc", fbu: "", fmotouke: "", grb: null, dl: { mode: 'all', from: '', to: '' }, block: null };
 
   function yen(n){ return (typeof n === 'number') ? '¥' + n.toLocaleString('ja-JP') : '—'; }
 
@@ -199,7 +221,7 @@
   function renderAnken(){
     var el = document.getElementById('anken-view');
     if (!state.anken){ el.innerHTML = '<div class="note">読み込み中…</div>'; return; }
-    var list = applyAnkenFilters(state.anken[state.aview] || []);
+    var list = applyAnkenFilters(filterByDeadline(state.anken[state.aview] || []));
     var cntEl = document.getElementById('anken-count');
     if (cntEl) cntEl.textContent = '該当 ' + list.length + '件';
     if (!list.length){ el.innerHTML = '<div class="note">該当する案件はありません。</div>'; return; }
@@ -298,11 +320,61 @@
   }
   function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, function(m){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[m]; }); }
 
+  // ===== Phase1: Excel出力＋期限しぼり =====
+  function activeProj(){ var t = document.querySelector('.ptab.active'); return t ? t.getAttribute('data-proj') : ''; }
+  function dlRange(){
+    if (state.dl.mode === 'all') return null;
+    var t = new Date(), y = t.getFullYear(), m = t.getMonth(), d = t.getDate();
+    function iso(x){ return x.getFullYear() + '-' + ('0'+(x.getMonth()+1)).slice(-2) + '-' + ('0'+x.getDate()).slice(-2); }
+    if (state.dl.mode === 'month') return [iso(new Date(y,m,1)), iso(new Date(y,m+1,0))];
+    if (state.dl.mode === 'week'){ var ws = new Date(y, m, d-((t.getDay()+6)%7)); var we = new Date(ws); we.setDate(ws.getDate()+6); return [iso(ws), iso(we)]; }
+    return [state.dl.from || '0000-00-00', state.dl.to || '9999-99-99']; // range
+  }
+  // 案件を「完了予定」で期限しぼり（範囲未指定＝全部なら素通し）
+  function filterByDeadline(list){
+    var r = dlRange(); if (!r) return list || [];
+    return (list || []).filter(function(a){ var k = a.kanryoYotei || ''; return k && k >= r[0] && k <= r[1]; });
+  }
+  function todayStamp(){ var t = new Date(); return '' + t.getFullYear() + ('0'+(t.getMonth()+1)).slice(-2) + ('0'+t.getDate()).slice(-2); }
+  function exportXlsx(rows2d, sheetName, fileName){
+    if (typeof XLSX === 'undefined'){ alert('Excel機能の読み込みに失敗しました。通信環境を確認して再読込してください。'); return; }
+    if (!rows2d || rows2d.length < 2){ alert('出力できるデータがありません。'); return; }
+    var ws = XLSX.utils.aoa_to_sheet(rows2d);
+    var wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, String(sheetName || 'データ').slice(0, 31));
+    XLSX.writeFile(wb, (fileName || 'export') + '.xlsx');
+  }
+  // 現在開いているタブの「見えてる物（フィルタ後）」を {sheet,file,rows(2次元配列)} で返す
+  function currentExportData(){
+    var proj = activeProj();
+    if (proj === 'anken'){
+      var list = sortAnken(applyAnkenFilters(filterByDeadline((state.anken && state.anken[state.aview]) || [])));
+      var rows = [['工番','案件名','元請','現場','担当','状態','受注日','完了予定','売上見込','粗利見込']];
+      list.forEach(function(a){ rows.push([a.kouban||'', a.ankenName||'', a.motouke||'', a.genba||'', a.tantou||'', a.status||'', a.juchuBi||'', a.kanryoYotei||'', (typeof a.uriage==='number'?a.uriage:''), (typeof a.arari==='number'?a.arari:'')]); });
+      return { sheet:'案件_'+state.aview, file:'案件一覧_'+todayStamp(), rows: rows };
+    }
+    if (proj === 'grb'){
+      var g = state.grb; if (!g || !g.tasks || !g.tasks.length) return null;
+      var cur = {}; ((g.data && g.data.current) || []).forEach(function(c){ cur[(c.name||'')+'|'+c.content] = c.assignee; });
+      var rows2 = [['対象日','元の担当','業務内容','現在の割当']];
+      g.tasks.forEach(function(t){ rows2.push([g.date, t.name||'', t.content||'', cur[(t.name||'')+'|'+t.content] || '']); });
+      return { sheet:'GRB割当', file:'GRB割当_'+g.date, rows: rows2 };
+    }
+    if (proj === 'yotei'){
+      if (!state.block || !state.block.length) return null;
+      return { sheet:(state.view==='tsukibetsu'?'人工':'元請集計'), file:(state.view==='tsukibetsu'?'人工_':'元請_')+state.month, rows: state.block };
+    }
+    return null;
+  }
+  function onExportClick(){ var d = currentExportData(); if (!d){ alert('このタブは出力対象がありません。'); return; } exportXlsx(d.rows, d.sheet, d.file); }
+  function rerenderActive(){ if (activeProj() === 'anken') renderAnken(); }
+
   function loadView(){
     var el = document.getElementById('view');
     el.innerHTML = '読み込み中…';
     api(state.view, "&month=" + encodeURIComponent(state.month)).then(function(res){
       if (!res.ok){ el.innerHTML = '<div class="err">読み込めませんでした（' + esc(res.error) + '）。更新で再試行してください。</div>'; return; }
+      state.block = res.block || null;
       var caption = state.view === 'tsukibetsu'
         ? '<div class="note">' + esc(state.month) + ' ／ 名前×日の人工（給料・人工の確認用）</div>'
         : '<div class="note">' + esc(state.month) + ' ／ 元請ごとの集計</div>';
@@ -449,6 +521,21 @@
         else { document.getElementById('proj-soon').classList.remove('hidden'); }
       };
     });
+
+    // 期限フィルタ＋Excel出力（Phase1・全タブ共通ツールバー）
+    document.querySelectorAll('#toolbar .dl-btn').forEach(function(b){
+      b.onclick = function(){
+        document.querySelectorAll('#toolbar .dl-btn').forEach(function(x){ x.classList.remove('on'); });
+        b.classList.add('on');
+        state.dl.mode = b.getAttribute('data-dl');
+        var on = state.dl.mode === 'range';
+        ['dl-from','dl-sep','dl-to'].forEach(function(id){ document.getElementById(id).style.display = on ? '' : 'none'; });
+        rerenderActive();
+      };
+    });
+    var dlF = document.getElementById('dl-from'); if (dlF) dlF.onchange = function(e){ state.dl.from = e.target.value; rerenderActive(); };
+    var dlT = document.getElementById('dl-to'); if (dlT) dlT.onchange = function(e){ state.dl.to = e.target.value; rerenderActive(); };
+    var bx = document.getElementById('btn-export'); if (bx) bx.onclick = onExportClick;
   }
 
   // 合言葉ログイン（合言葉はHTMLに埋めない＝Git公開先に鍵を出さない。サーバー(GAS)に照合→通れば端末に保存）

@@ -61,6 +61,13 @@
   #toolbar .dl-btn{ padding:4px 12px; border:1px solid #ccc; border-radius:14px; background:#fff; cursor:pointer; font-size:12px; }
   #toolbar .dl-btn.on{ background:var(--gr-orange); color:#fff; border-color:var(--gr-orange); font-weight:700; }
   #btn-export{ background:#1d7a46; color:#fff; border:0; border-radius:7px; padding:7px 16px; font-weight:700; cursor:pointer; }
+  /* Phase2: 予定入力（PC=週グリッド / スマホ=縦リスト） */
+  .yi-grid{ display:grid; grid-template-columns:repeat(5,1fr); gap:8px; }
+  @media (max-width:680px){ .yi-grid{ grid-template-columns:1fr; } }
+  .yi-cell{ border:1px solid #e6e6e6; border-radius:8px; padding:8px; background:#fff; }
+  .yi-day{ font-weight:700; color:var(--gr-orange); margin-bottom:6px; }
+  .yi-input{ width:100%; min-height:72px; border:1px solid #ccc; border-radius:6px; padding:6px; font-family:inherit; font-size:13px; resize:vertical; }
+  .prim-btn{ background:var(--gr-green); color:#fff; border:0; border-radius:7px; padding:8px 22px; font-weight:700; cursor:pointer; }
 </style>
 </head>
 <body>
@@ -99,6 +106,7 @@
     <div class="ptab active" data-proj="yotei">予定管理</div>
     <div class="ptab" data-proj="anken">📁案件</div>
     <div class="ptab" data-proj="grb">🗂GRB割当</div>
+    <div class="ptab" data-proj="yotei-input">🗓予定入力</div>
     <div class="ptab disabled" data-proj="vehicle">車両 <span class="soon">準備中</span></div>
     <div class="ptab disabled" data-proj="keiri">経理 <span class="soon">準備中</span></div>
     <div class="ptab disabled" data-proj="staff">社員 <span class="soon">準備中</span></div>
@@ -165,13 +173,28 @@
     </div></main>
   </div>
 
+  <!-- 予定入力プロジェクト（事務所の予定を画面から入力＝裏のシートに書き戻し） -->
+  <div id="proj-yotei-input" class="hidden">
+    <main><div class="panel">
+      <div class="note">事務所の予定を画面から入力します（保存すると裏の予定表に反映＝朝のLINE配信にも出ます）。</div>
+      <div style="margin:10px 0;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        氏名：<select id="yi-name"></select>
+        <button id="yi-prev">← 前の週</button>
+        <span id="yi-label" class="note" style="margin:0;font-weight:700;color:#333;"></span>
+        <button id="yi-next">次の週 →</button>
+        <button id="yi-reload">読み込む</button>
+      </div>
+      <div id="yi-view" class="panel">氏名を選んで「読み込む」を押してください。</div>
+    </div></main>
+  </div>
+
   <!-- 準備中プロジェクト共通 -->
   <div id="proj-soon" class="hidden"><main><div class="panel soon-box">このプロジェクトは準備中です。</div></main></div>
 </div>
 
 <!-- ロジック（Task4：取得・描画・タブ切替） -->
 <script>
-  var state = { month: "", view: "tsukibetsu", aview: "shinkou", anken: null, q: "", sort: "juchu_desc", fbu: "", fmotouke: "", grb: null, dl: { mode: 'all', from: '', to: '' }, block: null };
+  var state = { month: "", view: "tsukibetsu", aview: "shinkou", anken: null, q: "", sort: "juchu_desc", fbu: "", fmotouke: "", grb: null, dl: { mode: 'all', from: '', to: '' }, block: null, yi: null, yiBase: null };
 
   function yen(n){ return (typeof n === 'number') ? '¥' + n.toLocaleString('ja-JP') : '—'; }
 
@@ -369,6 +392,68 @@
   function onExportClick(){ var d = currentExportData(); if (!d){ alert('このタブは出力対象がありません。'); return; } exportXlsx(d.rows, d.sheet, d.file); }
   function rerenderActive(){ if (activeProj() === 'anken') renderAnken(); }
 
+  // ===== Phase2: 予定入力（PC週ビュー / スマホ日リスト・レスポンシブ） =====
+  function weekRangeOf(base){
+    var t = new Date(base.getFullYear(), base.getMonth(), base.getDate());
+    var dow = (t.getDay()+6)%7; // 月曜=0
+    var mon = new Date(t); mon.setDate(t.getDate()-dow);
+    var sun = new Date(mon); sun.setDate(mon.getDate()+6);
+    function iso(x){ return x.getFullYear()+'-'+('0'+(x.getMonth()+1)).slice(-2)+'-'+('0'+x.getDate()).slice(-2); }
+    return [iso(mon), iso(sun)];
+  }
+  function dayLabel(iso){ var p=iso.split('-'); var d=new Date(Number(p[0]),Number(p[1])-1,Number(p[2])); var w=['日','月','火','水','木','金','土'][d.getDay()]; return Number(p[1])+'/'+Number(p[2])+'('+w+')'; }
+  function initYoteiInput(){
+    var sel = document.getElementById('yi-name'); if (!sel) return;
+    if (!sel.options.length){
+      var mon = state.month ? (Number(state.month.split('-')[1]) + '月') : ((new Date().getMonth()+1) + '月');
+      api('office_names','&month='+encodeURIComponent(mon)).then(function(res){
+        var names = (res.ok && res.names) || [];
+        sel.innerHTML = '<option value="">（氏名を選ぶ）</option>' + names.map(function(n){ return '<option>'+esc(n)+'</option>'; }).join('');
+      });
+    }
+  }
+  function loadYoteiInput(){
+    var name = document.getElementById('yi-name').value;
+    var view = document.getElementById('yi-view');
+    if (!name){ view.innerHTML='<div class="note">氏名を選んでください。</div>'; return; }
+    var r = weekRangeOf(state.yiBase || new Date());
+    var lbl = document.getElementById('yi-label'); if (lbl) lbl.textContent = r[0] + ' 〜 ' + r[1];
+    view.innerHTML = '読み込み中…';
+    api('office_week','&from='+encodeURIComponent(r[0])+'&to='+encodeURIComponent(r[1])+'&name='+encodeURIComponent(name)).then(function(res){
+      if (!res.ok){ view.innerHTML='<div class="err">読み込めませんでした（'+esc(res.error)+'）。</div>'; return; }
+      var week = res.week || [], map = {}, days = [];
+      week.forEach(function(w){ map[w.date] = w.content || ''; });
+      Object.keys(map).sort().forEach(function(d){ days.push({ iso:d, label:dayLabel(d) }); });
+      state.yi = { name:name, from:r[0], to:r[1], days:days, map:map };
+      renderYoteiInput();
+    }).catch(function(){ view.innerHTML='<div class="err">通信に失敗しました。</div>'; });
+  }
+  function renderYoteiInput(){
+    var v = document.getElementById('yi-view'), y = state.yi; if (!y) return;
+    if (!y.days.length){ v.innerHTML='<div class="note">この週は予定表に日付の列がありません。別の週を選ぶか、予定表（月のシート）に日付列がある週にしてください。</div>'; return; }
+    var h = '<div class="yi-grid">';
+    y.days.forEach(function(d){ h += '<div class="yi-cell"><div class="yi-day">'+esc(d.label)+'</div>'
+      + '<textarea class="yi-input" data-date="'+esc(d.iso)+'">'+esc(y.map[d.iso]||'')+'</textarea></div>'; });
+    h += '</div><div style="text-align:right;padding:10px 0 0;"><button id="yi-save" class="prim-btn">保存</button></div>';
+    v.innerHTML = h;
+    document.getElementById('yi-save').onclick = saveYoteiInput;
+  }
+  function saveYoteiInput(){
+    var y = state.yi; if (!y) return;
+    var areas = document.querySelectorAll('#yi-view textarea[data-date]'), jobs = [], changed = [];
+    areas.forEach(function(a){ var d=a.getAttribute('data-date'), val=a.value;
+      if ((y.map[d]||'') !== val){ changed.push(d); jobs.push(api('office_save','&date='+encodeURIComponent(d)+'&name='+encodeURIComponent(y.name)+'&content='+encodeURIComponent(val))); }
+    });
+    if (!jobs.length){ alert('変更はありません。'); return; }
+    var btn = document.getElementById('yi-save'); btn.disabled=true; btn.textContent='保存中…';
+    Promise.all(jobs).then(function(list){
+      var fail = list.filter(function(r){ return !(r&&r.ok); }).length;
+      alert(fail ? (changed.length+'件中'+fail+'件は保存できませんでした（日付列の有無を確認）。') : ('保存しました（'+changed.length+'件）。'));
+      loadYoteiInput();
+    }).catch(function(){ alert('通信に失敗しました。'); btn.disabled=false; btn.textContent='保存'; });
+  }
+  function shiftYiWeek(delta){ var b = state.yiBase || new Date(); state.yiBase = new Date(b.getFullYear(), b.getMonth(), b.getDate()+delta*7); loadYoteiInput(); }
+
   function loadView(){
     var el = document.getElementById('view');
     el.innerHTML = '読み込み中…';
@@ -509,6 +594,7 @@
         document.getElementById('proj-yotei').classList.add('hidden');
         document.getElementById('proj-anken').classList.add('hidden');
         document.getElementById('proj-grb').classList.add('hidden');
+        document.getElementById('proj-yotei-input').classList.add('hidden');
         document.getElementById('proj-soon').classList.add('hidden');
         if (proj === 'yotei'){ document.getElementById('proj-yotei').classList.remove('hidden'); }
         else if (proj === 'anken'){ document.getElementById('proj-anken').classList.remove('hidden'); if (!state.anken) loadAnken(); }
@@ -517,6 +603,11 @@
           var gd = document.getElementById('grb-date');
           if (!gd.value){ var now = new Date(); gd.value = now.getFullYear() + '-' + ('0'+(now.getMonth()+1)).slice(-2) + '-' + ('0'+now.getDate()).slice(-2); }
           if (!state.grb) loadGrb();
+        }
+        else if (proj === 'yotei-input'){
+          document.getElementById('proj-yotei-input').classList.remove('hidden');
+          if (!state.yiBase) state.yiBase = new Date();
+          initYoteiInput();
         }
         else { document.getElementById('proj-soon').classList.remove('hidden'); }
       };
@@ -536,6 +627,12 @@
     var dlF = document.getElementById('dl-from'); if (dlF) dlF.onchange = function(e){ state.dl.from = e.target.value; rerenderActive(); };
     var dlT = document.getElementById('dl-to'); if (dlT) dlT.onchange = function(e){ state.dl.to = e.target.value; rerenderActive(); };
     var bx = document.getElementById('btn-export'); if (bx) bx.onclick = onExportClick;
+
+    // 予定入力（Phase2）の操作
+    var yiName = document.getElementById('yi-name'); if (yiName) yiName.onchange = loadYoteiInput;
+    var yiReload = document.getElementById('yi-reload'); if (yiReload) yiReload.onclick = loadYoteiInput;
+    var yiPrev = document.getElementById('yi-prev'); if (yiPrev) yiPrev.onclick = function(){ shiftYiWeek(-1); };
+    var yiNext = document.getElementById('yi-next'); if (yiNext) yiNext.onclick = function(){ shiftYiWeek(1); };
   }
 
   // 合言葉ログイン（合言葉はHTMLに埋めない＝Git公開先に鍵を出さない。サーバー(GAS)に照合→通れば端末に保存）

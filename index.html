@@ -112,16 +112,7 @@
 
   <!-- 共通ツールバー（どのタブでも：期限しぼり＋Excel出力） -->
   <div id="toolbar">
-    <div id="dl-wrap" style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:13px;">
-      <span class="note" style="margin:0;">📅 期限（案件）：</span>
-      <button class="dl-btn on" data-dl="all">全部</button>
-      <button class="dl-btn" data-dl="week">今週</button>
-      <button class="dl-btn" data-dl="month">今月</button>
-      <button class="dl-btn" data-dl="range">期間</button>
-      <input type="date" id="dl-from" style="display:none">
-      <span id="dl-sep" style="display:none">〜</span>
-      <input type="date" id="dl-to" style="display:none">
-    </div>
+    <span class="note" style="margin:0;">⬇ 出力＝今表示中の内容（予定管理＝上の「月」で選んだ月／GRB＝選んだ日）</span>
     <button id="btn-export" type="button">⬇ Excel出力</button>
   </div>
 
@@ -388,11 +379,10 @@
   function rerenderActive(){ if (activeProj() === 'anken') renderAnken(); }
   // ツールバーをタブに合わせて出し分け（期限しぼりは案件だけ／出力はデータのあるタブだけ）
   function updateToolbar(proj){
-    var tb=document.getElementById('toolbar'), wrap=document.getElementById('dl-wrap'), bx=document.getElementById('btn-export');
+    var tb=document.getElementById('toolbar'), bx=document.getElementById('btn-export');
     var hasExport=(proj==='yotei'||proj==='anken'||proj==='grb');
     if(tb) tb.style.display=hasExport?'flex':'none';
     if(bx) bx.style.display=hasExport?'':'none';
-    if(wrap) wrap.style.display=(proj==='anken')?'':'none';
   }
 
   // ===== Phase2: 予定入力（PC週ビュー / スマホ日リスト・レスポンシブ） =====

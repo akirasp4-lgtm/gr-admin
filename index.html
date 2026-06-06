@@ -533,7 +533,9 @@
       var sel = document.getElementById('month');
       var months = (res.ok && res.months) || [];
       sel.innerHTML = months.map(function(m){ return '<option value="' + m + '">' + m.replace(/^(\d{4})-0?(\d+)$/, '$1年$2') + '月</option>'; }).join('');
-      state.month = months[0] || "";
+      var nowM = (function(){ var n = new Date(); return n.getFullYear() + '-' + ('0'+(n.getMonth()+1)).slice(-2); })();
+      state.month = (months.indexOf(nowM) >= 0) ? nowM : (months[0] || "");  // 既定は“今月”（無ければ最新）
+      sel.value = state.month;
       loadView();
     }).catch(function(){ document.getElementById('view').innerHTML = '<div class="err">月一覧の取得に失敗しました。更新ボタンで再試行してください。</div>'; });
 

@@ -4,8 +4,6 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>GR管理画面</title>
-<!-- Excel出力ライブラリ(SheetJS) -->
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
   :root{ --gr-orange:#F39800; --gr-green:#7FBA00; }
   *{ box-sizing:border-box; }
@@ -358,46 +356,35 @@
     var r = dlRange(); if (!r) return list || [];
     return (list || []).filter(function(a){ var k = a.kanryoYotei || ''; return k && k >= r[0] && k <= r[1]; });
   }
-  function todayStamp(){ var t = new Date(); return '' + t.getFullYear() + ('0'+(t.getMonth()+1)).slice(-2) + ('0'+t.getDate()).slice(-2); }
-  function exportXlsx(rows2d, sheetName, fileName){
-    if (typeof XLSX === 'undefined'){ alert('Excel機能の読み込みに失敗しました。通信環境を確認して再読込してください。'); return; }
-    if (!rows2d || rows2d.length < 2){ alert('出力できるデータがありません。'); return; }
-    var ws = XLSX.utils.aoa_to_sheet(rows2d);
-    var wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, String(sheetName || 'データ').slice(0, 31));
-    XLSX.writeFile(wb, (fileName || 'export') + '.xlsx');
-  }
-  // 現在開いているタブの「見えてる物（フィルタ後）」を {sheet,file,rows(2次元配列)} で返す
-  function currentExportData(){
-    var proj = activeProj();
+  // Excel出力：GAS（Google標準のExcel化）に任せる。期間は各タブの“既存の選択”を使う。
+  function onExportClick(){
+    var proj = activeProj(), extra = '';
     if (proj === 'anken'){
-      // 画面と同じ「会社 → 事業部」の並びで出す（見た目を揃える）
-      var src = applyAnkenFilters(filterByDeadline((state.anken && state.anken[state.aview]) || []));
-      var groups = {};
-      src.forEach(function(a){ var co=companyOfBu(a.bu), bu=a.bu||'(事業部なし)'; groups[co]=groups[co]||{}; (groups[co][bu]=groups[co][bu]||[]).push(a); });
-      var rows = [['会社','事業部','工番','案件名','元請','現場','担当','状態','受注日','完了予定','売上見込','粗利見込']];
-      ['グローライズ','その他（会社未設定）'].forEach(function(co){
-        if(!groups[co]) return;
-        Object.keys(groups[co]).sort(function(x,y){ var ix=BU_ORDER.indexOf(x),iy=BU_ORDER.indexOf(y); return (ix<0?99:ix)-(iy<0?99:iy); }).forEach(function(bu){
-          sortAnken(groups[co][bu]).forEach(function(a){ rows.push([co, bu, a.kouban||'', a.ankenName||'', a.motouke||'', a.genba||'', a.tantou||'', a.status||'', a.juchuBi||'', a.kanryoYotei||'', (typeof a.uriage==='number'?a.uriage:''), (typeof a.arari==='number'?a.arari:'')]); });
-        });
-      });
-      return { sheet:'案件_'+state.aview, file:'案件一覧_'+todayStamp(), rows: rows };
-    }
-    if (proj === 'grb'){
-      var g = state.grb; if (!g || !g.tasks || !g.tasks.length) return null;
-      var cur = {}; ((g.data && g.data.current) || []).forEach(function(c){ cur[(c.name||'')+'|'+c.content] = c.assignee; });
-      var rows2 = [['対象日','元の担当','業務内容','現在の割当']];
-      g.tasks.forEach(function(t){ rows2.push([g.date, t.name||'', t.content||'', cur[(t.name||'')+'|'+t.content] || '']); });
-      return { sheet:'GRB割当', file:'GRB割当_'+g.date, rows: rows2 };
-    }
-    if (proj === 'yotei'){
-      if (!state.block || !state.block.length) return null;
-      return { sheet:(state.view==='tsukibetsu'?'人工':'元請集計'), file:(state.view==='tsukibetsu'?'人工_':'元請_')+state.month, rows: state.block };
-    }
-    return null;
+      var r = dlRange();
+      extra = '&tab=anken&aview=' + encodeURIComponent(state.aview) + (r ? ('&from=' + r[0] + '&to=' + r[1]) : '');
+    } else if (proj === 'grb'){
+      if (!state.grb || !state.grb.date){ alert('GRB割当で日付を読み込んでから出力してください。'); return; }
+      extra = '&tab=grb&date=' + encodeURIComponent(state.grb.date);
+    } else if (proj === 'yotei'){
+      if (!state.month){ alert('月を選んでください。'); return; }
+      extra = '&tab=yotei&view=' + encodeURIComponent(state.view) + '&month=' + encodeURIComponent(state.month);
+    } else { alert('このタブは出力対象がありません。'); return; }
+    var bx = document.getElementById('btn-export'); var old = bx ? bx.textContent : '';
+    if (bx){ bx.disabled = true; bx.textContent = '作成中…'; }
+    api('export_xlsx', extra).then(function(res){
+      if (bx){ bx.disabled = false; bx.textContent = old; }
+      if (!res.ok || !res.b64){ alert('出力に失敗しました（' + esc(res.error || '') + '）'); return; }
+      downloadB64Xlsx(res.b64, (res.fname || 'export') + '.xlsx');
+    }).catch(function(){ if (bx){ bx.disabled = false; bx.textContent = old; } alert('通信に失敗しました。'); });
   }
-  function onExportClick(){ var d = currentExportData(); if (!d){ alert('このタブは出力対象がありません。'); return; } exportXlsx(d.rows, d.sheet, d.file); }
+  function downloadB64Xlsx(b64, filename){
+    var bin = atob(b64), len = bin.length, bytes = new Uint8Array(len);
+    for (var i = 0; i < len; i++) bytes[i] = bin.charCodeAt(i);
+    var blob = new Blob([bytes], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    var url = URL.createObjectURL(blob), a = document.createElement('a');
+    a.href = url; a.download = filename; document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 1500);
+  }
   function rerenderActive(){ if (activeProj() === 'anken') renderAnken(); }
   // ツールバーをタブに合わせて出し分け（期限しぼりは案件だけ／出力はデータのあるタブだけ）
   function updateToolbar(proj){

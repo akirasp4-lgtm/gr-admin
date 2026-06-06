@@ -112,7 +112,7 @@
 
   <!-- 共通ツールバー（どのタブでも：期限しぼり＋Excel出力） -->
   <div id="toolbar">
-    <span class="note" style="margin:0;">⬇ 出力＝今表示中の内容（予定管理＝上の「月」で選んだ月／GRB＝選んだ日）</span>
+    <span id="toolbar-note" class="note" style="margin:0;">⬇ 出力＝今 表示している内容</span>
     <button id="btn-export" type="button">⬇ Excel出力</button>
   </div>
 
@@ -379,10 +379,13 @@
   function rerenderActive(){ if (activeProj() === 'anken') renderAnken(); }
   // ツールバーをタブに合わせて出し分け（期限しぼりは案件だけ／出力はデータのあるタブだけ）
   function updateToolbar(proj){
-    var tb=document.getElementById('toolbar'), bx=document.getElementById('btn-export');
-    var hasExport=(proj==='yotei'||proj==='anken'||proj==='grb');
-    if(tb) tb.style.display=hasExport?'flex':'none';
-    if(bx) bx.style.display=hasExport?'':'none';
+    var tb=document.getElementById('toolbar'), bx=document.getElementById('btn-export'), nt=document.getElementById('toolbar-note');
+    var showExport=(proj==='anken'||proj==='grb');           // 予定管理の人工Excelは予定管理アプリに任せる（重複解消）
+    if(tb) tb.style.display=(showExport||proj==='yotei')?'flex':'none';
+    if(bx) bx.style.display=showExport?'':'none';
+    if(nt) nt.textContent=(proj==='yotei')
+      ? '人工・請求のExcelは「予定管理アプリ」で出せます（色・罫線・合計関数つき）。重複を避けこちらでは省略。'
+      : '⬇ 出力＝今 表示している内容（GRB＝選んだ日）';
   }
 
   // ===== Phase2: 予定入力（PC週ビュー / スマホ日リスト・レスポンシブ） =====

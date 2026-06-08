@@ -56,8 +56,7 @@
   #view td:first-child, #view th:first-child{ position:sticky; left:0; background:#fff; }
   /* Phase1: 共通ツールバー（期限フィルタ＋Excel出力） */
   #toolbar{ display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap; padding:8px 14px; background:#fafafa; border-bottom:1px solid #eee; }
-  #toolbar .dl-btn{ padding:4px 12px; border:1px solid #ccc; border-radius:14px; background:#fff; cursor:pointer; font-size:12px; }
-  #toolbar .dl-btn.on{ background:var(--gr-orange); color:#fff; border-color:var(--gr-orange); font-weight:700; }
+  /* 期限フィルタ(dl-btn)は撤去済み（出力は月ドロップダウン等の既存選択を使う） */
   #btn-export{ background:#1d7a46; color:#fff; border:0; border-radius:7px; padding:7px 16px; font-weight:700; cursor:pointer; }
   /* Phase2: 予定入力（PC=週グリッド / スマホ=縦リスト） */
   .yi-grid{ display:grid; grid-template-columns:repeat(5,1fr); gap:8px; }
@@ -198,7 +197,7 @@
 
 <!-- ロジック（Task4：取得・描画・タブ切替） -->
 <script>
-  var state = { month: "", view: "tsukibetsu", aview: "shinkou", anken: null, q: "", sort: "juchu_desc", fbu: "", fmotouke: "", grb: null, dl: { mode: 'all', from: '', to: '' }, block: null, yi: null, yiBase: null };
+  var state = { month: "", view: "tsukibetsu", aview: "shinkou", anken: null, q: "", sort: "juchu_desc", fbu: "", fmotouke: "", grb: null, block: null, yi: null, yiBase: null, yiNamesMonth: '' };
 
   function yen(n){ return (typeof n === 'number') ? '¥' + n.toLocaleString('ja-JP') : '—'; }
 
@@ -248,7 +247,7 @@
   function renderAnken(){
     var el = document.getElementById('anken-view');
     if (!state.anken){ el.innerHTML = '<div class="note">読み込み中…</div>'; return; }
-    var list = applyAnkenFilters(filterByDeadline(state.anken[state.aview] || []));
+    var list = applyAnkenFilters(state.anken[state.aview] || []);
     var cntEl = document.getElementById('anken-count');
     if (cntEl) cntEl.textContent = '該当 ' + list.length + '件';
     if (!list.length){ el.innerHTML = '<div class="note">該当する案件はありません。</div>'; return; }
@@ -349,33 +348,15 @@
   }
   function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, function(m){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[m]; }); }
 
-  // ===== Phase1: Excel出力＋期限しぼり =====
+  // ===== Excel出力（GAS=Google標準xlsx化に任せる） =====
   function activeProj(){ var t = document.querySelector('.ptab.active'); return t ? t.getAttribute('data-proj') : ''; }
-  function dlRange(){
-    if (state.dl.mode === 'all') return null;
-    var t = new Date(), y = t.getFullYear(), m = t.getMonth(), d = t.getDate();
-    function iso(x){ return x.getFullYear() + '-' + ('0'+(x.getMonth()+1)).slice(-2) + '-' + ('0'+x.getDate()).slice(-2); }
-    if (state.dl.mode === 'month') return [iso(new Date(y,m,1)), iso(new Date(y,m+1,0))];
-    if (state.dl.mode === 'week'){ var ws = new Date(y, m, d-((t.getDay()+6)%7)); var we = new Date(ws); we.setDate(ws.getDate()+6); return [iso(ws), iso(we)]; }
-    return [state.dl.from || '0000-00-00', state.dl.to || '9999-99-99']; // range
-  }
-  // 案件を「完了予定」で期限しぼり（範囲未指定＝全部なら素通し）
-  function filterByDeadline(list){
-    var r = dlRange(); if (!r) return list || [];
-    return (list || []).filter(function(a){ var k = a.kanryoYotei || ''; return k && k >= r[0] && k <= r[1]; });
-  }
-  // Excel出力：GAS（Google標準のExcel化）に任せる。期間は各タブの“既存の選択”を使う。
   function onExportClick(){
     var proj = activeProj(), extra = '';
     if (proj === 'anken'){
-      var r = dlRange();
-      extra = '&tab=anken&aview=' + encodeURIComponent(state.aview) + (r ? ('&from=' + r[0] + '&to=' + r[1]) : '');
+      extra = '&tab=anken&aview=' + encodeURIComponent(state.aview);
     } else if (proj === 'grb'){
       if (!state.grb || !state.grb.date){ alert('GRB割当で日付を読み込んでから出力してください。'); return; }
       extra = '&tab=grb&date=' + encodeURIComponent(state.grb.date);
-    } else if (proj === 'yotei'){
-      if (!state.month){ alert('月を選んでください。'); return; }
-      extra = '&tab=yotei&view=' + encodeURIComponent(state.view) + '&month=' + encodeURIComponent(state.month);
     } else { alert('このタブは出力対象がありません。'); return; }
     var bx = document.getElementById('btn-export'); var old = bx ? bx.textContent : '';
     if (bx){ bx.disabled = true; bx.textContent = '作成中…'; }
@@ -393,8 +374,7 @@
     a.href = url; a.download = filename; document.body.appendChild(a); a.click(); document.body.removeChild(a);
     setTimeout(function(){ URL.revokeObjectURL(url); }, 1500);
   }
-  function rerenderActive(){ if (activeProj() === 'anken') renderAnken(); }
-  // ツールバーをタブに合わせて出し分け（期限しぼりは案件だけ／出力はデータのあるタブだけ）
+  // ツールバーをタブに合わせて出し分け（出力はデータのあるタブだけ表示）
   function updateToolbar(proj){
     var tb=document.getElementById('toolbar'), bx=document.getElementById('btn-export'), nt=document.getElementById('toolbar-note');
     var showExport=(proj==='anken'||proj==='grb');           // 予定管理の人工Excelは予定管理アプリに任せる（重複解消）
@@ -417,21 +397,22 @@
   function dayLabel(iso){ var p=iso.split('-'); var d=new Date(Number(p[0]),Number(p[1])-1,Number(p[2])); var w=['日','月','火','水','木','金','土'][d.getDay()]; return Number(p[1])+'/'+Number(p[2])+'('+w+')'; }
   function initYoteiInput(){
     var sel = document.getElementById('yi-name'); if (!sel) return;
-    if (!sel.options.length){
-      var base = state.yiBase || new Date();
-      var mon = (base.getMonth()+1) + '月';  // 予定表の月タブは "6月" 等。今日(表示中の週)の月で氏名を出す
-      api('office_names','&month='+encodeURIComponent(mon)).then(function(res){
-        var names = (res.ok && res.names) || [];
-        sel.innerHTML = '<option value="">（氏名を選ぶ）</option>' + names.map(function(n){ return '<option>'+esc(n)+'</option>'; }).join('');
-      });
-    }
+    var base = state.yiBase || new Date();
+    var mon = (base.getMonth()+1) + '月';  // 表示中の週の月で氏名を出す
+    if (state.yiNamesMonth === mon && sel.options.length) return;  // 同じ月なら取り直さない
+    state.yiNamesMonth = mon;
+    var prev = sel.value;
+    api('office_names','&month='+encodeURIComponent(mon)).then(function(res){
+      var names = (res.ok && res.names) || [];
+      sel.innerHTML = '<option value="">（氏名を選ぶ）</option>' + names.map(function(n){ return '<option'+(n===prev?' selected':'')+'>'+esc(n)+'</option>'; }).join('');
+    });
   }
   function loadYoteiInput(){
     var name = document.getElementById('yi-name').value;
     var view = document.getElementById('yi-view');
-    if (!name){ view.innerHTML='<div class="note">氏名を選んでください。</div>'; return; }
     var r = weekRangeOf(state.yiBase || new Date());
-    var lbl = document.getElementById('yi-label'); if (lbl) lbl.textContent = r[0] + ' 〜 ' + r[1];
+    var lbl = document.getElementById('yi-label'); if (lbl) lbl.textContent = r[0] + ' 〜 ' + r[1];  // 氏名選択前でも週ラベルは更新（前/次の週の無反応を防ぐ）
+    if (!name){ view.innerHTML='<div class="note">氏名を選んでください。</div>'; return; }
     view.innerHTML = '読み込み中…';
     api('office_week','&from='+encodeURIComponent(r[0])+'&to='+encodeURIComponent(r[1])+'&name='+encodeURIComponent(name)).then(function(res){
       if (!res.ok){ view.innerHTML='<div class="err">読み込めませんでした（'+esc(res.error)+'）。</div>'; return; }
@@ -466,7 +447,7 @@
       loadYoteiInput();
     }).catch(function(){ alert('通信に失敗しました。'); btn.disabled=false; btn.textContent='保存'; });
   }
-  function shiftYiWeek(delta){ var b = state.yiBase || new Date(); state.yiBase = new Date(b.getFullYear(), b.getMonth(), b.getDate()+delta*7); loadYoteiInput(); }
+  function shiftYiWeek(delta){ var b = state.yiBase || new Date(); state.yiBase = new Date(b.getFullYear(), b.getMonth(), b.getDate()+delta*7); initYoteiInput(); loadYoteiInput(); }
 
   function loadView(){
     var el = document.getElementById('view');
@@ -669,6 +650,7 @@
     // プロジェクトタブ切替（予定管理 / 案件 が中身、車両/経理/社員は準備中）
     document.querySelectorAll('.ptab').forEach(function(t){
       t.onclick = function(){
+        if (t.classList.contains('disabled')) return;   // 準備中タブ(車両/社員)は無反応に
         document.querySelectorAll('.ptab').forEach(function(x){ x.classList.remove('active'); });
         t.classList.add('active');
         var proj = t.getAttribute('data-proj');
@@ -707,19 +689,7 @@
       };
     });
 
-    // 期限フィルタ＋Excel出力（Phase1・全タブ共通ツールバー）
-    document.querySelectorAll('#toolbar .dl-btn').forEach(function(b){
-      b.onclick = function(){
-        document.querySelectorAll('#toolbar .dl-btn').forEach(function(x){ x.classList.remove('on'); });
-        b.classList.add('on');
-        state.dl.mode = b.getAttribute('data-dl');
-        var on = state.dl.mode === 'range';
-        ['dl-from','dl-sep','dl-to'].forEach(function(id){ document.getElementById(id).style.display = on ? '' : 'none'; });
-        rerenderActive();
-      };
-    });
-    var dlF = document.getElementById('dl-from'); if (dlF) dlF.onchange = function(e){ state.dl.from = e.target.value; rerenderActive(); };
-    var dlT = document.getElementById('dl-to'); if (dlT) dlT.onchange = function(e){ state.dl.to = e.target.value; rerenderActive(); };
+    // Excel出力ボタン
     var bx = document.getElementById('btn-export'); if (bx) bx.onclick = onExportClick;
 
     // 予定入力（Phase2）の操作

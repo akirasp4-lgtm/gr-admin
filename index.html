@@ -66,6 +66,7 @@
   .yi-input{ width:100%; min-height:72px; border:1px solid #ccc; border-radius:6px; padding:6px; font-family:inherit; font-size:13px; resize:vertical; }
   .prim-btn{ background:var(--gr-green); color:#fff; border:0; border-radius:7px; padding:8px 22px; font-weight:700; cursor:pointer; }
 </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 </head>
 <body>
 
@@ -104,7 +105,7 @@
     <div class="ptab" data-proj="anken">📁案件</div>
     <div class="ptab" data-proj="grb">🗂GRB割当</div>
     <div class="ptab" data-proj="yotei-input">🗓予定入力</div>
-    <div class="ptab disabled" data-proj="vehicle">車両 <span class="soon">準備中</span></div>
+    <div class="ptab" data-proj="vehicle">🚗車両</div>
     <div class="ptab" data-proj="keiri">💰経理</div>
     <div class="ptab" data-proj="kokyaku">🏢顧客</div>
     <div class="ptab disabled" data-proj="staff">社員 <span class="soon">準備中</span></div>
@@ -127,6 +128,38 @@
       <span class="note" style="margin-left:8px;">現場/人工/請求/Excelは成熟版のこちらで</span>
     </div>
     <main><div id="view" class="panel">読み込み中…</div></main>
+  </div>
+
+  <!-- 車両プロジェクト -->
+  <div id="proj-vehicle" class="hidden">
+    <main>
+      <div class="panel">
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px;">
+          <button id="veh-add" class="prim-btn" type="button">📄 車検証PDFを追加</button>
+          <input id="veh-file" type="file" accept="application/pdf" class="hidden">
+          <span id="veh-msg" class="note" style="margin:0;"></span>
+        </div>
+        <div class="note" style="margin-top:0;">車検証PDFを入れると、車名・ナンバー・車検満了日を読み取って確認画面に出します。OKで車両台帳とカレンダーに自動登録。</div>
+        <div id="veh-list" style="margin-top:8px;">読み込み中…</div>
+      </div>
+    </main>
+  </div>
+
+  <!-- 車検証 確認モーダル -->
+  <div id="veh-modal" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:50;align-items:center;justify-content:center;padding:14px;">
+    <div style="background:#fff;border-radius:10px;max-width:420px;width:100%;padding:18px;">
+      <div style="font-weight:700;font-size:16px;margin-bottom:6px;">読み取り結果の確認</div>
+      <div class="note" style="margin-top:0;">違っていれば直してから登録してください。</div>
+      <label style="display:block;margin-top:10px;font-size:13px;">車名<br><input id="vm-model" style="width:100%;padding:6px;"></label>
+      <label style="display:block;margin-top:8px;font-size:13px;">ナンバー（フル）<br><input id="vm-plate" style="width:100%;padding:6px;"></label>
+      <label style="display:block;margin-top:8px;font-size:13px;">車検満了日<br><input id="vm-shaken" type="date" style="width:100%;padding:6px;"></label>
+      <label style="display:block;margin-top:8px;font-size:13px;">所有会社<br><select id="vm-company" style="width:100%;padding:6px;"></select></label>
+      <div style="display:flex;gap:8px;margin-top:16px;">
+        <button id="vm-cancel" type="button" style="flex:1;padding:9px;border:1px solid #ccc;border-radius:7px;background:#f7f7f7;cursor:pointer;">やめる</button>
+        <button id="vm-ok" class="prim-btn" type="button" style="flex:1;">この内容で登録</button>
+      </div>
+      <div id="vm-err" class="err"></div>
+    </div>
   </div>
 
   <!-- 案件プロジェクト -->
@@ -329,6 +362,97 @@
   function api(action, extra){
     var qs = "?action=" + action + "&token=" + encodeURIComponent(AUTH.token) + (extra || "");
     return fetch(CONFIG.GAS_URL + qs).then(function(r){ return r.json(); });
+  }
+  // POST（大きいペイロード=車検証画像のOCR・車両登録）。Content-Typeは付けない＝GASのCORS簡易リクエストにする。
+  function postApi(action, body){
+    body = body || {}; body.action = action; body.token = AUTH.token;
+    return fetch(CONFIG.GAS_URL, { method:'POST', body: JSON.stringify(body) }).then(function(r){ return r.json(); });
+  }
+
+  // ===== 車両タブ =====
+  function loadVehicles(){
+    var box = document.getElementById('veh-list');
+    box.textContent = '読み込み中…';
+    api('vehicle_list').then(function(res){
+      if (!res.ok){ box.innerHTML = '<div class="err">読み込み失敗：'+esc(res.error||'')+'</div>'; return; }
+      state.vehCompanies = res.divisions || [];
+      var vs = (res.vehicles||[]).filter(function(v){ return v.status !== '廃車予定'; });
+      vs.sort(function(a,b){ return String(a.shaken||'9999').localeCompare(String(b.shaken||'9999')); });
+      if (!vs.length){ box.innerHTML = '<div class="note">登録車両がありません。「車検証PDFを追加」から登録してください。</div>'; return; }
+      var today = new Date();
+      var html = '<table><thead><tr><th>車両</th><th>会社</th><th>ナンバー</th><th>車検満了日</th><th>残り</th></tr></thead><tbody>';
+      vs.forEach(function(v){
+        var left = '-', warn = false;
+        if (v.shaken){ var days = Math.round((new Date(v.shaken) - today)/86400000); left = days<0?'期限切れ':(days+'日'); warn = days < 30; }
+        html += '<tr'+(warn?' style="background:#fff3e0;"':'')+'><td>'+esc(v.name)+'</td><td>'+esc(v.company)+'</td><td>'+esc(v.plate)+'</td><td>'+esc(v.shaken||'-')+'</td><td>'+esc(left)+'</td></tr>';
+      });
+      box.innerHTML = html + '</tbody></table>';
+    }).catch(function(){ box.innerHTML = '<div class="err">通信に失敗しました</div>'; });
+  }
+
+  function onVehFile(ev){
+    var f = ev.target.files && ev.target.files[0]; if (!f) return;
+    var msg = document.getElementById('veh-msg');
+    msg.textContent = 'PDFを画像化中…';
+    var reader = new FileReader();
+    reader.onload = function(){
+      try {
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        pdfjsLib.getDocument({ data: new Uint8Array(reader.result) }).promise.then(function(pdf){
+          return pdf.getPage(1);
+        }).then(function(page){
+          var vp = page.getViewport({ scale: 1.6 });
+          var canvas = document.createElement('canvas');
+          canvas.width = vp.width; canvas.height = vp.height;
+          return page.render({ canvasContext: canvas.getContext('2d'), viewport: vp }).promise.then(function(){
+            return canvas.toDataURL('image/jpeg', 0.85);
+          });
+        }).then(function(dataUrl){
+          msg.textContent = 'AIで読み取り中…';
+          return postApi('vehicle_ocr', { image: dataUrl });
+        }).then(function(res){
+          msg.textContent = '';
+          if (!res.ok){ alert('読み取りに失敗しました：'+(res.error||'')); return; }
+          openVehModal(res.ocr || {});
+        }).catch(function(e){ msg.textContent=''; alert('PDF処理に失敗しました：'+e); });
+      } catch(e){ msg.textContent=''; alert('PDFを開けませんでした：'+e); }
+    };
+    reader.readAsArrayBuffer(f);
+    ev.target.value = '';
+  }
+
+  function openVehModal(ocr){
+    document.getElementById('vm-model').value = ocr.model || '';
+    document.getElementById('vm-plate').value = ocr.plate || '';
+    document.getElementById('vm-shaken').value = ocr.shaken || '';
+    var sel = document.getElementById('vm-company');
+    var cos = state.vehCompanies || ['グローライズ','和信カインド','ビジネスサポート','ラーテル','GRHD','GRミツマ'];
+    sel.innerHTML = '<option value="">（会社を選ぶ）</option>' + cos.map(function(c){ return '<option>'+esc(c)+'</option>'; }).join('');
+    document.getElementById('vm-err').textContent = '';
+    document.getElementById('veh-modal').style.display = 'flex';
+    document.getElementById('veh-modal').classList.remove('hidden');
+  }
+  function closeVehModal(){ var m=document.getElementById('veh-modal'); m.classList.add('hidden'); m.style.display='none'; }
+
+  function submitVehReg(){
+    var plate = document.getElementById('vm-plate').value.trim();
+    var err = document.getElementById('vm-err');
+    if (!plate){ err.textContent = 'ナンバーを入れてください'; return; }
+    var ok = document.getElementById('vm-ok'); ok.disabled = true; ok.textContent = '登録中…';
+    postApi('vehicle_register', {
+      plate: plate,
+      shaken: document.getElementById('vm-shaken').value,
+      model: document.getElementById('vm-model').value.trim(),
+      name: document.getElementById('vm-model').value.trim(),
+      company: document.getElementById('vm-company').value
+    }).then(function(res){
+      ok.disabled = false; ok.textContent = 'この内容で登録';
+      if (!res.ok){ err.textContent = '登録失敗：'+(res.error||''); return; }
+      closeVehModal();
+      var r = res.result || {};
+      document.getElementById('veh-msg').textContent = (r.mode==='created'?'新規登録':'更新')+'しました：'+(r.name||plate);
+      loadVehicles();
+    }).catch(function(){ ok.disabled = false; ok.textContent = 'この内容で登録'; err.textContent = '通信に失敗しました'; });
   }
 
   // 2次元配列 block を表に。先頭行をヘッダ、「合計」を含む行は強調。
@@ -661,6 +785,7 @@
         document.getElementById('proj-yotei-input').classList.add('hidden');
         document.getElementById('proj-keiri').classList.add('hidden');
         document.getElementById('proj-kokyaku').classList.add('hidden');
+        document.getElementById('proj-vehicle').classList.add('hidden');
         document.getElementById('proj-soon').classList.add('hidden');
         if (proj === 'yotei'){ document.getElementById('proj-yotei').classList.remove('hidden'); }
         else if (proj === 'anken'){ document.getElementById('proj-anken').classList.remove('hidden'); if (!state.anken) loadAnken(); }
@@ -685,12 +810,22 @@
           if (!state.anken){ loadAnken(); }   // 取得後にrenderKokyakuも走る
           renderKokyaku();
         }
+        else if (proj === 'vehicle'){
+          document.getElementById('proj-vehicle').classList.remove('hidden');
+          loadVehicles();
+        }
         else { document.getElementById('proj-soon').classList.remove('hidden'); }
       };
     });
 
     // Excel出力ボタン
     var bx = document.getElementById('btn-export'); if (bx) bx.onclick = onExportClick;
+
+    // 車両タブ
+    var va = document.getElementById('veh-add'); if (va) va.onclick = function(){ document.getElementById('veh-file').click(); };
+    var vf = document.getElementById('veh-file'); if (vf) vf.onchange = onVehFile;
+    var vcl = document.getElementById('vm-cancel'); if (vcl) vcl.onclick = closeVehModal;
+    var vok = document.getElementById('vm-ok'); if (vok) vok.onclick = submitVehReg;
 
     // 予定入力（Phase2）の操作
     var yiName = document.getElementById('yi-name'); if (yiName) yiName.onchange = loadYoteiInput;

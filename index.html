@@ -258,6 +258,11 @@
       +   '<span>外注先</span><input type="text" class="kr-gaichu" value="' + esc(a.gaichusaki || '') + '">'
       +   '<button class="kr-save">保存</button>'
       + '</div>'
+      + (a.kouban ? '<div class="keiri-row bu-row" data-id="' + esc(a.id) + '" data-kouban="' + esc(a.kouban) + '" data-bu="' + esc(a.bu || '') + '" data-motouke="' + esc(a.motouke || '') + '" data-genba="' + esc(a.genba || '') + '">'
+      +   '<span>事業部</span><select class="br-bu">' + BU_ORDER.map(function(b){ return '<option' + (b === a.bu ? ' selected' : '') + '>' + b + '</option>'; }).join('') + '</select>'
+      +   '<button class="br-exec">振替</button>'
+      +   '<span style="color:#888;">※実働の事業部と違う時だけ（工番が新しくなります）</span>'
+      + '</div>' : '')
       + '<div class="status-row">'
       +   '<button class="status-btn' + (a.status === '進行中' ? ' on' : '') + '" data-id="' + esc(a.id) + '" data-status="進行中">進行中</button>'
       +   '<button class="status-btn' + (a.status === '完了' ? ' on' : '') + '" data-id="' + esc(a.id) + '" data-status="完了">完了</button>'
@@ -358,6 +363,19 @@
       if (res && res.ok){ loadAnken(); }
       else { alert('更新できませんでした（' + ((res && res.error) || '不明') + '）'); }
     }).catch(function(){ alert('通信に失敗しました'); });
+  }
+
+  // Notion改名だけ失敗した時のやり直し。中断すると次の同期で案件がダブるので必ず成功させる（設計の安全策#3）
+  function retryNotionRename(id, newJobNo, newBu, oldJobNo){
+    if (!confirm('シートの付け替えは成功しましたが、経営の案件（Notion）の工番書き換えに失敗しました。\n' + oldJobNo + ' → ' + newJobNo + '\n\n【重要】このままにすると次の「同期」で案件がダブります。\nOK＝もう一度書き換えを試す／キャンセル＝中断')){
+      alert('中断しました。⚠️「同期」は押さず、管理者に「工番 ' + newJobNo + ' のNotion改名が未完」と伝えてください。\n（管理者の直し方：Notionの案件管理DBで旧工番 ' + oldJobNo + ' のページを開き、工番を ' + newJobNo + ' に手で書き換えれば直ります。金額や請求日はそのまま残ります）');
+      loadAnken();
+      return;
+    }
+    postApi('bu_reassign_retry', { id: id, newJobNo: newJobNo, newBu: newBu }).then(function(res){
+      if (res && res.ok){ alert('書き換えました ✅ ' + oldJobNo + ' → ' + newJobNo); loadAnken(); }
+      else { retryNotionRename(id, newJobNo, newBu, oldJobNo); }
+    }).catch(function(){ retryNotionRename(id, newJobNo, newBu, oldJobNo); });
   }
 
   function syncYotei(){
@@ -956,6 +974,32 @@
         if (res && res.ok){ btn.textContent = '保存済✓'; loadAnken(); }
         else { btn.disabled = false; btn.textContent = '保存'; alert('保存できませんでした（' + ((res && res.error) || '不明') + '）'); }
       }).catch(function(){ btn.disabled = false; btn.textContent = '保存'; alert('通信に失敗しました'); });
+    });
+
+    // 事業部振り替え（委譲）。設計書: docs/superpowers/specs/2026-06-11-工番事業部振り替えGR移設-design.md
+    document.getElementById('anken-view').addEventListener('click', function(e){
+      var btn = e.target.closest ? e.target.closest('.br-exec') : null;
+      if (!btn) return;
+      var row = btn.closest('.bu-row');
+      var id = row.getAttribute('data-id'), kouban = row.getAttribute('data-kouban');
+      var curBu = row.getAttribute('data-bu'), motouke = row.getAttribute('data-motouke');
+      var genba = row.getAttribute('data-genba'), newBu = row.querySelector('.br-bu').value;
+      if (newBu === curBu){ alert('すでに ' + newBu + ' です。変える時だけ押してください。'); return; }
+      if (!motouke || !genba){ alert('この案件は元請または現場名が空のため振り替えできません。先にNotionで元請・現場名を入れてください。'); return; }
+      if (!confirm('現場「' + genba + '」(' + kouban + ') を ' + (curBu || '未設定') + ' → ' + newBu + ' に振り替えます。\n\n・新しい工番が自動で発番されます\n・日報・アーカイブ・経営の案件（お金の記録ごと）も付け替わります\n・按分（事業部別の人件費）は次の集計から新事業部になります\n\nよろしいですか？')) return;
+      btn.disabled = true; btn.textContent = '振替中…';
+      postApi('bu_reassign', { id: id, motouke: motouke, genba: genba, newBu: newBu }).then(function(res){
+        if (!res || !res.ok){ btn.disabled = false; btn.textContent = '振替'; alert('振り替えできませんでした（' + ((res && res.error) || '不明') + '）'); return; }
+        var r = res.result || {};
+        if (r.same){ btn.disabled = false; btn.textContent = '振替'; alert(r.message || '事業部は変更されていません'); return; }
+        if (r.notionUpdated){
+          alert('振り替えました ✅\n' + r.oldJobNo + ' → ' + r.newJobNo + '\n日報' + r.updatedRows + '行・アーカイブ' + r.archivedUpdated + '行を更新\n※按分は次の集計（毎朝6時 or 集計を更新）で反映されます');
+          loadAnken();
+        } else {
+          // ボタンはここで再有効化しない（retryNotionRename → loadAnken() の再描画でカードごと作り直されるため）
+          retryNotionRename(id, r.newJobNo, newBu, r.oldJobNo);
+        }
+      }).catch(function(){ btn.disabled = false; btn.textContent = '振替'; alert('通信に失敗しました'); });
     });
 
     var syncBtn = document.getElementById('sync-yotei');

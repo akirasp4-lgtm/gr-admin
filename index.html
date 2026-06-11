@@ -702,6 +702,44 @@
     }).catch(function(){ v.innerHTML = '<div class="err">通信に失敗しました。</div>'; });
   }
 
+  // 月次推移グラフ（対象月を含む過去6ヶ月の売上・粗利。CSS棒・ライブラリ不使用）
+  function trendHtml(list){
+    function sum(arr, f){ return arr.reduce(function(s,a){ var x = f(a); return s + (typeof x === 'number' && isFinite(x) ? x : 0); }, 0); }
+    function uri(a){ return typeof a.uriage === 'number' ? a.uriage : 0; }
+    var parts = dash.ym.split('-');
+    var y = Number(parts[0]), mo = Number(parts[1]);
+    var months = [];
+    var i;
+    for (i = 5; i >= 0; i--){
+      var d = new Date(y, mo - 1 - i, 1);
+      months.push(d.getFullYear() + '-' + ('0'+(d.getMonth()+1)).slice(-2));
+    }
+    var data = months.map(function(m){
+      var inM = list.filter(function(a){ return (a.seikyuBi || '').slice(0,7) === m; });
+      return { m: m, u: sum(inM, uri), r: sum(inM, effArari) };
+    });
+    var max = data.reduce(function(s,d){ return Math.max(s, d.u, d.r); }, 0);
+    var html = '<div class="bu-head" style="margin-top:14px;">📊 月次推移（直近6ヶ月・請求ベース）'
+      + ' <span style="font-size:11px;font-weight:400;color:#666;">■<span style="color:var(--gr-orange);">売上</span>／■<span style="color:#5a8a00;">粗利</span></span></div>';
+    if (!max) return html + '<div class="note">この6ヶ月に請求した案件はまだありません（請求日を入れると育ちます）。</div>';
+    function manYen(vv){ return vv ? Math.round(vv/10000).toLocaleString() + '万' : '0'; }
+    html += '<div style="display:flex;gap:14px;align-items:flex-end;border:1px solid #e6e6e6;border-radius:8px;padding:12px 10px 6px;overflow-x:auto;">';
+    data.forEach(function(d){
+      var hU = d.u ? Math.max(3, Math.round(d.u / max * 90)) : 0;
+      var hR = d.r ? Math.max(3, Math.round(d.r / max * 90)) : 0;
+      html += '<div style="text-align:center;min-width:62px;flex:1;">'
+        + '<div style="display:flex;gap:3px;align-items:flex-end;justify-content:center;height:90px;">'
+        +   '<div title="売上 ' + yen(d.u) + '" style="width:16px;height:' + hU + 'px;background:var(--gr-orange);border-radius:3px 3px 0 0;"></div>'
+        +   '<div title="粗利 ' + yen(d.r) + '" style="width:16px;height:' + hR + 'px;background:#5a8a00;border-radius:3px 3px 0 0;"></div>'
+        + '</div>'
+        + '<div style="font-size:11px;color:#666;">' + d.m.replace(/^\d\d(\d\d)-0?(\d+)$/, "$1年$2月") + '</div>'
+        + '<div style="font-size:10px;color:#999;">' + manYen(d.u) + '／' + manYen(d.r) + '</div>'
+        + '</div>';
+    });
+    html += '</div>';
+    return html;
+  }
+
   function mikomiHtml(list){
     function sum(arr, key){ return arr.reduce(function(s,a){ return s + (typeof a[key]==='number'?a[key]:0); }, 0); }
     var G = [
@@ -754,6 +792,8 @@
       + kpi('未入金', yen(sum(minyukinL, uri)), minyukinL.length + '件')
       + '</div>';
 
+    html += trendHtml(list);
+
     function groupTable(title, keyFn){
       var m = {};
       inMonth.forEach(function(a){
@@ -781,11 +821,11 @@
         return (y.juchuBi||'').localeCompare(x.juchuBi||'');
       });
     html += '<div class="bu-head" style="margin-top:14px;">📋 案件別利益（ここで原価を入力）</div>';
-    html += '<table><thead><tr><th>工番</th><th>案件名</th><th>受注金額</th><th>原価</th><th>粗利</th><th>利益率</th><th>請求日</th><th>入金日</th><th>状態</th></tr></thead><tbody>';
+    html += '<table><thead><tr><th>工番</th><th>案件名</th><th>受注金額(入力可)</th><th>原価</th><th>粗利</th><th>利益率</th><th>請求日</th><th>入金日</th><th>状態</th></tr></thead><tbody>';
     rows.forEach(function(a){
       var g = effArari(a);
       html += '<tr><td>' + esc(a.kouban||'') + '</td><td>' + esc(a.ankenName||'') + '</td>'
-        + '<td>' + yen(a.uriage) + '</td>'
+        + '<td><input type="number" class="dash-uriage" data-id="' + esc(a.id) + '" value="' + (typeof a.uriage === 'number' ? a.uriage : '') + '" style="width:110px;"></td>'
         + '<td><input type="number" class="dash-genka" data-id="' + esc(a.id) + '" value="' + (typeof a.genka === 'number' ? a.genka : '') + '" style="width:110px;"></td>'
         + '<td>' + yen(g) + (isMikomi(a) ? ' <span class="mikomi-badge">見込</span>' : '') + '</td>'
         + '<td>' + (uri(a) ? Math.round(g/uri(a)*100) + '%' : '—') + '</td>'
@@ -812,6 +852,21 @@
           if (res && res.ok){
             var a = dash.list.filter(function(x){ return x.id === id; })[0];
             if (a) a.genka = (val === '' ? null : Number(val));
+            renderDashboard(v);
+          } else { alert('保存できませんでした（' + ((res && res.error) || '不明') + '）'); }
+        }).catch(function(){ inp.disabled = false; alert('通信に失敗しました'); });
+      };
+    });
+    Array.prototype.forEach.call(v.querySelectorAll('.dash-uriage'), function(inp){
+      inp.onchange = function(){
+        var id = inp.getAttribute('data-id');
+        var val = inp.value;
+        inp.disabled = true;
+        postApi('set_uriage', { id: id, uriage: val, dk: dash.key }).then(function(res){
+          inp.disabled = false;
+          if (res && res.ok){
+            var a = dash.list.filter(function(x){ return x.id === id; })[0];
+            if (a) a.uriage = (val === '' ? null : Number(val));
             renderDashboard(v);
           } else { alert('保存できませんでした（' + ((res && res.error) || '不明') + '）'); }
         }).catch(function(){ inp.disabled = false; alert('通信に失敗しました'); });

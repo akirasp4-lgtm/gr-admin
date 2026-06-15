@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>GR管理画面</title>
+<title>GRBusinessPlatform管理画面</title>
 <style>
   :root{ --gr-orange:#F39800; --gr-green:#7FBA00; }
   *{ box-sizing:border-box; }
@@ -79,29 +79,29 @@
 <script>
   var CONFIG = {
     GAS_URL: "https://script.google.com/macros/s/AKfycbxtP7pC8jSWHaG_o_qHoIiV_6oGG50jTPFp86OJGvaApGjA41HCQ1TfjpuaxxSqxvd-/exec",
-    STORE_KEY: "gr_admin_token"   // 合言葉は端末(localStorage)にだけ保存。HTMLには鍵を埋め込まない。
+    STORE_KEY: "gr_admin_token"   // パスワードは端末(localStorage)にだけ保存。HTMLには鍵を埋め込まない。
   };
-  var AUTH = { token: "" };       // 合言葉。初回入力→端末に保存→次回は自動。
+  var AUTH = { token: "" };       // パスワード。初回入力→端末に保存→次回は自動。
 </script>
 
 <!-- PINゲート -->
 <div id="gate" class="gate">
-  <div style="font-weight:700;margin-bottom:10px;">GR管理画面</div>
-  <input id="pin" type="password" placeholder="合言葉" autocomplete="current-password">
+  <div style="font-weight:700;margin-bottom:10px;">GRBusinessPlatform管理画面</div>
+  <input id="pin" type="password" placeholder="パスワード" autocomplete="current-password">
   <div><button id="enter">入る</button></div>
   <div id="gate-err" class="err"></div>
-  <div style="font-size:11px;color:#999;margin-top:10px;">※管理者から共有された合言葉を入力。次回からこの端末では省略されます。</div>
+  <div style="font-size:11px;color:#999;margin-top:10px;">※管理者から共有されたパスワードを入力。次回からこの端末では省略されます。</div>
 </div>
 
 <!-- 本体（PIN通過後に表示） -->
 <div id="app" class="hidden">
   <header>
-    <span class="title">GR管理画面</span>
+    <span class="title">GRBusinessPlatform管理画面</span>
     <span class="right">
       <span class="lock">管理者</span>
       月：<select id="month"></select>
       <button id="refresh">更新</button>
-      <button id="logout" title="この端末から合言葉を消す">ログアウト</button>
+      <button id="logout" title="この端末からパスワードを消す">ログアウト</button>
     </span>
   </header>
 
@@ -219,7 +219,7 @@
     </div></main>
   </div>
 
-  <!-- 📊経営タブ（v2実績ダッシュボード・社長合言葉ゲート。見込みv1は下部に残置） -->
+  <!-- 📊経営タブ（v2実績ダッシュボード・社長パスワードゲート。見込みv1は下部に残置） -->
   <div id="proj-keiri" class="hidden">
     <main><div id="keiri-view" class="panel">読み込み中…</div></main>
   </div>
@@ -672,7 +672,7 @@
       .catch(function(){ alert('通信に失敗しました。'); btn.disabled = false; btn.textContent = '割当'; });
   }
 
-  // ===== 📊経営タブ v2（社長合言葉ゲート＋実績ダッシュボード。数字のルールは設計書§4） =====
+  // ===== 📊経営タブ v2（社長パスワードゲート＋実績ダッシュボード。数字のルールは設計書§4） =====
   var dash = {
     key: sessionStorage.getItem('GR_DASH_KEY') || '',
     list: null,
@@ -693,9 +693,9 @@
   }
 
   function renderDashGate(v, msg){
-    v.innerHTML = '<div class="note">📊 経営ダッシュボードを開くには経営用の合言葉が必要です（通常の合言葉とは別）。</div>'
+    v.innerHTML = '<div class="note">📊 経営ダッシュボードを開くには経営用のパスワードが必要です（通常のパスワードとは別）。</div>'
       + (msg ? '<div class="err">' + esc(msg) + '</div>' : '')
-      + '<div style="margin:10px 0;"><input type="password" id="dash-key" placeholder="経営用の合言葉"> <button id="dash-enter">開く</button></div>';
+      + '<div style="margin:10px 0;"><input type="password" id="dash-key" placeholder="経営用のパスワード"> <button id="dash-enter">開く</button></div>';
     document.getElementById('dash-enter').onclick = function(){
       dash.key = document.getElementById('dash-key').value || '';
       if (dash.key) loadDashboard();
@@ -711,7 +711,7 @@
     api('dashboard', '&dk=' + encodeURIComponent(dash.key)).then(function(res){
       if (!res.ok){
         dash.key = ''; dash.list = null; sessionStorage.removeItem('GR_DASH_KEY');
-        renderDashGate(v, '合言葉が違います。');
+        renderDashGate(v, 'パスワードが違います。');
         return;
       }
       sessionStorage.setItem('GR_DASH_KEY', dash.key);
@@ -1087,7 +1087,7 @@
     updateToolbar('yotei'); // 初期タブ(予定管理)に合わせる
   }
 
-  // 合言葉ログイン（合言葉はHTMLに埋めない＝Git公開先に鍵を出さない。サーバー(GAS)に照合→通れば端末に保存）
+  // パスワードログイン（パスワードはHTMLに埋めない＝Git公開先に鍵を出さない。サーバー(GAS)に照合→通れば端末に保存）
   function showApp(){
     document.getElementById('gate').classList.add('hidden');
     document.getElementById('app').classList.remove('hidden');
@@ -1105,13 +1105,13 @@
       } else {
         AUTH.token = '';
         if (fromStore) localStorage.removeItem(CONFIG.STORE_KEY);
-        errEl.textContent = '合言葉が違います';
+        errEl.textContent = 'パスワードが違います';
       }
     }).catch(function(){ AUTH.token = ''; errEl.textContent = '通信に失敗しました。再試行してください。'; });
   }
   document.getElementById('enter').onclick = function(){
     var v = document.getElementById('pin').value.trim();
-    if (!v){ document.getElementById('gate-err').textContent = '合言葉を入力してください'; return; }
+    if (!v){ document.getElementById('gate-err').textContent = 'パスワードを入力してください'; return; }
     tryLogin(v, false);
   };
   document.getElementById('pin').addEventListener('keydown', function(e){
@@ -1122,7 +1122,7 @@
     AUTH.token = '';
     location.reload();
   };
-  // 端末に保存済みの合言葉があれば自動ログイン
+  // 端末に保存済みのパスワードがあれば自動ログイン
   (function(){
     var saved = localStorage.getItem(CONFIG.STORE_KEY);
     if (saved) tryLogin(saved, true);

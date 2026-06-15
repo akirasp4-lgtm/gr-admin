@@ -1,0 +1,3532 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>現場管理</title>
+<link rel="icon" href="icon.png">
+<link rel="apple-touch-icon" href="icon.png">
+<link rel="manifest" href="manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" id="app-title-meta" content="現場管理">
+<meta name="theme-color" content="#1D9E75">
+<script>
+(function(){
+  var c = new URLSearchParams(location.search).get('c');
+  // URLパラメータが無ければlocalStorageから復元（ホーム画面追加時にc=が消えるケース対策）
+  if (!c) { try { c = localStorage.getItem('genba-c-param') || ''; } catch(e) {} }
+  if (c && c.indexOf(',') < 0) {
+    var t = c + '予定表';
+    document.title = t;
+    var m = document.getElementById('app-title-meta');
+    if (m) m.setAttribute('content', t);
+  }
+})();
+</script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden}
+body{font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans',sans-serif;background:#f2f2f7;color:#1a1a1a;overscroll-behavior:none}
+.company-bar{position:fixed;top:0;left:0;right:0;z-index:100;background:#fff;border-bottom:1px solid #ddd;padding:8px 12px;display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.help-btn-inline{background:#1D9E75;color:#fff;border:none;border-radius:16px;height:30px;padding:0 12px;font-size:12px;font-weight:600;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,0.15);display:inline-flex;align-items:center;gap:4px;white-space:nowrap}
+.help-btn-inline:active{transform:scale(0.96)}
+.page-title-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;gap:8px}
+.page-title-row .page-title{margin:0}
+.help-section{margin-bottom:20px;border-left:3px solid #1D9E75;padding-left:12px}
+.help-section h3{margin:0 0 8px;font-size:15px;color:#1D9E75}
+.help-section p,.help-section li{font-size:13px;color:#333;line-height:1.6;margin:4px 0}
+.help-section ul,.help-section ol{padding-left:20px;margin:6px 0}
+.help-kbd{background:#F0F0F0;border:1px solid #DDD;border-radius:4px;padding:1px 6px;font-family:Consolas,monospace;font-size:12px}
+.company-chip{padding:6px 14px;border-radius:20px;font-size:13px;font-weight:500;white-space:nowrap;border:1.5px solid #ddd;background:#fff;color:#666;cursor:pointer;flex-shrink:0;transition:all 0.15s}
+.company-chip.active{background:#1D9E75;color:#fff;border-color:#1D9E75}
+.tab-bar{position:fixed;bottom:0;left:0;right:0;display:flex;background:#fff;border-top:1px solid #ddd;z-index:100;padding-bottom:env(safe-area-inset-bottom)}
+.tab{flex:1;padding:10px 0 6px;text-align:center;font-size:10px;color:#999;border:none;background:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px}
+.tab.active{color:#1D9E75}
+.tab-icon{font-size:22px;line-height:1}
+.screen{display:none;max-width:600px;margin:0 auto;padding:52px 12px 78px;height:100vh;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+.screen.active{display:block}
+.page-title{font-size:20px;font-weight:600;margin-bottom:16px;padding-top:8px}
+.card{background:#fff;border-radius:12px;padding:16px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,0.08)}
+label{font-size:13px;color:#666;display:block;margin-bottom:4px}
+input:not([type="checkbox"]),select,textarea{width:100%;font-size:16px;padding:10px 12px;border:1px solid #ddd;border-radius:8px;background:#f9f9f9;color:#1a1a1a;margin-bottom:12px;-webkit-appearance:none}
+select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23999' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px}
+textarea{resize:vertical;min-height:64px;font-size:15px}
+.btn{width:100%;padding:14px;border-radius:10px;font-size:16px;font-weight:600;cursor:pointer;border:none;background:#1D9E75;color:#fff}
+.btn:disabled{opacity:0.5;cursor:not-allowed}
+.btn-secondary{background:#f2f2f7;color:#1a1a1a;border:1px solid #ddd}
+.btn-danger{background:#ff3b30;color:#fff;border:none}
+.btn-sm{width:auto;padding:6px 14px;font-size:13px;font-weight:500;border-radius:8px}
+.alert{border-radius:10px;padding:12px;font-size:14px;margin-bottom:12px;display:none}
+.alert-ok{background:#EAF3DE;color:#3B6D11}
+.alert-err{background:#FCEBEB;color:#A32D2D}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.metric{background:#f2f2f7;border-radius:10px;padding:14px;text-align:center}
+.metric-val{font-size:24px;font-weight:600}
+.metric-lbl{font-size:12px;color:#666;margin-top:2px}
+.yotei-card{background:#fff;border-radius:12px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,0.08);overflow:hidden}
+.yotei-header{padding:12px 16px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #f2f2f7}
+.yotei-date{font-size:13px;color:#666}
+.yotei-genba{font-size:16px;font-weight:600}
+.yotei-body{padding:12px 16px}
+.yotei-loc{font-size:13px;color:#666;margin-bottom:8px}
+.yotei-members{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
+.yotei-vehicle{font-size:12px;color:#444;background:#F1F5F9;border-radius:6px;padding:3px 8px;margin-top:6px;display:inline-block}
+.worktype-chip{display:inline-block;font-size:11px;font-weight:600;color:#92400E;background:#FEF3C7;border-radius:8px;padding:2px 8px;margin-left:6px;vertical-align:middle}
+.worktype-chip.worktype-default{color:#374151;background:#E5E7EB}
+.member-tag{padding:4px 10px;border-radius:20px;font-size:13px}
+.tag-leader{background:#E6F1FB;color:#0C447C}
+.tag-member{background:#EAF3DE;color:#3B6D11}
+.yotei-time{font-size:13px;color:#666}
+.yotei-memo{font-size:13px;color:#444;margin-top:6px;padding-top:6px;border-top:1px solid #f2f2f7}
+.yotei-updated-by{font-size:11px;color:#888;text-align:right;margin-top:6px}
+.yotei-actions{display:flex;gap:8px;padding:10px 16px;background:#f9f9f9}
+.yakin-badge{display:inline-block;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600;background:#2C2C5A;color:#E8D44D;margin-left:6px;vertical-align:middle}
+.yasumi-badge{display:inline-block;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600;background:#E8384F;color:#fff;margin-left:6px;vertical-align:middle}
+.yotei-badge-tag{display:inline-block;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600;background:#3B82F6;color:#fff;margin-left:6px;vertical-align:middle}
+.souko-badge{display:inline-block;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600;background:#8B5E3C;color:#fff;margin-left:6px;vertical-align:middle}
+.company-badge{display:inline-block;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:500;background:#f0f0f0;color:#666;margin-left:4px;vertical-align:middle}
+.toggle-row{display:flex;align-items:center;gap:10px;margin-bottom:12px;padding:10px 12px;border:1px solid #ddd;border-radius:8px;background:#f9f9f9;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.toggle-row .t-icon{font-size:20px;opacity:0.4;transition:opacity 0.15s}
+.toggle-row .t-label{font-size:15px;font-weight:500;color:#666;transition:color 0.15s}
+.toggle-row.active .t-icon{opacity:1}
+.toggle-souko.active{background:#8B5E3C;border-color:#8B5E3C}
+.toggle-souko.active .t-label{color:#fff}
+.toggle-yakin.active{background:#2C2C5A;border-color:#2C2C5A}
+.toggle-yakin.active .t-label{color:#E8D44D}
+.toggle-yasumi.active{background:#E8384F;border-color:#E8384F}
+.toggle-yasumi.active .t-label{color:#fff}
+.toggle-yotei.active{background:#3B82F6;border-color:#3B82F6}
+.toggle-yotei.active .t-label{color:#fff}
+.member-section{margin-bottom:12px}
+.member-label{font-size:13px;color:#666;margin-bottom:6px}
+.member-grid{display:flex;flex-wrap:wrap;gap:8px;padding:12px;border:1px solid #ddd;border-radius:10px;background:#f9f9f9;min-height:52px}
+.member-chip{padding:8px 14px;border-radius:20px;font-size:14px;cursor:pointer;border:1px solid #ddd;background:#fff;color:#444;-webkit-tap-highlight-color:transparent;transition:all 0.1s}
+.member-chip.selected{background:#EAF3DE;border-color:#97C459;color:#3B6D11;font-weight:500}
+.leader-select-wrap{margin-bottom:12px}
+.date-filter{display:flex;gap:8px;margin-bottom:12px;overflow-x:auto;padding-bottom:4px}
+.date-chip{padding:6px 14px;border-radius:20px;font-size:13px;white-space:nowrap;border:1px solid #ddd;background:#fff;cursor:pointer;flex-shrink:0}
+.date-chip.active{background:#1D9E75;color:#fff;border-color:#1D9E75}
+.modal-bg{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:200;align-items:flex-end;justify-content:center}
+.modal-bg.active{display:flex}
+.modal{background:#fff;border-radius:20px 20px 0 0;padding:20px;width:100%;max-width:600px;max-height:90vh;overflow-y:auto;padding-bottom:calc(20px + env(safe-area-inset-bottom))}
+.modal-title{font-size:18px;font-weight:600;margin-bottom:16px}
+.tbl{width:100%;font-size:13px;border-collapse:collapse}
+.tbl th{text-align:left;color:#666;font-weight:500;padding:6px 8px;border-bottom:1px solid #eee}
+.tbl td{padding:8px;border-bottom:1px solid #eee;vertical-align:top}
+.tbl tr:last-child td{border-bottom:none}
+.empty{color:#999;text-align:center;padding:32px;font-size:15px}
+.filter-row{display:flex;gap:8px;margin-bottom:12px}
+.filter-row select{margin-bottom:0;flex:1}
+.archive-section{margin-top:16px;padding:16px;background:#FFF9E6;border-radius:12px;border:1px solid #F0D860}
+.archive-section .archive-title{font-size:14px;font-weight:600;color:#8B7000;margin-bottom:8px}
+.archive-section .archive-desc{font-size:12px;color:#8B7000;margin-bottom:12px}
+.loading-bar{position:fixed;top:44px;left:0;right:0;height:3px;z-index:101;display:none}
+.loading-bar.active{display:block}
+.loading-bar::after{content:'';display:block;height:100%;background:#1D9E75;animation:loadAnim 1.2s ease-in-out infinite}
+@keyframes loadAnim{0%{width:0;margin-left:0}50%{width:60%}100%{width:0;margin-left:100%}}
+.notice-bar{background:#FFF3CD;color:#856404;padding:8px 16px;font-size:13px;text-align:center;display:none}
+.notice-bar.active{display:block}
+.week-table{width:100%;border-collapse:collapse;font-size:13px}
+.week-table th{padding:6px 4px;text-align:center;font-weight:600;border-bottom:2px solid #ddd;font-size:12px;color:#666}
+.week-table td{padding:4px 2px;text-align:center;border-bottom:1px solid #f0f0f0;font-size:12px}
+.week-table .name-col{text-align:left;font-weight:500;padding-left:8px;min-width:60px;white-space:nowrap}
+.week-cell{border-radius:4px;padding:3px 2px;font-size:11px;font-weight:500}
+.week-cell.free{background:#EAF3DE;color:#3B6D11}
+.week-cell.busy{background:#FAECE7;color:#993C1D}
+.week-cell.yasumi{background:#FFF9E6;color:#8B7000}
+.week-cell.souko{background:#F3EAE0;color:#8B5E3C}
+.veh-cell{border-radius:4px;padding:4px 3px;font-size:11px;font-weight:500;line-height:1.3;min-height:40px;display:flex;flex-direction:column;justify-content:center;text-align:center}
+.veh-cell.free{background:#EAF3DE;color:#3B6D11}
+.veh-cell.busy{background:#FAECE7;color:#993C1D}
+.veh-cell .veh-driver{font-weight:700;font-size:11px}
+.veh-cell .veh-dest{font-size:10px;opacity:0.9;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;margin-top:1px}
+.veh-table{font-size:11px}
+.veh-table th{padding:6px 3px;text-align:center;font-weight:600;border-bottom:2px solid #ddd;font-size:11px;color:#666;white-space:nowrap}
+.veh-table td{padding:3px;text-align:center;border-bottom:1px solid #f0f0f0}
+.veh-table .name-col{text-align:left;font-weight:500;padding-left:6px;min-width:80px;white-space:nowrap;font-size:11px;background:#fafafa}
+.week-sun th,.week-sun{color:#E8384F!important}
+.week-sat th,.week-sat{color:#3B82F6!important}
+.gm-mode-bar{display:flex;gap:8px;margin-bottom:8px}.gm-mode-bar .btn{flex:1;font-size:12px;padding:6px 4px}.btn-secondary.active{background:#1D9E75 !important;color:#fff !important;border-color:#1D9E75 !important}
+.gm-day-row{display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid #f0f0f0}
+.gm-day-row:last-child{border-bottom:none}
+.gm-day-check{width:22px;height:22px;flex-shrink:0;cursor:pointer;accent-color:#ff3b30}
+.gm-day-info{flex:1;min-width:0}
+.gm-day-date{font-size:14px;font-weight:600}
+.gm-day-members{font-size:12px;color:#666;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gm-edit-btn{flex-shrink:0;padding:6px 12px;font-size:12px;font-weight:500;border-radius:8px;border:1px solid #ddd;background:#f2f2f7;color:#1a1a1a;cursor:pointer}
+.gm-delete-bar{background:#fff;border-top:2px solid #ff3b30;padding:10px 12px;display:none;position:sticky;bottom:64px;z-index:50}
+.gm-delete-bar.active{display:block}
+.cal-header{display:grid;grid-template-columns:repeat(7,1fr);margin-bottom:2px}
+.cal-header-cell{text-align:center;font-size:11px;font-weight:600;color:#999;padding:4px 0}
+.cal-header-cell:first-child{color:#1a1a1a}
+.cal-header-cell:nth-child(6){color:#3B82F6}
+.cal-header-cell:last-child{color:#E8384F}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+.cal-cell{min-height:72px;border-radius:6px;padding:3px 2px;background:#f9f9f9;cursor:pointer;position:relative;-webkit-tap-highlight-color:transparent;transition:background 0.1s;overflow:hidden}
+.cal-cell:active{background:#e8e8e8}
+.cal-cell.empty{background:transparent;cursor:default}
+.cal-cell.today .cal-day-num{background:#1D9E75;color:#fff;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;margin:0 auto 2px}
+.cal-cell.sun .cal-day-num{color:#E8384F}
+.cal-cell.sat .cal-day-num{color:#3B82F6}
+.cal-day-num{font-size:12px;font-weight:600;text-align:center;margin-bottom:2px}
+.cal-event{font-size:9px;font-weight:600;color:#fff;border-radius:3px;padding:1px 3px;margin-bottom:1px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;line-height:1.4}
+.cal-overflow{font-size:9px;color:#999;padding-left:3px;line-height:1.4}
+.color-picker-wrap{display:flex;flex-wrap:wrap;gap:8px;padding:10px 0;margin-bottom:12px}
+.color-swatch{width:32px;height:32px;border-radius:50%;cursor:pointer;border:3px solid transparent;transition:all 0.15s;-webkit-tap-highlight-color:transparent}
+.color-swatch.selected{border-color:#1a1a1a;transform:scale(1.15)}
+/* インライン追加ボタン用 */
+.select-add-wrap{display:flex;align-items:center;gap:6px;margin-bottom:12px}
+.select-add-wrap select{flex:1;margin-bottom:0}
+.add-inline-btn{flex-shrink:0;padding:10px 12px;font-size:16px;line-height:1;width:auto}
+/* 工番ヒント */
+.jobno-hint{font-size:12px;color:#1D9E75;margin-top:-8px;margin-bottom:10px;padding:4px 8px;background:#EAF3DE;border-radius:6px;display:none}
+.worktype-tag{display:inline-block;padding:1px 8px;border-radius:10px;font-size:11px;font-weight:600;background:#FFF1B8;color:#7C5800;margin-left:6px;vertical-align:middle}
+/* 予定詳細フルスクリーン */
+.detail-fullscreen{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:#fff;z-index:300;flex-direction:column;overflow:hidden}
+.detail-fullscreen.active{display:flex}
+.detail-fs-header{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid #eee;flex-shrink:0;padding-top:calc(14px + env(safe-area-inset-top))}
+.detail-fs-back{background:transparent;border:none;font-size:22px;color:#1D9E75;cursor:pointer;padding:4px 8px}
+.detail-fs-title{font-size:14px;color:#666;flex:1;text-align:center}
+.detail-fs-trash{background:transparent;border:none;font-size:20px;color:#ff3b30;cursor:pointer;padding:4px 8px}
+.detail-fs-body{flex:1;overflow-y:auto;padding:20px 16px 100px;-webkit-overflow-scrolling:touch}
+.detail-color-bar{width:6px;border-radius:3px;align-self:stretch;margin-right:12px;flex-shrink:0}
+.detail-title-row{display:flex;align-items:flex-start;margin-bottom:8px}
+.detail-title{font-size:24px;font-weight:600;color:#1a1a1a;line-height:1.3;flex:1}
+.detail-period{font-size:14px;color:#666;margin-bottom:16px;padding-left:18px}
+.detail-row{display:flex;align-items:flex-start;padding:14px 0;border-top:1px solid #f0f0f0;gap:12px}
+.detail-row-icon{font-size:18px;color:#666;width:24px;text-align:center;flex-shrink:0}
+.detail-row-content{flex:1;font-size:15px;color:#1a1a1a;word-break:break-word}
+.detail-row-label{font-size:12px;color:#888;margin-bottom:4px}
+.detail-fs-footer{display:flex;gap:8px;padding:12px 16px;border-top:1px solid #eee;background:#fff;flex-shrink:0;padding-bottom:calc(12px + env(safe-area-inset-bottom))}
+.detail-fs-footer button{flex:1}
+.yotei-tap-area{cursor:pointer;-webkit-tap-highlight-color:transparent}
+.yotei-tap-area:active{background:rgba(0,0,0,0.03)}
+.yotei-card-min{padding:8px 12px;margin-bottom:5px;cursor:pointer;-webkit-tap-highlight-color:rgba(0,0,0,0.05);box-shadow:none}
+.yotei-card-min:active{background:#f7f7f7}
+.yotei-card-min .yotei-card-title{font-size:14px;font-weight:600;color:#1a1a1a;margin-bottom:4px;line-height:1.3}
+.yotei-card-min .yotei-members{display:flex;flex-wrap:wrap;gap:3px}
+.yotei-card-min .member-tag{padding:2px 8px;font-size:11px}
+.card-mode-badges{font-size:13px;margin-left:4px;vertical-align:middle;letter-spacing:2px}
+.ghost-marker{display:inline-block;font-size:10px;color:#666;background:#f0f0f0;padding:1px 6px;border-radius:8px;margin-right:4px;font-weight:500;vertical-align:middle}
+.yotei-card-ghost{opacity:0.85;background:#fafafa}
+/* PC表示: カレンダー大きめ・コンテナ拡張 */
+@media (min-width:1024px){
+  .screen{max-width:1000px;padding:60px 24px 80px}
+  .cal-cell{min-height:120px;padding:6px 5px}
+  .cal-day-num{font-size:14px;margin-bottom:4px}
+  .cal-event{font-size:11px;padding:2px 5px;margin-bottom:2px}
+  .cal-overflow{font-size:11px}
+  .cal-header-cell{font-size:13px;padding:6px 0}
+  .week-table th,.week-table td{font-size:13px}
+}
+/* スマホ最適化: フォント・タップ領域を大きく */
+@media (max-width:600px){
+  .btn,.btn-secondary{min-height:46px;font-size:15px}
+  .btn-sm{min-height:38px;font-size:14px;padding:8px 12px}
+  label{font-size:14px}
+  input:not([type="checkbox"]),select,textarea{font-size:16px;padding:12px 14px;min-height:46px}
+  .tab{padding:10px 0 7px}
+  .tab-icon{font-size:24px}
+  .tab{font-size:11px}
+  .toggle-row{padding:14px 12px;font-size:15px}
+  .member-chip{padding:10px 14px;font-size:14px;min-height:40px;display:inline-flex;align-items:center}
+  .company-chip{padding:8px 14px;font-size:14px}
+  .yotei-card-min{padding:10px 14px}
+  .yotei-card-min .yotei-card-title{font-size:15px}
+  .yotei-card-min .yotei-members .member-tag{padding:3px 10px;font-size:12px}
+  .help-btn-inline{height:34px;font-size:13px;padding:0 14px}
+  /* 引き下げて更新インジケーター */
+  .ptr-indicator{position:fixed;top:0;left:0;right:0;text-align:center;font-size:13px;color:#1D9E75;background:#fff;padding:8px;z-index:200;transform:translateY(-100%);transition:transform 0.2s;font-weight:600}
+  .ptr-indicator.show{transform:translateY(0)}
+}
+/* スマホ専用: 空き確認・車確認をリスト表示に切替 */
+.list-mode{display:none}
+.tbl-mode{display:block}
+@media (max-width:600px){
+  .list-mode{display:block}
+  .tbl-mode{display:none}
+}
+.day-block{background:#fff;border-radius:12px;padding:12px 14px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,0.08)}
+.day-block-header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;border-bottom:1px solid #eee;padding-bottom:6px}
+.day-block-date{font-size:16px;font-weight:700;color:#1a1a1a}
+.day-block-date.sun{color:#CC0000}
+.day-block-date.sat{color:#0000CC}
+.day-block-count{font-size:12px;color:#666}
+.day-row{display:flex;justify-content:space-between;align-items:center;padding:8px 4px;border-bottom:1px solid #f5f5f5;gap:12px}
+.day-row:last-child{border-bottom:none}
+.day-row-main{flex:1;min-width:0;font-size:14px;font-weight:500;color:#1a1a1a}
+.day-row-sub{font-size:12px;color:#666;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.day-row-status{font-size:12px;font-weight:600;padding:3px 10px;border-radius:10px;flex-shrink:0}
+.status-busy{background:#FAECE7;color:#993C1D}
+.status-free{background:#EAF3DE;color:#3B6D11}
+.status-yasumi{background:#FFF9E6;color:#8B7000}
+.status-souko{background:#F3EAE0;color:#8B5E3C}
+/* PWA インストールバナー */
+.install-banner{position:fixed;bottom:62px;left:8px;right:8px;background:#1D9E75;color:#fff;padding:10px 14px;border-radius:12px;font-size:13px;display:flex;align-items:center;gap:10px;box-shadow:0 4px 12px rgba(0,0,0,0.25);z-index:90;display:none}
+.install-banner.show{display:flex}
+.install-banner .ib-text{flex:1;line-height:1.4}
+.install-banner button{background:#fff;color:#1D9E75;border:none;border-radius:8px;padding:6px 10px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap}
+.install-banner .ib-close{background:transparent;color:#fff;padding:4px 8px}
+</style>
+</head>
+<body>
+<div class="company-bar" id="company-bar"></div>
+<div class="loading-bar" id="loading-bar"></div>
+<div class="notice-bar" id="notice-bar">会社を選択して入力してください</div>
+
+<div id="screen-input" class="screen">
+<div class="page-title">日報入力</div>
+<div class="card">
+  <label>操作者（あなたの名前）<span style="color:#ff3b30;font-weight:600;margin-left:2px">*</span></label>
+  <div class="select-add-wrap">
+    <select id="s-operator" onchange="onOperatorChange()"><option value="">選択してください</option></select>
+    <button class="btn btn-secondary btn-sm add-inline-btn" onclick="openSettingsFor('s-operator')">➕</button>
+  </div>
+  <div class="grid2">
+    <div><label>開始日<span style="color:#ff3b30;font-weight:600;margin-left:2px">*</span></label><input type="date" id="s-date" onchange="refreshVehicleSelect('s')"></div>
+    <div><label>終了日（連続入力）</label><input type="date" id="s-date-end" onchange="refreshVehicleSelect('s')"></div>
+  </div>
+  <label>作業区分<span style="color:#ff3b30;font-weight:600;margin-left:2px">*</span></label>
+  <select id="s-work-type" onchange="onWorkTypeChange('s')">
+    <option value="">▼ まず作業区分を選んでください</option>
+    <option value="現場作業">⛑️ 現場作業（工番発行）</option>
+    <option value="現調">📐 現調</option>
+    <option value="着打ち">🔨 着打ち</option>
+    <option value="カギ借用">🗝️ カギ借用</option>
+    <option value="材料引取・検品">📦 材料引取・検品</option>
+    <option value="撤去品返却">♻️ 撤去品返却</option>
+    <option value="前乗り">🚗 前乗り</option>
+    <option value="倉庫作業">🏭 倉庫作業</option>
+    <option value="休み">🏖️ 休み</option>
+    <option value="その他">📋 その他</option>
+  </select>
+  <div id="s-worktype-notice" style="color:#dc2626;font-size:13px;font-weight:600;background:#FEE2E2;border:1px solid #FCA5A5;border-radius:8px;padding:8px 12px;margin-bottom:12px">⚠️ 最初に「作業区分」を選択してください。選択するまで以下の項目は入力できません。</div>
+  <label>元請名<span style="color:#ff3b30;font-weight:600;margin-left:2px">*</span></label>
+  <div class="select-add-wrap">
+    <select id="s-genba-select" onchange="onGenbaSelect('s')"><option value="">選択してください</option><option value="__manual__">直接入力する</option></select>
+    <button class="btn btn-secondary btn-sm add-inline-btn" onclick="openGenbaSettingsFor('s-genba-select')">➕</button>
+  </div>
+  <input type="text" id="s-genba" placeholder="例：〇〇電気" style="display:none;margin-bottom:12px">
+  <label>現場名</label>
+  <input type="search" id="s-location-search" placeholder="🔍 現場名で絞り込み（部分一致）" oninput="onLocationSearch('s')" style="margin-bottom:4px;font-size:13px;padding:6px 10px;width:100%;box-sizing:border-box;border:1px solid #ddd;border-radius:6px">
+  <select id="s-location-select" onchange="onLocationSelect('s')" style="margin-bottom:6px">
+    <option value="">既存の現場から選択</option>
+    <option value="__new__" style="color:#1D9E75;font-weight:600">＋ 新規現場として追加</option>
+  </select>
+  <input type="text" id="s-location" placeholder="例：〇〇ビル新築工事" oninput="onLocationInput('s')" style="display:none">
+  <div id="s-loc-similar" style="display:none;background:#FEF3C7;border:1px solid #FCD34D;border-radius:8px;padding:8px 10px;margin-bottom:12px;font-size:13px;color:#92400E"></div>
+  <datalist id="s-location-list"></datalist>
+  <div id="s-vehicle-wrap">
+    <label>🚗 車両<span style="font-size:11px;font-weight:400;color:#666;margin-left:6px">(複数選択可・未選択=使用しない)</span></label>
+    <input type="hidden" id="s-vehicle" value="">
+    <div id="s-vehicle-chips" style="display:flex;flex-wrap:wrap;gap:8px"></div>
+  </div>
+  <div class="jobno-hint" id="s-jobno-hint"></div>
+  <div id="s-jobno-div-wrap" style="display:none;margin-bottom:12px">
+    <label style="font-size:12px;color:#666">新規現場の工番事業部</label>
+    <select id="s-jobno-division" onchange="this.dataset.userSet='1'">
+      <option value="ICT">ICT</option>
+      <option value="INF">INF</option>
+      <option value="MSC">MSC</option>
+      <option value="GRB">GRB</option>
+    </select>
+  </div>
+  <div class="grid2">
+    <div><label>出勤</label><input type="time" id="s-start" value="08:00"></div>
+    <div><label>退勤</label><input type="time" id="s-end" value="17:00"></div>
+  </div>
+  <div class="toggle-row toggle-souko" id="s-souko-toggle" onclick="setMode('s','souko')"><span class="t-icon">🏭</span><span class="t-label">倉庫</span></div>
+  <div id="s-souko-tasks-wrap" style="display:none;background:#FFF7ED;border:2px solid #FED7AA;border-radius:10px;padding:12px;margin-bottom:10px">
+    <div style="font-size:14px;font-weight:700;color:#9A3412;margin-bottom:10px">🏭 今日の倉庫作業<span style="color:#dc2626;margin-left:6px">*</span><span style="font-size:11px;font-weight:400;color:#9A3412;margin-left:6px">(複数選択可・1つ以上必須)</span></div>
+    <div id="s-souko-tasks" style="display:flex;flex-wrap:wrap;gap:8px"></div>
+    <div id="s-souko-tasks-error" style="display:none;color:#dc2626;font-size:12px;margin-top:8px;font-weight:600">⚠️ 倉庫作業を1つ以上タップして選んでください</div>
+  </div>
+  <div class="toggle-row toggle-yakin" id="s-yakin-toggle" onclick="setMode('s','yakin')"><span class="t-icon">🌙</span><span class="t-label">夜勤</span></div>
+  <div class="toggle-row toggle-yasumi" id="s-yasumi-toggle" onclick="setMode('s','yasumi')"><span class="t-icon">🏖️</span><span class="t-label">休み</span></div>
+  <div class="toggle-row toggle-yotei" id="s-yotei-toggle" onclick="setMode('s','yotei')"><span class="t-icon">📌</span><span class="t-label">予定</span></div>
+  <div class="leader-select-wrap">
+    <label>代表者<span style="color:#ff3b30;font-weight:600;margin-left:2px">*</span></label>
+    <div class="select-add-wrap" style="margin-bottom:0">
+      <select id="s-leader" onchange="checkLocationJobNo()"><option value="">代表者を選択してください</option></select>
+      <button class="btn btn-secondary btn-sm add-inline-btn" onclick="openSettingsFor('s-leader')">➕</button>
+    </div>
+  </div>
+  <div class="member-section"><div class="member-label">同行メンバー（タップで選択）</div><div id="member-selector" class="member-grid"></div></div>
+  <label>メモ <span style="font-size:11px;color:#999;font-weight:400">🎤 キーボードのマイクで音声入力できます</span></label>
+  <textarea id="s-memo" placeholder="作業内容など"></textarea>
+  <label>カレンダーの色</label>
+  <div id="s-color-picker" class="color-picker-wrap"></div>
+  <div id="s-alert" class="alert"></div>
+  <button class="btn" id="submit-btn" onclick="submitNippo()">登録する</button>
+</div>
+</div>
+
+<div id="screen-list" class="screen active">
+<div class="page-title-row">
+  <div class="page-title">カレンダー</div>
+  <button class="help-btn-inline" onclick="openHelp()">❓ 使い方</button>
+</div>
+<div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:12px">
+  <button class="btn btn-secondary btn-sm" onclick="changeListMonth(-1)">◀</button>
+  <span id="list-month-label" style="font-size:15px;font-weight:600;min-width:100px;text-align:center"></span>
+  <button class="btn btn-secondary btn-sm" onclick="changeListMonth(1)">▶</button>
+</div>
+<div class="card" style="padding:8px">
+  <div id="cal-grid"></div>
+</div>
+<button class="btn" style="margin-top:8px" onclick="switchTab('input')">＋ 予定を入力する</button>
+<button class="btn btn-secondary" style="margin-top:8px" onclick="loadData()">更新</button>
+</div>
+
+<!-- カレンダー日付モーダル -->
+<div id="cal-day-modal" class="modal-bg" onclick="if(event.target===this)this.classList.remove('active')">
+<div class="modal">
+  <div class="modal-title" id="cal-day-title"></div>
+  <div id="cal-day-content"></div>
+  <div style="display:flex;gap:8px;margin-top:12px">
+    <button class="btn btn-secondary btn-sm" style="flex:1" onclick="document.getElementById('cal-day-modal').classList.remove('active')">閉じる</button>
+    <button class="btn btn-sm" style="flex:2" onclick="calGoToInput()">＋ この日の予定を入力</button>
+  </div>
+</div>
+</div>
+
+<!-- 予定詳細フルスクリーン -->
+<div id="cal-detail-modal" class="detail-fullscreen">
+  <div class="detail-fs-header">
+    <button class="detail-fs-back" onclick="closeEventDetail()" aria-label="戻る">←</button>
+    <div class="detail-fs-title" id="detail-fs-title">予定の詳細</div>
+    <button class="detail-fs-trash" onclick="deleteFromDetail()" aria-label="削除">🗑️</button>
+  </div>
+  <div class="detail-fs-body" id="detail-fs-body"></div>
+  <div class="detail-fs-footer">
+    <button class="btn btn-secondary btn-sm" onclick="shareFromDetail()">📤 共有</button>
+    <button class="btn btn-secondary btn-sm" onclick="copyFromDetail()">コピー</button>
+    <button class="btn btn-sm" onclick="editFromDetail()">編集</button>
+  </div>
+</div>
+
+<div id="screen-avail" class="screen">
+<div class="page-title">空き確認</div>
+<div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:12px">
+  <button class="btn btn-secondary btn-sm" onclick="changeAvailWeek(-1)">◀</button>
+  <span id="avail-week-label" style="font-size:15px;font-weight:600;min-width:180px;text-align:center"></span>
+  <button class="btn btn-secondary btn-sm" onclick="changeAvailWeek(1)">▶</button>
+</div>
+<div class="tbl-mode">
+  <div class="card" style="overflow-x:auto">
+    <div id="avail-weekly" style="min-width:600px"></div>
+    <div style="display:flex;flex-wrap:wrap;gap:12px;font-size:12px;color:#999;margin-top:8px">
+      <span><span style="display:inline-block;width:10px;height:10px;background:#EAF3DE;border:1px solid #97C459;border-radius:2px;margin-right:3px"></span>空き</span>
+      <span><span style="display:inline-block;width:10px;height:10px;background:#FAECE7;border:1px solid #F0997B;border-radius:2px;margin-right:3px"></span>出勤</span>
+      <span><span style="display:inline-block;width:10px;height:10px;background:#FFF9E6;border:1px solid #F0D860;border-radius:2px;margin-right:3px"></span>休み</span>
+      <span><span style="display:inline-block;width:10px;height:10px;background:#F3EAE0;border:1px solid #C49A6C;border-radius:2px;margin-right:3px"></span>倉庫</span>
+    </div>
+  </div>
+</div>
+<div class="list-mode" id="avail-list"></div>
+<button class="btn btn-secondary" onclick="loadData()">更新</button>
+</div>
+
+<div id="screen-vehicle" class="screen">
+<div class="page-title">車確認</div>
+<div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:12px">
+  <button class="btn btn-secondary btn-sm" onclick="changeVehicleWeek(-1)">◀</button>
+  <span id="vehicle-week-label" style="font-size:15px;font-weight:600;min-width:180px;text-align:center"></span>
+  <button class="btn btn-secondary btn-sm" onclick="changeVehicleWeek(1)">▶</button>
+</div>
+<div class="tbl-mode">
+  <div class="card" style="overflow-x:auto">
+    <div id="vehicle-weekly" style="min-width:600px"></div>
+    <div style="display:flex;flex-wrap:wrap;gap:12px;font-size:12px;color:#999;margin-top:8px">
+      <span><span style="display:inline-block;width:10px;height:10px;background:#EAF3DE;border:1px solid #97C459;border-radius:2px;margin-right:3px"></span>空き</span>
+      <span><span style="display:inline-block;width:10px;height:10px;background:#FAECE7;border:1px solid #F0997B;border-radius:2px;margin-right:3px"></span>予約済</span>
+    </div>
+  </div>
+</div>
+<div class="list-mode" id="vehicle-list"></div>
+<button class="btn btn-secondary" onclick="loadData()">更新</button>
+</div>
+
+<div id="screen-genba" class="screen">
+<div class="page-title">現場別管理</div>
+<div class="gm-mode-bar">
+  <button id="gm-mode-genba" class="btn btn-secondary active" onclick="setGmMode('genba')">🏗️ 現場で探す</button>
+  <button id="gm-mode-person" class="btn btn-secondary" onclick="setGmMode('person')">👤 人で探す</button>
+  <button id="gm-mode-pin" class="btn btn-secondary" onclick="setGmMode('pin')">📌 予定だけ</button>
+</div>
+<!-- 現場フィルタ（既存） -->
+<div id="gm-filter-genba" class="card">
+  <label>元請名 / 月</label>
+  <div style="display:flex;gap:8px;margin-bottom:8px">
+    <select id="gm-genba" onchange="onGmGenbaChange()" style="flex:2;margin-bottom:0"><option value="">元請を選択</option></select>
+    <select id="gm-month" onchange="onGmGenbaChange()" style="flex:1;margin-bottom:0"><option value="">全期間</option></select>
+  </div>
+  <label>現場名</label>
+  <select id="gm-location" onchange="renderGmList()" style="margin-bottom:0"><option value="">現場を選択</option></select>
+</div>
+<!-- 人フィルタ（新規） -->
+<div id="gm-filter-person" class="card" style="display:none">
+  <label>人を選ぶ</label>
+  <select id="gm-person" onchange="renderGmList()" style="margin-bottom:8px"><option value="">人を選択</option></select>
+  <label>月（任意）</label>
+  <select id="gm-person-month" onchange="renderGmList()"><option value="">全期間</option></select>
+</div>
+<!-- 予定ピンフィルタ（新規） -->
+<div id="gm-filter-pin" class="card" style="display:none">
+  <div style="display:flex;gap:8px;margin-bottom:8px">
+    <button id="gm-pin-overdue-btn" class="btn btn-secondary active" style="flex:1;font-size:12px" onclick="setPinFilterMode('overdue')">📌 期限切れのみ</button>
+    <button id="gm-pin-month-btn" class="btn btn-secondary" style="flex:1;font-size:12px" onclick="setPinFilterMode('month')">月で絞る</button>
+  </div>
+  <select id="gm-pin-month" onchange="renderGmList()" style="display:none"><option value="">月を選択</option></select>
+</div>
+<div id="gm-list-wrap" style="display:none">
+  <div class="card" style="padding:12px 16px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <span style="font-size:13px;color:#666;font-weight:500">日程一覧</span>
+      <button class="btn btn-secondary btn-sm" id="gm-select-all-btn" onclick="toggleGmSelectAll()">全選択</button>
+    </div>
+    <div id="gm-day-list"></div>
+  </div>
+  <div class="gm-delete-bar" id="gm-delete-bar">
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-sm" id="gm-edit-checked-btn" onclick="openBulkEditModal()" style="flex:1;background:#1D9E75">チェックした日を一括編集</button>
+      <button class="btn btn-danger btn-sm" id="gm-delete-btn" onclick="deleteGmChecked()" style="flex:1">削除</button>
+    </div>
+  </div>
+</div>
+<button class="btn btn-secondary" style="margin-top:8px" onclick="loadData()">更新</button>
+</div>
+
+<div id="screen-jimu" class="screen">
+<div class="page-title">事務</div>
+<div class="grid2">
+  <div class="metric"><div class="metric-val" id="j-total-ko">－</div><div class="metric-lbl">今月 総人工</div></div>
+  <div class="metric"><div class="metric-val" id="j-total-days">－</div><div class="metric-lbl">今月 延べ人数</div></div>
+</div>
+<div class="filter-row">
+  <select id="j-month" onchange="updateJimu()"></select>
+  <select id="j-genba-filter" onchange="updateJimu()"><option value="">全元請</option></select>
+</div>
+<div class="card">
+  <div style="font-size:13px;color:#666;margin-bottom:10px;font-weight:500">職人別集計</div>
+  <table class="tbl">
+    <thead><tr><th>氏名</th><th>出勤日数</th><th>人工合計</th></tr></thead>
+    <tbody id="j-shokunin-tbl"><tr><td colspan="3" class="empty">更新してください</td></tr></tbody>
+  </table>
+</div>
+<button class="btn btn-secondary" style="margin-bottom:8px" onclick="loadData()">更新</button>
+<div class="card" style="margin-top:8px">
+  <div style="font-size:13px;color:#666;margin-bottom:10px;font-weight:500">CSVダウンロード</div>
+  <select id="csv-sheet" style="margin-bottom:8px">
+    <option value="日報データ">日報データ</option><option value="アーカイブ">アーカイブ</option>
+    <option value="月別集計">月別集計</option><option value="会社別集計">会社別集計</option>
+    <option value="元請マスタ">元請マスタ</option>
+    <option value="現場マスタ">現場マスタ</option>
+    <option value="月別確認表">月別確認表</option>
+    <!-- 🔒 職人マスタ（単価列＝給料情報入り）と元請別請求集計は現場画面から外した（2026-06-11）。
+         管理画面(admin.html・PIN付き)からは引き続きダウンロード可。復活させる前に必ず単価の扱いを確認すること。
+    <option value="職人マスタ">職人マスタ</option>
+    <option value="元請別請求集計">元請別請求集計</option> -->
+  </select>
+  <button class="btn btn-secondary" id="csv-btn" onclick="downloadSheetCSV()">ダウンロード</button>
+</div>
+<div style="display:flex;gap:8px;margin-top:8px">
+  <button class="btn btn-secondary" style="flex:1" onclick="openSettings()">職人を管理</button>
+  <button class="btn btn-secondary" style="flex:1" onclick="openGenbaSettings()">元請を管理</button>
+</div>
+<div class="archive-section" style="background:#E8F4FD;border-color:#85B7EB">
+  <div class="archive-title" style="color:#0C447C">📊 スプレッドシート集計</div>
+  <div class="archive-desc" style="color:#0C447C">会社別・月別の出勤日数・人工をスプレッドシートに自動集計します。毎朝6時にも自動更新されます。</div>
+  <button class="btn btn-secondary btn-sm" id="summary-btn" onclick="runSummary()">集計を更新</button>
+</div>
+<div class="archive-section">
+  <div class="archive-title">📦 データアーカイブ</div>
+  <div class="archive-desc">3ヶ月以上前のデータを「アーカイブ」シートに移動します。移動後は元に戻せません。</div>
+  <button class="btn btn-secondary btn-sm" onclick="archiveOldData()">古いデータをアーカイブ</button>
+</div>
+<div class="card" style="margin-top:8px">
+  <div style="display:flex;justify-content:space-between;align-items:center">
+    <div>
+      <div style="font-size:13px;color:#666;font-weight:500">操作者名</div>
+      <div id="current-username-display" style="font-size:15px;font-weight:600;margin-top:2px">未設定</div>
+    </div>
+    <button class="btn btn-secondary btn-sm" onclick="openUsernameModal()">変更</button>
+  </div>
+</div>
+</div>
+
+<div class="tab-bar">
+  <button class="tab active" onclick="switchTab('list')"><span class="tab-icon">📅</span>カレンダー</button>
+  <button class="tab" onclick="switchTab('avail')"><span class="tab-icon">👥</span>空き確認</button>
+  <button class="tab" onclick="switchTab('genba')"><span class="tab-icon">🏗️</span>現場管理</button>
+  <button class="tab" onclick="switchTab('vehicle')"><span class="tab-icon">🚗</span>車確認</button>
+  <button class="tab" id="tab-jimu" onclick="switchTab('jimu')"><span class="tab-icon">📊</span>事務</button>
+</div>
+
+<div id="username-modal" class="modal-bg">
+<div class="modal">
+  <div class="modal-title">操作者名の変更</div>
+  <label>あなたの名前を選択してください</label>
+  <select id="username-select" style="margin-bottom:12px;"></select>
+  <div style="display:flex;gap:8px;margin-top:4px">
+    <button class="btn btn-secondary btn-sm" style="flex:1" onclick="document.getElementById('username-modal').classList.remove('active')">キャンセル</button>
+    <button class="btn btn-sm" style="flex:2" onclick="confirmUsername()">変更する</button>
+  </div>
+</div>
+</div>
+
+<div id="edit-modal" class="modal-bg">
+<div class="modal">
+  <div class="modal-title" id="edit-title">編集</div>
+  <label>作業区分<span style="color:#ff3b30;font-weight:600;margin-left:2px">*</span></label>
+  <select id="e-work-type" onchange="onWorkTypeChange('e')">
+    <option value="">▼ まず作業区分を選んでください</option>
+    <option value="現場作業">⛑️ 現場作業（工番発行）</option>
+    <option value="現調">📐 現調</option>
+    <option value="着打ち">🔨 着打ち</option>
+    <option value="カギ借用">🗝️ カギ借用</option>
+    <option value="材料引取・検品">📦 材料引取・検品</option>
+    <option value="撤去品返却">♻️ 撤去品返却</option>
+    <option value="前乗り">🚗 前乗り</option>
+    <option value="倉庫作業">🏭 倉庫作業</option>
+    <option value="休み">🏖️ 休み</option>
+    <option value="その他">📋 その他</option>
+  </select>
+  <div id="e-worktype-notice" style="display:none;color:#dc2626;font-size:13px;font-weight:600;background:#FEE2E2;border:1px solid #FCA5A5;border-radius:8px;padding:8px 12px;margin-bottom:12px">⚠️ 最初に「作業区分」を選択してください。選択するまで以下の項目は編集できません。</div>
+  <div id="e-date-wrap">
+    <label>作業日<span style="color:#ff3b30;font-weight:600;margin-left:2px">*</span></label>
+    <input type="date" id="e-date" onchange="onEditDateChange()">
+  </div>
+  <label>元請名</label>
+  <select id="e-genba-select" onchange="onGenbaSelect('e')"><option value="">選択してください</option><option value="__manual__">直接入力する</option></select>
+  <input type="text" id="e-genba" style="display:none;margin-bottom:12px">
+  <label>現場名</label>
+  <input type="search" id="e-location-search" placeholder="🔍 現場名で絞り込み（部分一致）" oninput="onLocationSearch('e')" style="margin-bottom:4px;font-size:13px;padding:6px 10px;width:100%;box-sizing:border-box;border:1px solid #ddd;border-radius:6px">
+  <select id="e-location-select" onchange="onLocationSelect('e')" style="margin-bottom:6px">
+    <option value="">既存の現場から選択</option>
+    <option value="__new__" style="color:#1D9E75;font-weight:600">＋ 新規現場として追加</option>
+  </select>
+  <input type="text" id="e-location" placeholder="新規現場名を入力" oninput="onLocationInput('e')" style="display:none">
+  <div id="e-loc-similar" style="display:none;background:#FEF3C7;border:1px solid #FCD34D;border-radius:8px;padding:8px 10px;margin-bottom:12px;font-size:13px;color:#92400E"></div>
+  <datalist id="e-location-list"></datalist>
+  <div id="e-vehicle-wrap">
+    <label>🚗 車両<span style="font-size:11px;font-weight:400;color:#666;margin-left:6px">(複数選択可・未選択=使用しない)</span></label>
+    <input type="hidden" id="e-vehicle" value="">
+    <div id="e-vehicle-chips" style="display:flex;flex-wrap:wrap;gap:8px"></div>
+  </div>
+  <div class="grid2">
+    <div><label>出勤</label><input type="time" id="e-start"></div>
+    <div><label>退勤</label><input type="time" id="e-end"></div>
+  </div>
+  <div class="toggle-row toggle-souko" id="e-souko-toggle" onclick="setMode('e','souko')"><span class="t-icon">🏭</span><span class="t-label">倉庫</span></div>
+  <div id="e-souko-tasks-wrap" style="display:none;background:#FFF7ED;border:2px solid #FED7AA;border-radius:10px;padding:12px;margin-bottom:10px">
+    <div style="font-size:14px;font-weight:700;color:#9A3412;margin-bottom:10px">🏭 今日の倉庫作業<span style="color:#dc2626;margin-left:6px">*</span><span style="font-size:11px;font-weight:400;color:#9A3412;margin-left:6px">(複数選択可・1つ以上必須)</span></div>
+    <div id="e-souko-tasks" style="display:flex;flex-wrap:wrap;gap:8px"></div>
+    <div id="e-souko-tasks-error" style="display:none;color:#dc2626;font-size:12px;margin-top:8px;font-weight:600">⚠️ 倉庫作業を1つ以上タップして選んでください</div>
+  </div>
+  <div class="toggle-row toggle-yakin" id="e-yakin-toggle" onclick="setMode('e','yakin')"><span class="t-icon">🌙</span><span class="t-label">夜勤</span></div>
+  <div class="toggle-row toggle-yasumi" id="e-yasumi-toggle" onclick="setMode('e','yasumi')"><span class="t-icon">🏖️</span><span class="t-label">休み</span></div>
+  <div class="toggle-row toggle-yotei" id="e-yotei-toggle" onclick="setMode('e','yotei')"><span class="t-icon">📌</span><span class="t-label">予定</span></div>
+  <div class="leader-select-wrap"><label>代表者</label><select id="e-leader"><option value="">代表者を選択してください</option></select></div>
+  <div class="member-section"><div class="member-label">同行メンバー（タップで選択）</div><div id="e-member-selector" class="member-grid"></div></div>
+  <label>メモ</label><textarea id="e-memo"></textarea>
+  <label>カレンダーの色</label>
+  <div id="e-color-picker" class="color-picker-wrap"></div>
+  <div style="display:flex;gap:8px;margin-top:4px">
+    <button class="btn btn-secondary btn-sm" style="flex:1" onclick="closeEditModal()">キャンセル</button>
+    <button class="btn btn-sm" style="flex:2" id="save-edit-btn" onclick="saveEdit()">保存する</button>
+  </div>
+</div>
+</div>
+
+<div id="settings-modal" class="modal-bg">
+<div class="modal">
+  <div class="modal-title">職人の管理 <span id="settings-company-name" style="font-size:14px;color:#1D9E75"></span></div>
+  <div style="display:flex;gap:8px;margin-bottom:8px">
+    <input type="text" id="new-shokunin" placeholder="氏名を入力" style="margin-bottom:0;flex:1">
+    <button class="btn btn-sm" onclick="addShokunin()">追加</button>
+  </div>
+  <div id="division-field" style="display:none;margin-bottom:12px">
+    <select id="new-shokunin-division" style="margin-bottom:0">
+      <option value="">事業部（なし）</option>
+      <option value="ICT">ICT（情報通信）</option>
+      <option value="INF">INF（インフラ）</option>
+      <option value="MSC">MSC（ミスク）</option>
+      <option value="GRB">GRB（ビジサポ）</option>
+    </select>
+  </div>
+  <div id="shokunin-list" style="margin-bottom:16px"></div>
+  <button class="btn btn-secondary" onclick="closeSettings()">閉じる</button>
+</div>
+</div>
+
+<div id="help-modal" class="modal-bg">
+<div class="modal" style="max-width:720px">
+  <div class="modal-title">❓ 使い方ガイド</div>
+
+  <div class="help-section">
+    <h3>📝 日報入力の流れ</h3>
+    <ol>
+      <li><b>操作者</b>（自分の名前）を選択 ※初回のみ、以降は記憶</li>
+      <li><b>作業日</b>を選ぶ（連続する複数日は終了日も指定）</li>
+      <li><b>作業区分</b>を選ぶ ⚠️ <b>必須・最初に選ぶ</b>（選ぶまで以下の項目が入力できません）</li>
+      <li><b>元請名</b>をプルダウンから選択（なければ ➕ で追加）</li>
+      <li><b>現場名</b>をプルダウンから選ぶ／🔍検索ボックスで絞り込み（最近使った順で並ぶ）。新規は「＋ 新規現場として追加」</li>
+      <li><b>🚗 車両</b>（任意・工番発行会社のみ・複数選択可）— 同日に他予定で予約済みは選択不可。2 台で行く時は両方の chip を ON</li>
+      <li><b>代表者</b>を選ぶ（その日の現場責任者）</li>
+      <li><b>同行者</b>（代表以外のメンバー）を選ぶ</li>
+      <li><b>出勤/退勤時間</b>と<b>メモ</b>を入力</li>
+      <li>必要なら 🏭倉庫 / 🌙夜勤 / 🏖️休み / 📌予定 を選択</li>
+      <li><b>登録する</b>ボタンで送信</li>
+    </ol>
+    <p style="margin-top:6px;color:#1D9E75;font-weight:600">💡 人工は<b>1日=1.0で固定</b>（休み=0、それ以外=1.0）。1日に複数現場行ったら自動で<b>1/Nに按分</b>されます。</p>
+  </div>
+
+  <div class="help-section">
+    <h3>⚠️ 作業区分ゲート <span style="color:#1D9E75;font-size:12px">🆕</span></h3>
+    <p>画面上部に赤い警告バーが出ます: 「最初に『作業区分』を選択してください」。</p>
+    <ul>
+      <li>作業区分を選ぶまで、現場名・メンバー・時刻・モードなど<b>下の入力欄はすべてロック</b></li>
+      <li>これは <b>現場名の統一</b> と <b>工番の正しい発番</b> を強制するためのガード</li>
+      <li>編集モーダルでも同様の動作</li>
+    </ul>
+    <p style="margin-top:6px"><b>作業区分の種類</b>:</p>
+    <ul style="font-size:13px">
+      <li><b>現場作業</b>: 通常の現場稼働 → 工番発行会社なら<b>工番が発行</b>される</li>
+      <li><b>現調</b>: 現地調査 — 工番なし</li>
+      <li><b>着打ち</b>: 着工前の打合せ — 工番なし</li>
+      <li><b>カギ借用</b>: カギの貸借や立会のみ — 工番なし</li>
+      <li><b>材料引取・検品</b>: 材料・道具の搬出入＋検品 — 工番なし</li>
+      <li><b>撤去品返却</b>: 撤去物の返却作業 — 工番なし</li>
+      <li><b>前乗り</b>: 前日の移動・宿泊など実作業前の前乗り — 工番なし</li>
+      <li><b>🏭 倉庫作業</b>: 選ぶと自動的に倉庫モード ON、倉庫タスクが選べる — 工番なし</li>
+      <li><b>🏖️ 休み</b>: 選ぶと自動的に休みモード ON、他項目は不要 — 工番なし</li>
+      <li><b>その他</b>: 上記以外 — 工番なし</li>
+    </ul>
+    <p style="font-size:12px;color:#666">集計（人工合計）は全区分を合算。カレンダーでは現場作業以外が黄色いタグで表示されます。</p>
+  </div>
+
+  <div class="help-section">
+    <h3>🏷 モードの使い分け</h3>
+    <ul>
+      <li><b>🏭倉庫</b>: 倉庫作業（工番なし、人工1.0は出勤としてカウント）</li>
+      <li><b>🌙夜勤</b>: 夜勤（昼勤と独立カウント。詳細は次セクション）</li>
+      <li><b>🏖️休み</b>: 休暇・欠勤（人工は0）</li>
+      <li><b>📌予定</b>: 未確定の予定（集計・工番から除外）</li>
+    </ul>
+    <p style="margin-top:8px;color:#1D9E75;font-weight:600">🆕 休み・倉庫モード時の挙動</p>
+    <ul style="font-size:13px">
+      <li>🏖️休み / 🏭倉庫 をONにすると <b>元請・現場・時間・メモ等の入力欄が自動で無効化</b>されます</li>
+      <li>入力した後にON にすると<b>入力済みの値は自動でクリア</b>されます（操作者・日付・代表者・同行メンバーは残ります）</li>
+      <li>元請名は<b>入力不要</b>になります</li>
+      <li>もう一度同じトグルを押すと解除され、入力欄が再び有効化されます</li>
+    </ul>
+    <p style="margin-top:8px;color:#9A3412;font-weight:600">🆕 🏭倉庫モード時の作業内容選択</p>
+    <ul style="font-size:13px">
+      <li>🏭倉庫 をONにすると <b>「今日の倉庫作業」セクション</b>が出現します</li>
+      <li>選択肢: <b>🧹清掃 / 📦備品管理 / 🔧工具メンテナンス / 🚚入荷対応 / 📤出荷準備 / ♻️廃材処理</b></li>
+      <li>該当する作業を <b>1 つ以上タップ</b>して選択（複数選択可）</li>
+      <li>選んだ作業はカレンダーに「🏭 清掃、備品管理」のように表示されます</li>
+      <li>誰が何の倉庫作業をしているか後から振り返れます</li>
+    </ul>
+    <p style="margin-top:8px;color:#1D9E75;font-weight:600">🆕 工番が発行されないモード</p>
+    <ul style="font-size:13px">
+      <li>🏖️休み / 🏭倉庫 / 📌予定 のいずれかがONの場合は工番が発行されません</li>
+      <li>🌙夜勤は通常通り工番発行対象です</li>
+    </ul>
+    <p style="margin-top:8px;color:#1D9E75;font-weight:600">🆕 カレンダー表示</p>
+    <ul style="font-size:13px">
+      <li>元請名なしの休み・倉庫はカレンダーに<b>「🏖️ 休み」「🏭 倉庫」</b>と表示されます</li>
+      <li>元請名ありの場合は<b>「🏖️ 〇〇電気」「🏭 〇〇電気」</b>のように先頭にアイコンが付きます</li>
+    </ul>
+  </div>
+
+  <div class="help-section">
+    <h3>🌙 夜勤モードの使い方</h3>
+    <p>夜から翌朝にかけての作業はこのモードでON。</p>
+    <ol>
+      <li><b>作業日</b>: 作業を<b>始める日</b>を選ぶ（翌朝5時に終わる場合は前日）</li>
+      <li><b>🌙夜勤モード</b> をON</li>
+      <li><b>出勤・退勤時間</b>: 実際の時刻をそのまま入力（例 22:00 〜 05:00）</li>
+    </ol>
+    <p style="color:#1D9E75">✓ 退勤＜出勤エラーは夜勤モード時は<b>免除</b>されます</p>
+    <p style="color:#1D9E75">✓ 翌日のカレンダー・空き確認にも自動で「⏰前日から」表示（集計には影響なし）</p>
+    <p style="color:#1D9E75">✓ 同日に昼勤+夜勤を別登録すると合計2人工（独立カウント）</p>
+    <p style="color:#c00;font-size:12px;margin-top:6px">❌ よくあるミス: 作業日を翌日にしてしまう / 夜勤モードOFFのまま22:00→05:00入力 / 9-18のまま登録</p>
+  </div>
+
+  <div class="help-section">
+    <h3>📱 スマホ便利機能</h3>
+    <ul>
+      <li><b>引き下げて更新</b>: 画面を下に引っ張ると最新データを取り込みます</li>
+      <li><b>📤 共有</b>: 予定詳細から LINE・メール等へワンタップで送れます</li>
+      <li><b>🎤 音声入力</b>: メモ欄でキーボードのマイクボタンを押すと声で入力できます</li>
+      <li><b>📲 ホーム画面に追加</b>: アプリのように起動できます（バナーから／iPhoneは Safari の「共有」→「ホーム画面に追加」）</li>
+      <li><b>触覚フィードバック</b>: スワイプ・登録時に軽く振動します（対応端末のみ）</li>
+      <li><b>スマホ表示</b>: 空き確認・車確認はスマホでは見やすいリスト形式で自動表示</li>
+    </ul>
+  </div>
+
+  <div class="help-section">
+    <h3>🚗 車両セレクタ <span style="color:#1D9E75;font-size:12px">🆕 複数選択対応</span></h3>
+    <p>予定登録時に、使用する車両を <b>chip ボタンで複数選択</b>できます。</p>
+    <ul>
+      <li>未選択 = 「使用しない」。1 台ならその chip だけ ON、2 台以上で行くなら複数選択</li>
+      <li>選んだ日に<b>他の予定で既に予約済みの車両</b>はグレーアウト＋「使用中」表示で選べません</li>
+      <li>連続入力（複数日）の場合は、その期間中いずれかの日で予約済みなら選択不可</li>
+      <li>編集モーダルでも同じ動作（自分自身のグループは除外して判定）</li>
+      <li>複数選んだ場合、シート・詳細・共有テキストには「メビウス、ヤリス」のようにカンマ区切りで保存</li>
+      <li>🏖️休み / 🏭倉庫 をONにすると車両セレクタも自動でロック＆クリア</li>
+    </ul>
+    <p style="color:#1D9E75;font-size:12px;margin-top:6px">登録できる車両: ダブルキャブ / ユニック / 高所作業車 / ハイエース（白・シルバー・白2）/ タウンエース / ProBox / ジムニー / クリッパー（シルバー）</p>
+  </div>
+
+  <div class="help-section">
+    <h3>🔍 現場名プルダウン＋検索 <span style="color:#1D9E75;font-size:12px">🆕</span></h3>
+    <p>元請を選ぶと、その元請に紐付く<b>既存の現場名</b>がプルダウンに自動列挙されます。</p>
+    <ul>
+      <li>並び順は <b>最近使った順</b>（最終使用日が新しい順）</li>
+      <li>プルダウンの上に <b>🔍 検索ボックス</b>（部分一致）— 文字を打つと候補が絞り込まれる</li>
+      <li>新規現場は <b>「＋ 新規現場として追加」</b> を選択 → 直接入力欄が出現</li>
+      <li>新規入力時は <b>類似する既存現場</b> が黄色枠でサジェスト → 表記揺れ防止（例: 「○○ビル」と「〇〇ビル新築」を分けないよう促す）</li>
+      <li>送信時にも似た現場名があれば確認ダイアログが出る</li>
+    </ul>
+    <p style="color:#1D9E75;font-size:12px">編集モーダルでも同じ動作。会社を切り替えると候補が更新されます。</p>
+  </div>
+
+  <div class="help-section">
+    <h3>🔢 工番事業部セレクタ（工番発行会社のみ）</h3>
+    <p>新規現場を「現場作業」で入力すると「新規現場の工番事業部」セレクタが表示されます。</p>
+    <ul>
+      <li>デフォルトは<b>代表者の事業部</b></li>
+      <li>初日だけ他事業部の人が代表する場合は手動で変更OK</li>
+      <li>選んだ事業部が工番の頭文字になります（例: ICT-26-001）</li>
+      <li><b>工番が発行されないケース</b>: 作業区分が「現場作業」以外 / 🏭倉庫 / 🏖️休み / 📌予定</li>
+    </ul>
+  </div>
+
+  <div class="help-section">
+    <h3>⚠️ 異常値の警告</h3>
+    <ul>
+      <li><b>退勤 ≤ 出勤</b> → 送信ブロック（<b>🌙夜勤モード時は免除</b>）</li>
+    </ul>
+  </div>
+
+  <div class="help-section">
+    <h3>📅 カレンダータブ</h3>
+    <p>月単位で予定をカレンダー表示。</p>
+    <ul>
+      <li><b>日付をタップ</b> → 日別モーダル（現場名+メンバーの最小表示）</li>
+      <li>予定カードをタップ → <b>詳細フルスクリーン画面</b>へ</li>
+      <li>該当する <b>モードアイコン</b>（🏭🌙🏖️📌）がカード末尾に表示</li>
+      <li>日付跨ぎ予定は翌日に「⏰前日から」のラベル付きで自動表示（集計影響なし）</li>
+      <li>PCで開くとカレンダーが大きく中央表示</li>
+    </ul>
+  </div>
+
+  <div class="help-section">
+    <h3>📖 予定詳細フルスクリーン画面</h3>
+    <p>日別モーダルでカードをタップで開きます。</p>
+    <ul>
+      <li>表示項目: 現場名/期間/モードバッジ/作業区分/メンバー/人工/会社/工番/メモ/最終更新者</li>
+      <li>メモ内のURL（http(s)://）はタップ可能なリンクに自動変換</li>
+      <li>左上「←」または<b>右スワイプ</b>で戻る</li>
+      <li><b>左スワイプ</b>で同じ日の次の予定にループ</li>
+      <li>右上 🗑️ → 削除 / 下部 コピー・編集</li>
+    </ul>
+    <p style="color:#1D9E75;font-size:12px">編集・削除・コピーはすべて詳細画面に集約（日別モーダルにはボタンなし）</p>
+  </div>
+
+  <div class="help-section">
+    <h3>👆 スワイプ操作</h3>
+    <ul>
+      <li><b>カレンダー画面</b>: 左→次月 / 右→前月</li>
+      <li><b>日別モーダル</b>: 左→翌日 / 右→前日</li>
+      <li><b>空き確認の週テーブル</b>: 左→次週 / 右→前週</li>
+      <li><b>予定詳細画面</b>: 左→次の予定 / 右→戻る</li>
+    </ul>
+  </div>
+
+  <div class="help-section">
+    <h3>👥 空き確認タブ</h3>
+    <p>指定週の全職人の空き状況を一覧表示。休み・倉庫は色分け表示。左右スワイプで前週/次週切替。</p>
+  </div>
+
+  <div class="help-section">
+    <h3>🚗 車確認タブ（工番発行会社のみ） <span style="color:#1D9E75;font-size:12px">🆕</span></h3>
+    <p>週次の <b>車両×日付マトリクス</b> で予約状況を一目で確認できます。</p>
+    <ul>
+      <li>空きは「○」、使用中は<b>代表者名と行先</b>が表示される</li>
+      <li>週移動ボタン（◀▶）または左右スワイプで前週／翌週に移動</li>
+      <li>他予定で予約済みの車両は新規予定登録時にプルダウンでグレーアウトされる（ダブルブッキング防止）</li>
+    </ul>
+  </div>
+
+  <div class="help-section">
+    <h3>🏗️ 現場管理タブ</h3>
+    <p>既存の現場別に登録内容をまとめて確認・編集。複数日まとめて修正する「一括編集」も可能。</p>
+    <ul>
+      <li><b>元請名 + 月</b>で絞り込み可能（月は元請の右側、デフォルトは「全期間」）</li>
+      <li>月を選ぶとその月の現場リスト・日程一覧だけが表示される</li>
+      <li>チェックボックスで複数日選択 → <b>一括編集</b>で時間・元請・代表者・メンバー・車両等をまとめて変更</li>
+      <li>編集保存時、メンバーが他の予定とぶつかる場合は<b>被り警告</b>が出ます</li>
+    </ul>
+  </div>
+
+  <div class="help-section">
+    <h3>🆘 困ったら</h3>
+    <ul>
+      <li><b>入力が反映されない</b> → 「現在他の人が更新中」が出ていたら数秒待って再送信</li>
+      <li><b>間違えた日報を消したい</b> → 該当日タップ → 予定カードタップ → 詳細画面右上 🗑️</li>
+      <li><b>予定を実績に変更</b> → 編集画面で 📌予定 を解除して保存</li>
+      <li><b>会社が違って表示される</b> → 「会社を選択してください」モーダルで自分の会社をタップ</li>
+      <li><b>夜勤予定が翌日にも出る</b> → 仕様通り。集計は元の日にだけ計上されます</li>
+    </ul>
+  </div>
+
+  <button class="btn btn-secondary" style="width:100%;margin-top:8px" onclick="document.getElementById('help-modal').classList.remove('active')">閉じる</button>
+</div>
+</div>
+
+<div id="similar-loc-modal" class="modal-bg">
+<div class="modal">
+  <div class="modal-title">現場名の確認</div>
+  <p style="margin:0 0 12px;font-size:14px;color:#333">候補に一致する現場がありますが、これは新規の現場ですか？</p>
+  <div style="font-size:12px;color:#666;margin-bottom:6px">既存の現場から選ぶ（タップ）:</div>
+  <div id="similar-loc-list" style="margin-bottom:16px"></div>
+  <div style="display:flex;gap:8px">
+    <button class="btn btn-secondary btn-sm" style="flex:1" onclick="cancelSimilarLoc()">キャンセル</button>
+    <button class="btn btn-sm" style="flex:1;background:#1D9E75;color:#fff" onclick="confirmNewLoc()">はい、新規として登録</button>
+  </div>
+</div>
+</div>
+
+<div id="genba-settings-modal" class="modal-bg">
+<div class="modal">
+  <div class="modal-title">元請の管理 <span id="genba-settings-company-name" style="font-size:14px;color:#1D9E75"></span></div>
+  <div style="display:flex;gap:8px;margin-bottom:12px">
+    <input type="text" id="new-genba-master" placeholder="元請名を入力" style="margin-bottom:0;flex:1">
+    <button class="btn btn-sm" onclick="addGenbaMaster()">追加</button>
+  </div>
+  <div id="genba-master-list" style="margin-bottom:16px"></div>
+  <button class="btn btn-secondary" onclick="closeGenbaSettings()">閉じる</button>
+</div>
+</div>
+
+<script>
+const GAS_URL='https://script.google.com/macros/s/AKfycbzcZAwtMiqwzNjbwX__bbTXqzoQKpidgw76zCUWy2I06rN1EfedOFT9VKoqDlSd_Bg7/exec';
+
+// ── 合言葉(k)の自動付与（2026-06-10 セキュリティ強化）──────────────
+// URLの ?k=合言葉 を一度受け取ると端末(localStorage)に保存し、
+// 以後すべてのGAS通信（読み書き）へ自動で添える。
+// サーバー側の照合が有効になると、合言葉なしのアクセスは拒否される。
+let CAL_K='';
+try{
+  const _qk=new URLSearchParams(location.search).get('k');
+  if(_qk&&_qk.trim())localStorage.setItem('cal-k',_qk.trim());
+  CAL_K=localStorage.getItem('cal-k')||'';
+}catch(e){}
+const _calOrigFetch=window.fetch.bind(window);
+window.fetch=async function(url,opts){
+  const _url0=url,_opts0=opts;
+  let isGas=false;
+  try{
+    if(typeof url==='string'&&url.indexOf(GAS_URL)===0){
+      isGas=true;
+      if(opts&&typeof opts.body==='string'){
+        try{const b=JSON.parse(opts.body);if(b&&typeof b==='object'&&!b.k){b.k=CAL_K;opts=Object.assign({},opts,{body:JSON.stringify(b)});}}catch(e){}
+      }else{
+        url+=(url.indexOf('?')>=0?'&':'?')+'k='+encodeURIComponent(CAL_K);
+      }
+    }
+  }catch(e){}
+  const res=await _calOrigFetch(url,opts);
+  if(isGas){
+    try{
+      const peek=await res.clone().json();
+      if(peek&&peek.code==='auth'){
+        const nk=window.prompt('このアプリの合言葉を入力してください（不明な場合は事務所に確認）');
+        if(nk&&nk.trim()){
+          localStorage.setItem('cal-k',nk.trim());CAL_K=nk.trim();
+          return window.fetch(_url0,_opts0);
+        }
+      }
+    }catch(e){}
+  }
+  return res;
+};
+
+/* ===== この会社の設定（開通時にここだけ変える）===== */
+const COMPANIES = ['デモ会社'];        // 複数社で使うなら ['A社','B社',...] と足す
+const PRIMARY_COMPANY = '';            // 工番を発行する会社名。無ければ '' （工番・車両機能オフ）
+/* ================================================= */
+const MODES=['souko','yakin','yasumi','yotei'];
+const VEHICLES=[
+  {name:'車両A',plate:'品川300あ0001',company:'この会社名'},
+  {name:'車両B',plate:'品川300あ0002',company:'この会社名'},
+  {name:'車両C',plate:'品川300あ0003',company:'この会社名'},
+  {name:'車両D',plate:'品川300あ0004',company:'この会社名'},
+  {name:'車両E',plate:'品川300あ0005',company:'この会社名'},
+  {name:'車両F',plate:'品川300あ0006',company:'この会社名'},
+  {name:'車両G',plate:'品川300あ0007',company:'この会社名'},
+  {name:'車両H',plate:'品川300あ0008',company:'この会社名'},
+  {name:'車両I',plate:'品川300あ0009',company:'この会社名'},
+  {name:'車両J',plate:'品川300あ0010',company:'この会社名'}
+];
+function getCompanyVehicles(){
+  if(typeof currentCompany==='undefined'||!currentCompany)return [];
+  if(currentCompany==='全社')return VEHICLES;
+  return VEHICLES.filter(v=>v.company===currentCompany);
+}
+const CAL_COLORS=['#1D9E75','#3B82F6','#E8384F','#F59E0B','#8B5CF6','#EC4899','#2C2C5A','#8B5E3C','#64748B','#0EA5E9'];
+const DIVISIONS=['ICT','INF','MSC','GRB'];
+
+// URLパラメータ解析（スクリプト冒頭で確定）
+const urlParams=new URLSearchParams(window.location.search);
+const isAdminMode=urlParams.get('mode')==='admin';
+
+function openHelp(){document.getElementById('help-modal').classList.add('active');}
+
+// 全モーダル共通: 背景クリックで閉じる
+document.addEventListener('click',function(e){
+  if(e.target.classList&&e.target.classList.contains('modal-bg')&&e.target.classList.contains('active')){
+    e.target.classList.remove('active');
+    if(e.target.id==='similar-loc-modal'&&_similarLocResolve){_similarLocResolve({action:'cancel'});_similarLocResolve=null;}
+  }
+});
+
+// 現場名類似チェック
+let _similarLocResolve=null;
+function findSimilarLocs(genba,inputLoc){
+  if(!inputLoc||!genba)return [];
+  const existing=[...new Set(allNippos.filter(n=>n.genba===genba&&n.loc).map(n=>n.loc))];
+  const norm=inputLoc.toLowerCase().replace(/\s+/g,'');
+  return existing.filter(l=>{
+    if(l===inputLoc)return false;
+    const ln=l.toLowerCase().replace(/\s+/g,'');
+    return ln.includes(norm)||norm.includes(ln);
+  });
+}
+function confirmSimilarLoc(genba,loc){
+  return new Promise(resolve=>{
+    const similar=findSimilarLocs(genba,loc);
+    if(similar.length===0){resolve({action:'new'});return;}
+    const list=document.getElementById('similar-loc-list');
+    list.innerHTML=similar.map(l=>`<button class="btn btn-secondary btn-sm" style="display:block;width:100%;margin-bottom:6px;text-align:left" onclick="pickSimilarLoc(this.dataset.loc)" data-loc="${esc(l)}">${esc(l)}</button>`).join('');
+    _similarLocResolve=resolve;
+    document.getElementById('similar-loc-modal').classList.add('active');
+  });
+}
+function pickSimilarLoc(loc){
+  document.getElementById('similar-loc-modal').classList.remove('active');
+  if(_similarLocResolve){_similarLocResolve({action:'existing',loc});_similarLocResolve=null;}
+}
+function confirmNewLoc(){
+  document.getElementById('similar-loc-modal').classList.remove('active');
+  if(_similarLocResolve){_similarLocResolve({action:'new'});_similarLocResolve=null;}
+}
+function cancelSimilarLoc(){
+  document.getElementById('similar-loc-modal').classList.remove('active');
+  if(_similarLocResolve){_similarLocResolve({action:'cancel'});_similarLocResolve=null;}
+}
+
+let selectedColor={s:'#1D9E75',e:'#1D9E75'};
+
+function initColorPicker(prefix,current){
+  const wrap=document.getElementById(prefix+'-color-picker');
+  if(!wrap)return;
+  const c=current||selectedColor[prefix]||CAL_COLORS[0];
+  selectedColor[prefix]=c;
+  wrap.innerHTML=CAL_COLORS.map(col=>
+    `<div class="color-swatch${col===c?' selected':''}" style="background:${col}" onclick="selectColor('${prefix}','${col}')"></div>`
+  ).join('');
+}
+
+function selectColor(prefix,color){
+  selectedColor[prefix]=color;
+  initColorPicker(prefix,color);
+}
+
+function getGasUrl(){return GAS_URL;}
+
+let currentCompany='';
+let allNippos=[];
+let allMembers=[];
+let allGenbaMaster=[];
+let allJobsites=[]; // 現場マスタ（完了フラグ等）。{genba, loc, jobNo, completed}
+let selectedMembers=[];
+let editSelectedMembers=[];
+let editIds=[];
+let editDate='';
+let editDates=[];
+let bulkEditMode=false;
+let currentDateFilter='';
+let listMonth='';
+let modeState={s:'',e:''};
+let isSubmitting=false;
+let currentUsername='';
+
+// インラインマスタ追加用トラッキング
+let settingsOpenedForSelect=null;
+let genbaSettingsOpenedForSelect=null;
+
+function getGenbaMasterNames(){
+  if(currentCompany==='全社')return [...new Set(allGenbaMaster.map(g=>g.name))].sort();
+  return [...new Set(allGenbaMaster.filter(g=>g.company===currentCompany||!g.company).map(g=>g.name))].sort();
+}
+
+function getUsername(){return currentUsername;}
+function initUsername(){
+  try{currentUsername=localStorage.getItem('genba-username')||'';}catch(e){}
+  updateUsernameDisplay();
+}
+function updateUsernameDisplay(){
+  const el=document.getElementById('current-username-display');
+  if(el)el.textContent=currentUsername||'未設定';
+}
+function openUsernameModal(){
+  const sel=document.getElementById('username-select');
+  const names=getShokunin();
+  sel.innerHTML='<option value="">名前を選択</option>'+names.map(n=>`<option value="${n}"${n===currentUsername?' selected':''}>${n}</option>`).join('');
+  document.getElementById('username-modal').classList.add('active');
+}
+function confirmUsername(){
+  const v=document.getElementById('username-select').value;
+  if(!v){alert('名前を選択してください');return;}
+  currentUsername=v;
+  try{localStorage.setItem('genba-username',v);}catch(e){}
+  updateUsernameDisplay();
+  document.getElementById('username-modal').classList.remove('active');
+}
+function checkUsername(){}
+function onOperatorChange(){
+  const v=document.getElementById('s-operator').value;
+  if(v){
+    currentUsername=v;
+    try{localStorage.setItem('genba-username',v);}catch(e){}
+    updateUsernameDisplay();
+    updateLocationSuggestions();
+    checkLocationJobNo();
+  }
+}
+
+function esc(str){const d=document.createElement('div');d.textContent=String(str||'');return d.innerHTML;}
+// escされた文字列内の http(s)://〜 をクリック可能なリンクに変換
+function linkify(escapedHtml){
+  return String(escapedHtml||'').replace(/(https?:\/\/[^\s<]+)/g,u=>`<a href="${u}" target="_blank" rel="noopener noreferrer" style="color:#1D9E75;text-decoration:underline;word-break:break-all">${u}</a>`);
+}
+function uuid(){return 'xxxx-xxxx-xxxx'.replace(/x/g,()=>Math.floor(Math.random()*16).toString(16))+'-'+Date.now().toString(36);}
+function setLoading(on){document.getElementById('loading-bar').classList.toggle('active',on);}
+
+function setMode(p,mode){
+  const cur=modeState[p];
+  const next=cur===mode?'':mode;
+  modeState[p]=next;
+  // モードに応じて作業区分プルダウンも同期
+  syncWorkTypeWithMode(p,next,cur);
+  // souko/yasumi モードから抜ける時に残った値をクリア
+  if((cur==='souko'||cur==='yasumi')&&next!==cur){
+    const locEl=document.getElementById(p+'-location');
+    if(locEl)locEl.value='';
+    // 倉庫タスクはメモ欄に格納されているため、souko から抜ける時はメモもクリア
+    if(cur==='souko'){
+      const memoEl=document.getElementById(p+'-memo');
+      if(memoEl)memoEl.value='';
+    }
+  }
+  MODES.forEach(m=>{
+    const el=document.getElementById(p+'-'+m+'-toggle');
+    if(el)el.classList.toggle('active',m===next);
+  });
+  applyYasumiLock(p,true);
+  updateSoukoTasksVisibility(p);
+  hapticTap();
+}
+
+// 作業区分プルダウンとモードを同期させる
+// next: 切替後のモード, prev: 切替前のモード
+function syncWorkTypeWithMode(p,next,prev){
+  const wt=document.getElementById(p+'-work-type');
+  if(!wt)return;
+  if(next==='souko'){wt.value='倉庫作業';return;}
+  if(next==='yasumi'){wt.value='休み';return;}
+  // souko/yasumi から抜けた場合は現場作業に戻す
+  if(prev==='souko'||prev==='yasumi'){
+    wt.value='現場作業';
+  }
+}
+
+// 作業区分プルダウン変更時のハンドラ
+// 倉庫作業 / 休み を選んだら自動的に該当モードに切替
+function onWorkTypeChange(p){
+  const wt=document.getElementById(p+'-work-type');
+  const v=wt?wt.value:'';
+  let desiredMode=null;
+  if(v==='倉庫作業')desiredMode='souko';
+  else if(v==='休み')desiredMode='yasumi';
+  // 現在のモードを取得（夜勤/予定 はここでは触らず温存）
+  const cur=modeState[p]||'';
+  // souko/yasumi モードに切替が必要
+  if(desiredMode && cur!==desiredMode){
+    modeState[p]=desiredMode;
+    MODES.forEach(m=>{
+      const el=document.getElementById(p+'-'+m+'-toggle');
+      if(el)el.classList.toggle('active',m===desiredMode);
+    });
+    applyYasumiLock(p,true);
+    updateSoukoTasksVisibility(p);
+    hapticTap();
+  }
+  // 通常作業区分（現場作業など）を選んだら、もし souko/yasumi だったら解除
+  else if(!desiredMode && (cur==='souko'||cur==='yasumi')){
+    modeState[p]='';
+    // souko/yasumi から抜ける時に loc に残っている値をクリア
+    const locEl=document.getElementById(p+'-location');
+    if(locEl)locEl.value='';
+    // 倉庫タスクはメモ欄に格納されているため、souko から抜ける時はメモもクリア
+    if(cur==='souko'){
+      const memoEl=document.getElementById(p+'-memo');
+      if(memoEl)memoEl.value='';
+    }
+    MODES.forEach(m=>{
+      const el=document.getElementById(p+'-'+m+'-toggle');
+      if(el)el.classList.remove('active');
+    });
+    applyYasumiLock(p,true);
+    updateSoukoTasksVisibility(p);
+    hapticTap();
+  }
+  applyWorkTypeLock(p);
+}
+function applyMode(p,mode){
+  modeState[p]=mode||'';
+  // 倉庫/休み モードのときは作業区分プルダウンも対応する値に揃える
+  const wt=document.getElementById(p+'-work-type');
+  if(wt){
+    if(modeState[p]==='souko')wt.value='倉庫作業';
+    else if(modeState[p]==='yasumi')wt.value='休み';
+  }
+  MODES.forEach(m=>{
+    const el=document.getElementById(p+'-'+m+'-toggle');
+    if(el)el.classList.toggle('active',m===modeState[p]);
+  });
+  applyYasumiLock(p,false);
+  updateSoukoTasksVisibility(p);
+}
+
+// ===== 倉庫タスク（複数選択可・必須） =====
+const WAREHOUSE_TASKS=[
+  {key:'清掃',icon:'🧹'},
+  {key:'備品管理',icon:'📦'},
+  {key:'工具メンテナンス',icon:'🔧'},
+  {key:'入荷対応',icon:'🚚'},
+  {key:'出荷準備',icon:'📤'},
+  {key:'廃材処理',icon:'♻️'}
+];
+function parseSoukoTasks(loc){
+  if(!loc)return [];
+  return String(loc).split(/[、,]/).map(s=>s.trim()).filter(Boolean);
+}
+function renderSoukoTaskChips(p){
+  const container=document.getElementById(p+'-souko-tasks');
+  if(!container)return;
+  // タスクは メモ欄 に格納する
+  const memoEl=document.getElementById(p+'-memo');
+  const selected=parseSoukoTasks(memoEl?memoEl.value:'');
+  container.innerHTML=WAREHOUSE_TASKS.map(t=>{
+    const isSel=selected.includes(t.key);
+    const style=isSel
+      ? 'background:#EA580C;color:#fff;border-color:#EA580C;box-shadow:0 2px 4px rgba(234,88,12,0.3)'
+      : 'background:#fff;color:#9A3412;border-color:#FED7AA';
+    return `<button type="button" onclick="toggleSoukoTask('${p}','${esc(t.key)}')" style="${style};border:2px solid;border-radius:10px;padding:10px 14px;font-size:14px;font-weight:600;min-height:42px;flex:1 1 calc(50% - 4px);min-width:120px;cursor:pointer">${t.icon} ${esc(t.key)}</button>`;
+  }).join('');
+  const err=document.getElementById(p+'-souko-tasks-error');
+  if(err)err.style.display=selected.length===0?'':'none';
+}
+function toggleSoukoTask(p,key){
+  const memoEl=document.getElementById(p+'-memo');
+  if(!memoEl)return;
+  const current=parseSoukoTasks(memoEl.value);
+  const idx=current.indexOf(key);
+  if(idx>=0)current.splice(idx,1);
+  else current.push(key);
+  memoEl.value=current.join('、');
+  renderSoukoTaskChips(p);
+  hapticTap();
+}
+function updateSoukoTasksVisibility(p){
+  const wrap=document.getElementById(p+'-souko-tasks-wrap');
+  if(!wrap)return;
+  const isSouko=modeState[p]==='souko';
+  wrap.style.display=isSouko?'':'none';
+  if(isSouko){
+    // 倉庫モード時は現場名は使わないので、現場名入力欄と新規入力欄を強制非表示
+    const locInput=document.getElementById(p+'-location');
+    if(locInput)locInput.style.display='none';
+    // 現場名プルダウンの値を初期化（倉庫モード時は loc を空で保存する）
+    const locSel=document.getElementById(p+'-location-select');
+    if(locSel)locSel.value='';
+    renderSoukoTaskChips(p);
+  }
+}
+// 休み/倉庫モード時は入力欄を無効化。clearValues=true なら入力済みの値もクリア（ユーザーがトグルを押した時）
+function applyYasumiLock(p,clearValues){
+  const isLocked=modeState[p]==='yasumi'||modeState[p]==='souko';
+  // 作業区分（work-type）はゲートのため、ここではロックしない
+  const fieldIds=[
+    p+'-genba-select',p+'-genba',p+'-location',p+'-location-select',
+    p+'-start',p+'-end',p+'-memo',p+'-vehicle'
+  ];
+  fieldIds.forEach(id=>{
+    const el=document.getElementById(id);
+    if(!el)return;
+    el.disabled=isLocked;
+    el.style.opacity=isLocked?'0.45':'';
+    el.style.cursor=isLocked?'not-allowed':'';
+  });
+  // 代表者は休み/倉庫モードでも選択可能（誰が休みを取ったか/誰が倉庫作業をするか記録するため）
+  const leaderEl=document.getElementById(p+'-leader');
+  if(leaderEl){leaderEl.disabled=false;leaderEl.style.opacity='';leaderEl.style.cursor='';}
+  // 車両 chip コンテナもロック（chip 自体はボタン群なので pointerEvents で制御）
+  const vchip=document.getElementById(p+'-vehicle-chips');
+  if(vchip){vchip.style.pointerEvents=isLocked?'none':'';vchip.style.opacity=isLocked?'0.45':'';}
+  // カラーピッカーもロック
+  const cp=document.getElementById(p+'-color-picker');
+  if(cp){cp.style.pointerEvents=isLocked?'none':'';cp.style.opacity=isLocked?'0.45':'';}
+  if(isLocked&&clearValues){
+    const sel=document.getElementById(p+'-genba-select');
+    if(sel)sel.value='';
+    const gm=document.getElementById(p+'-genba');
+    if(gm){gm.value='';gm.style.display='none';}
+    const locEl=document.getElementById(p+'-location');
+    if(locEl)locEl.value='';
+    // 注意: 旧設計では workType を '現場作業' に reset していたが、新設計では
+    // 倉庫作業/休み が workType に入る必要があるため reset 行を削除。
+    // workType は呼び出し元(setMode/onWorkTypeChange)で正しい値が設定済み。
+    const startEl=document.getElementById(p+'-start');
+    if(startEl)startEl.value='08:00';
+    const endEl=document.getElementById(p+'-end');
+    if(endEl)endEl.value='17:00';
+    const memoEl=document.getElementById(p+'-memo');
+    if(memoEl)memoEl.value='';
+    const vehEl=document.getElementById(p+'-vehicle');
+    if(vehEl)vehEl.value='';
+    // chip も再描画して未選択状態に
+    if(typeof refreshVehicleSelect==='function')refreshVehicleSelect(p);
+    const hint=document.getElementById(p+'-jobno-hint');
+    if(hint)hint.style.display='none';
+    const divWrap=document.getElementById(p+'-jobno-div-wrap');
+    if(divWrap)divWrap.style.display='none';
+  }
+}
+
+// 作業区分が空白の時、以下の入力欄を全部ロックする（ゲート機構）
+// 注意: souko/yasumi モード中は applyYasumiLock 側がロックを管理するため、
+// ここでは触らない（上書きしてしまうとモードロックが解除されるバグになる）
+function applyWorkTypeLock(p){
+  const wt=document.getElementById(p+'-work-type');
+  const isEmpty=!wt||!wt.value;
+  const isModeLocked=modeState[p]==='yasumi'||modeState[p]==='souko';
+  const notice=document.getElementById(p+'-worktype-notice');
+  if(notice)notice.style.display=isEmpty?'':'none';
+  const fieldIds=[
+    p+'-genba-select',p+'-genba',p+'-location',p+'-location-select',
+    p+'-vehicle',p+'-start',p+'-end',
+    p+'-leader',p+'-memo'
+  ];
+  fieldIds.forEach(id=>{
+    const el=document.getElementById(id);
+    if(!el)return;
+    if(isEmpty){
+      el.disabled=true;
+      el.style.opacity='0.45';
+      el.style.cursor='not-allowed';
+    }else if(isModeLocked){
+      // 倉庫/休みモードのロックを applyYasumiLock に任せる（ここでは上書きしない）
+    }else{
+      el.disabled=false;
+      el.style.opacity='';
+      el.style.cursor='';
+    }
+  });
+  // 車両 chip コンテナもゲートする（隠し input ではなく chip 群が操作対象）
+  const vchipEl=document.getElementById(p+'-vehicle-chips');
+  if(vchipEl){
+    if(isEmpty){vchipEl.style.pointerEvents='none';vchipEl.style.opacity='0.45';}
+    else if(!isModeLocked){vchipEl.style.pointerEvents='';vchipEl.style.opacity='';}
+  }
+  ['souko','yakin','yasumi','yotei'].forEach(m=>{
+    const el=document.getElementById(p+'-'+m+'-toggle');
+    if(!el)return;
+    el.style.pointerEvents=isEmpty?'none':'';
+    el.style.opacity=isEmpty?'0.45':'';
+  });
+  const memberWrap=document.getElementById(p==='s'?'member-selector':'e-member-selector');
+  if(memberWrap){
+    memberWrap.style.pointerEvents=isEmpty?'none':'';
+    memberWrap.style.opacity=isEmpty?'0.45':'';
+  }
+  const cp=document.getElementById(p+'-color-picker');
+  if(cp){
+    cp.style.pointerEvents=isEmpty?'none':'';
+    cp.style.opacity=isEmpty?'0.45':'';
+  }
+  if(p==='s'){
+    const btn=document.getElementById('submit-btn');
+    if(btn)btn.disabled=isEmpty||currentCompany==='全社';
+  }
+  // 選択された場合は休み/倉庫モードのロックを再適用
+  if(!isEmpty)applyYasumiLock(p,false);
+}
+
+// 車両文字列を配列に分解（カンマ区切り、半角/全角どちらも許容）
+function parseVehicles(v){
+  if(!v)return [];
+  return String(v).split(/[、,]/).map(s=>s.trim()).filter(Boolean);
+}
+// 車両セレクタ: 指定日に他の予定で使用中の車両は disabled で表示する
+// 1 予定で複数車両（カンマ区切り）に対応
+function getVehicleUsageMap(dates,excludeIds){
+  const exclude=new Set(excludeIds||[]);
+  const used={};
+  (allNippos||[]).forEach(n=>{
+    if(!n.vehicle)return;
+    if(n.isGhost)return;
+    if(exclude.has(n.id))return;
+    if(!dates.includes(n.date))return;
+    parseVehicles(n.vehicle).forEach(v=>{
+      if(!used[v])used[v]={name:'',dates:new Set()};
+      used[v].dates.add(n.date);
+      used[v].name=n.name||used[v].name;
+    });
+  });
+  return used;
+}
+// chip 群を描画。selectId は隠し input の id（'s-vehicle'/'e-vehicle'）。
+// 隠し input の value にカンマ区切り文字列で選択中車両を保持。
+function renderVehicleOptions(selectId,dates,currentValue,excludeIds){
+  const inp=document.getElementById(selectId);if(!inp)return;
+  const list=getCompanyVehicles();
+  // 車両未登録の会社では車両フィールド自体を非表示
+  const wrap=document.getElementById(selectId+'-wrap');
+  if(wrap)wrap.style.display=list.length>0?'':'none';
+  // 隠し input に現在値を反映
+  inp.value=currentValue||'';
+  const selected=parseVehicles(currentValue||'');
+  const used=getVehicleUsageMap(dates||[],excludeIds||[]);
+  const container=document.getElementById(selectId+'-chips');
+  if(!container)return;
+  container.innerHTML=list.map(v=>{
+    const isSel=selected.includes(v.name);
+    const isUsed=!!used[v.name]&&!isSel;
+    const style=isUsed
+      ? 'background:#f5f5f5;color:#999;border-color:#ddd;cursor:not-allowed;opacity:0.7'
+      : isSel
+      ? 'background:#1D9E75;color:#fff;border-color:#1D9E75;box-shadow:0 2px 4px rgba(29,158,117,0.3);cursor:pointer'
+      : 'background:#fff;color:#1D9E75;border-color:#A7F3D0;cursor:pointer';
+    const onclick=isUsed?'':`onclick="toggleVehicleChip('${selectId}','${esc(v.name)}')"`;
+    const label=esc(v.name)+(isUsed?' ／使用中':'');
+    return `<button type="button" ${onclick} style="${style};border:2px solid;border-radius:10px;padding:8px 12px;font-size:13px;font-weight:600;min-height:38px;flex:0 1 auto">🚗 ${label}</button>`;
+  }).join('');
+}
+// chip クリックで隠し input の文字列を更新 → 再描画
+function toggleVehicleChip(selectId,name){
+  const inp=document.getElementById(selectId);if(!inp)return;
+  const current=parseVehicles(inp.value);
+  const idx=current.indexOf(name);
+  if(idx>=0)current.splice(idx,1);
+  else current.push(name);
+  inp.value=current.join('、');
+  // 同じ prefix で再描画
+  const p=selectId.charAt(0);
+  refreshVehicleSelect(p);
+  hapticTap();
+}
+function getInputDates(p){
+  const ds=document.getElementById(p+'-date');
+  const de=document.getElementById(p+'-date-end');
+  if(!ds||!ds.value)return [];
+  if(de&&de.value)return getDateRange(ds.value,de.value);
+  return [ds.value];
+}
+function refreshVehicleSelect(p){
+  const dates=p==='s'?getInputDates('s'):(window._editDates||(window.editDate?[window.editDate]:[]));
+  const sel=document.getElementById(p+'-vehicle');
+  const cur=sel?sel.value:'';
+  const excludeIds=p==='e'?(window._editIds||[]):[];
+  renderVehicleOptions(p+'-vehicle',dates,cur,excludeIds);
+}
+
+function getShokunin(){
+  if(currentCompany==='全社'){const all=[];allMembers.forEach(m=>{if(!all.includes(m.name))all.push(m.name);});return all;}
+  return allMembers.filter(m=>m.company===currentCompany).map(m=>m.name);
+}
+
+let allowedCompanies=[];
+let isAdmin=false;
+let companyBarHidden=false;
+
+let needsCompanyPicker=false;
+function parseCompanyParam(){
+  let c=urlParams.get('c');
+  // URLにcパラメータがある時は保存、無い時はlocalStorageから復元
+  // （ホーム画面追加時に start_url がパラメータを失うケースの対策）
+  try{
+    if(c)localStorage.setItem('genba-c-param',c);
+    else c=localStorage.getItem('genba-c-param')||'';
+  }catch(e){}
+  if(isAdminMode){
+    allowedCompanies=[...COMPANIES];isAdmin=true;companyBarHidden=false;
+  }else if(c&&c!=='all'){
+    allowedCompanies=c.split(',').map(s=>s.trim()).filter(s=>COMPANIES.includes(s));
+    if(allowedCompanies.length===0)allowedCompanies=[COMPANIES[0]];
+    isAdmin=false;companyBarHidden=allowedCompanies.length===1;
+  }else{
+    // 会社情報がまったく無い → 会社が1つなら自動採用、2つ以上なら選択モーダルを出す
+    allowedCompanies=[...COMPANIES];isAdmin=false;
+    if(COMPANIES.length<=1){
+      companyBarHidden=true; // 1社なら会社バーも非表示（選択不要）
+      needsCompanyPicker=false;
+    }else{
+      companyBarHidden=false;
+      needsCompanyPicker=true;
+    }
+  }
+}
+
+function showCompanyPicker(){
+  if(!needsCompanyPicker)return;
+  const overlay=document.createElement('div');
+  overlay.id='company-picker-overlay';
+  overlay.style.cssText='position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(15,56,48,0.96);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
+  overlay.innerHTML=
+    '<div style="background:#fff;border-radius:16px;padding:24px;max-width:400px;width:100%;box-shadow:0 8px 24px rgba(0,0,0,0.3)">'+
+    '<div style="font-size:20px;font-weight:600;color:#0F3830;margin-bottom:8px;text-align:center">会社を選択してください</div>'+
+    '<div style="font-size:13px;color:#666;margin-bottom:20px;text-align:center;line-height:1.5">所属する会社をタップしてください。<br>選択は次回以降記憶されます。</div>'+
+    '<div id="picker-list" style="display:flex;flex-direction:column;gap:10px"></div>'+
+    '</div>';
+  document.body.appendChild(overlay);
+  const list=overlay.querySelector('#picker-list');
+  list.innerHTML=COMPANIES.map(c=>
+    '<button onclick="pickCompany(\''+c+'\')" style="padding:14px 16px;font-size:16px;font-weight:600;background:#1D9E75;color:#fff;border:none;border-radius:10px;cursor:pointer">'+c+'</button>'
+  ).join('');
+}
+
+function pickCompany(c){
+  try{localStorage.setItem('genba-c-param',c);}catch(e){}
+  // URLパラメータ付きで再読み込み（タイトル・PWAも正しい状態で起動）
+  location.replace(location.pathname+'?c='+encodeURIComponent(c));
+}
+parseCompanyParam();
+
+function initCompanyBar(){
+  try{const c=localStorage.getItem('genba-company');if(c&&(allowedCompanies.includes(c)||(c==='全社'&&isAdmin)))currentCompany=c;}catch(e){}
+  if(!currentCompany||(!allowedCompanies.includes(currentCompany)&&currentCompany!=='全社'))currentCompany=allowedCompanies[0];
+  if(currentCompany==='全社'&&!isAdmin)currentCompany=allowedCompanies[0];
+  if(companyBarHidden){
+    currentCompany=allowedCompanies[0];
+  }
+  renderCompanyBar();updateNoticeBar();
+}
+
+function renderCompanyBar(){
+  let html='';
+  if(companyBarHidden){
+    html=`<div class="company-chip active" style="pointer-events:none;background:#1D9E75;color:#fff">🏢 ${esc(currentCompany)}</div>`;
+  }else{
+    if(isAdmin)html+='<div class="company-chip'+(currentCompany==='全社'?' active':'')+'" onclick="switchCompany(\'全社\')">全社</div>';
+    html+=allowedCompanies.map(c=>`<div class="company-chip${c===currentCompany?' active':''}" onclick="switchCompany('${esc(c)}')">${esc(c)}</div>`).join('');
+  }
+  document.getElementById('company-bar').innerHTML=html;
+}
+
+function switchCompany(c){
+  if(c!=='全社'&&!allowedCompanies.includes(c))return;
+  if(c==='全社'&&!isAdmin)return;
+  currentCompany=c;
+  try{localStorage.setItem('genba-company',c);}catch(e){}
+  selectedMembers=[];editSelectedMembers=[];
+  renderCompanyBar();initMemberUI();renderList();updateAvailability();updateJimu();updateGenbaFilter();refreshGmTab();updateNoticeBar();
+  refreshVehicleSelect('s');
+  // 車確認タブを開いていれば再描画
+  if(typeof renderVehicleWeek==='function'){renderVehicleWeek();renderVehicleList();}
+}
+
+function updateNoticeBar(){
+  const isAll=currentCompany==='全社';
+  document.getElementById('notice-bar').classList.toggle('active',isAll);
+  const btn=document.getElementById('submit-btn');
+  if(btn){btn.disabled=isAll;btn.textContent=isAll?'会社を選択してください':'登録する';}
+}
+
+function filteredNippos(){
+  if(currentCompany==='全社')return allNippos;
+  return allNippos.filter(n=>n.company===currentCompany);
+}
+
+function switchTab(t){
+  if(t==='jimu'&&!isAdminMode)return;
+  const tabs=['list','avail','genba','vehicle','jimu'];
+  document.querySelectorAll('.tab').forEach((el,i)=>el.classList.toggle('active',tabs[i]===t));
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  const target=document.getElementById('screen-'+t);
+  if(target)target.classList.add('active');
+  if(t==='genba')refreshGmTab();
+  if(t==='list')renderList();
+  if(t==='input')initColorPicker('s',selectedColor.s);
+  if(t==='vehicle'){if(!vehicleWeekStart)initVehicleWeek();renderVehicleWeek();renderVehicleList();}
+  if(t==='avail')renderAvailList();
+  hapticTap();
+}
+
+function initMemberUI(){
+  ['s-leader','e-leader'].forEach(id=>{
+    const sel=document.getElementById(id);if(!sel)return;
+    const cur=sel.value;
+    sel.innerHTML='<option value="">代表者を選択してください</option>'+getShokunin().map(n=>`<option value="${esc(n)}"${n===cur?' selected':''}>${esc(n)}</option>`).join('');
+  });
+  const opSel=document.getElementById('s-operator');
+  if(opSel){
+    const opNames=getShokunin();
+    const cur=opSel.value||currentUsername;
+    opSel.innerHTML='<option value="">選択してください</option>'+opNames.map(n=>`<option value="${esc(n)}"${n===cur?' selected':''}>${esc(n)}</option>`).join('');
+    if(cur&&opNames.includes(cur))opSel.value=cur;
+  }
+  renderMemberChips('member-selector',selectedMembers,toggleMember);
+  renderMemberChips('e-member-selector',editSelectedMembers,toggleEditMember);
+  updateLocationSuggestions();
+}
+
+function renderMemberChips(id,arr,fn){
+  const el=document.getElementById(id);if(!el)return;
+  el.innerHTML=getShokunin().map((name,i)=>`<div class="member-chip${arr.includes(i)?' selected':''}" onclick="${fn.name}(${i})">${esc(name)}</div>`).join('');
+}
+
+function toggleMember(i){const x=selectedMembers.indexOf(i);if(x>=0)selectedMembers.splice(x,1);else selectedMembers.push(i);renderMemberChips('member-selector',selectedMembers,toggleMember);}
+function toggleEditMember(i){const x=editSelectedMembers.indexOf(i);if(x>=0)editSelectedMembers.splice(x,1);else editSelectedMembers.push(i);renderMemberChips('e-member-selector',editSelectedMembers,toggleEditMember);}
+
+// ========== 現場名サジェスト ==========
+function updateLocationSuggestions(){
+  // 入力フォーム用: select プルダウンを populate
+  populateLocationSelect('s');
+  populateLocationSelect('e');
+  // datalist も互換のため残す
+  const dl=document.getElementById('s-location-list');
+  if(dl){
+    const genba=getGenbaValue('s');
+    let pool=allNippos;
+    if(currentCompany!=='全社')pool=pool.filter(n=>n.company===currentCompany);
+    if(genba)pool=pool.filter(n=>n.genba===genba);
+    const locs=[...new Set(pool.filter(n=>n.loc).map(n=>n.loc))].sort();
+    dl.innerHTML=locs.map(l=>`<option value="${esc(l)}">`).join('');
+  }
+}
+
+// 現場名プルダウンの populate（選択された元請の既存現場を表示）
+// - 最近使った順（lastUsed 日付の降順）で並べる
+// - 検索ボックス（p+'-location-search'）に入力があれば部分一致で絞り込み
+// - 現場マスタで「完了」フラグが立っている現場は除外（現在編集中の値は残す）
+function populateLocationSelect(p){
+  const sel=document.getElementById(p+'-location-select');
+  if(!sel)return;
+  const genba=getGenbaValue(p);
+  let pool=(allNippos||[]).filter(n=>!n.isGhost);
+  if(currentCompany!=='全社')pool=pool.filter(n=>n.company===currentCompany);
+  if(genba)pool=pool.filter(n=>n.genba===genba);
+  // 現場名ごとに最新日を記録（最近使った順ソート用）
+  const lastUsed={};
+  pool.forEach(n=>{
+    if(!n.loc)return;
+    if(!lastUsed[n.loc]||(n.date||'')>lastUsed[n.loc])lastUsed[n.loc]=n.date||'';
+  });
+  // 完了済みの現場をマップに（{loc: true}）
+  const completedLocs={};
+  (allJobsites||[]).forEach(j=>{
+    if(j.completed)completedLocs[j.genba+'|||'+j.loc]=true;
+  });
+  // 現在の入力値は残す（編集中など）。完了除外は元請×現場で判定（loc単独だと別元請の同名現場まで巻き込む）
+  const currentVal0=(document.getElementById(p+'-location')||{}).value||'';
+  let locs=Object.keys(lastUsed).filter(l=>!(genba&&completedLocs[genba+'|||'+l]) || l===currentVal0);
+  const totalCount=locs.length;
+  // 検索フィルタ
+  const searchEl=document.getElementById(p+'-location-search');
+  const q=(searchEl?searchEl.value:'').trim().toLowerCase();
+  if(q)locs=locs.filter(l=>l.toLowerCase().includes(q));
+  // 最近使った順にソート（日付降順、同日は五十音順）
+  locs.sort((a,b)=>{
+    const d=(lastUsed[b]||'').localeCompare(lastUsed[a]||'');
+    return d!==0?d:a.localeCompare(b);
+  });
+  const currentVal=(document.getElementById(p+'-location')||{}).value||'';
+  const inList=locs.includes(currentVal);
+  // ラベルに件数を出す（絞り込み中はヒット件数/全件）
+  const labelTxt=q?`既存から選択（${locs.length}/${totalCount}件）`:`既存から選択（${totalCount}件・最近順）`;
+  let html=`<option value="">${esc(labelTxt)}</option>`;
+  locs.forEach(l=>{
+    html+=`<option value="${esc(l)}"${l===currentVal?' selected':''}>${esc(l)}</option>`;
+  });
+  html+='<option value="__new__" style="color:#1D9E75;font-weight:600">＋ 新規現場として追加</option>';
+  sel.innerHTML=html;
+  // 現在値がリストにない場合 → 新規入力モード扱い
+  const input=document.getElementById(p+'-location');
+  if(currentVal && !inList){
+    sel.value='__new__';
+    if(input)input.style.display='';
+  }else if(currentVal && inList){
+    if(input)input.style.display='none';
+  }else{
+    if(input){input.style.display='none';input.value='';}
+  }
+}
+
+// 検索ボックスの入力ハンドラ
+function onLocationSearch(p){
+  populateLocationSelect(p);
+}
+
+// 現場名プルダウン onchange
+function onLocationSelect(p){
+  const sel=document.getElementById(p+'-location-select');
+  const input=document.getElementById(p+'-location');
+  const sim=document.getElementById(p+'-loc-similar');
+  if(!sel||!input)return;
+  if(sel.value==='__new__'){
+    // 新規モード: 入力欄表示
+    input.style.display='';
+    input.value='';
+    input.focus();
+    if(sim){sim.style.display='none';sim.innerHTML='';}
+    showSimilarSuggest(p);
+  }else if(sel.value===''){
+    input.style.display='none';
+    input.value='';
+    if(sim){sim.style.display='none';sim.innerHTML='';}
+  }else{
+    // 既存選択
+    input.style.display='none';
+    input.value=sel.value;
+    if(sim){sim.style.display='none';sim.innerHTML='';}
+    if(p==='s')checkLocationJobNo();
+  }
+}
+
+// 新規入力中の類似現場サジェスト（案C: 入力ごに類似案件だす）
+function onLocationInput(p){
+  if(p==='s')checkLocationJobNo();
+  showSimilarSuggest(p);
+}
+
+function showSimilarSuggest(p){
+  const input=document.getElementById(p+'-location');
+  const sim=document.getElementById(p+'-loc-similar');
+  if(!input||!sim)return;
+  const val=input.value.trim();
+  if(!val||val.length<2){sim.style.display='none';sim.innerHTML='';return;}
+  const genba=getGenbaValue(p);
+  let pool=(allNippos||[]).filter(n=>!n.isGhost&&n.loc);
+  if(currentCompany!=='全社')pool=pool.filter(n=>n.company===currentCompany);
+  if(genba)pool=pool.filter(n=>n.genba===genba);
+  const locs=[...new Set(pool.map(n=>n.loc))];
+  // 類似度: 完全一致 / 部分一致 / 1〜2文字違い等
+  const matches=[];
+  locs.forEach(l=>{
+    if(l===val)return;
+    const lower1=l.toLowerCase(),lower2=val.toLowerCase();
+    if(lower1.includes(lower2)||lower2.includes(lower1)){
+      matches.push(l);
+    }
+  });
+  if(matches.length===0){sim.style.display='none';sim.innerHTML='';return;}
+  let html='<div style="font-weight:600;margin-bottom:4px">⚠️ 似ている既存の現場があります。同じ現場ならタップして選んでください:</div>';
+  matches.slice(0,5).forEach(m=>{
+    html+=`<button type="button" onclick="pickSimilarLoc('${p}','${esc(m).replace(/'/g,"&apos;")}')" style="display:block;width:100%;text-align:left;background:#fff;border:1px solid #FCD34D;border-radius:6px;padding:6px 10px;margin-top:4px;cursor:pointer;font-size:13px">📌 ${esc(m)}</button>`;
+  });
+  sim.innerHTML=html;
+  sim.style.display='';
+}
+
+function pickSimilarLoc(p,loc){
+  const sel=document.getElementById(p+'-location-select');
+  const input=document.getElementById(p+'-location');
+  const sim=document.getElementById(p+'-loc-similar');
+  if(sel)sel.value=loc;
+  if(input){input.style.display='none';input.value=loc;}
+  if(sim){sim.style.display='none';sim.innerHTML='';}
+  if(p==='s')checkLocationJobNo();
+}
+
+function checkLocationJobNo(){
+  const hint=document.getElementById('s-jobno-hint');
+  const divWrap=document.getElementById('s-jobno-div-wrap');
+  if(!hint)return;
+  if(!PRIMARY_COMPANY||currentCompany!==PRIMARY_COMPANY){hint.style.display='none';if(divWrap)divWrap.style.display='none';return;}
+  const genba=getGenbaValue('s');
+  const loc=document.getElementById('s-location').value.trim();
+  if(loc&&genba){
+    const match=allNippos.find(n=>n.genba===genba&&n.loc===loc&&n.jobNo);
+    if(match){
+      hint.textContent='既存の工番 '+match.jobNo+' を使用します';
+      hint.style.display='block';
+      if(divWrap)divWrap.style.display='none';
+    }else{
+      hint.style.display='none';
+      if(divWrap){
+        const leader=document.getElementById('s-leader').value;
+        const member=allMembers.find(m=>m.name===leader&&m.company===currentCompany);
+        const ldDiv=(member&&member.division)||'ICT';
+        const sel=document.getElementById('s-jobno-division');
+        if(sel&&!sel.dataset.userSet)sel.value=DIVISIONS.includes(ldDiv)?ldDiv:'ICT';
+        divWrap.style.display='block';
+      }
+    }
+  }else{
+    hint.style.display='none';
+    if(divWrap)divWrap.style.display='none';
+  }
+}
+
+// ========== インラインマスタ追加 ==========
+function openSettingsFor(selectId){
+  settingsOpenedForSelect=selectId;
+  openSettings();
+}
+function openGenbaSettingsFor(selectId){
+  genbaSettingsOpenedForSelect=selectId;
+  openGenbaSettings();
+}
+
+// ========== 事業部管理 ==========
+async function updateMemberDivision(name,division){
+  try{
+    const res=await fetch(getGasUrl(),{method:'POST',body:JSON.stringify({action:'update_member_division',name,company:currentCompany,division}),headers:{'Content-Type':'text/plain'}});
+    const json=await res.json();
+    if(json.status==='ok'){
+      const m=allMembers.find(x=>x.name===name&&x.company===currentCompany);
+      if(m)m.division=division;
+    }else alert('エラー：'+json.message);
+  }catch(e){alert('更新エラー：'+e.message);}
+}
+
+function getDateRange(startStr,endStr){
+  const dates=[];
+  const s=startStr.split('-').map(Number);
+  const start=new Date(s[0],s[1]-1,s[2]);
+  if(!endStr){dates.push(startStr);return dates;}
+  const e=endStr.split('-').map(Number);
+  const end=new Date(e[0],e[1]-1,e[2]);
+  for(let d=new Date(start);d<=end;d.setDate(d.getDate()+1)){
+    dates.push(d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'));
+  }
+  return dates;
+}
+
+async function submitNippo(){
+  if(isSubmitting)return;
+  if(currentCompany==='全社'){showAlert('会社を選択してから登録してください','err');return;}
+  const operator=document.getElementById('s-operator').value;
+  if(!operator){showAlert('操作者（あなたの名前）を選択してください','err');return;}
+  const dateStart=document.getElementById('s-date').value;
+  const dateEnd=document.getElementById('s-date-end').value;
+  const genba=getGenbaValue('s');
+  let loc=document.getElementById('s-location').value.trim();
+  const start=document.getElementById('s-start').value;
+  const end=document.getElementById('s-end').value;
+  const kosu=1.0;
+  const memo=document.getElementById('s-memo').value;
+  const leader=document.getElementById('s-leader').value;
+  const mode=modeState.s;
+  const yasumi=mode==='yasumi';
+  const yakin=mode==='yakin';
+  const souko=mode==='souko';
+  const yotei=mode==='yotei';
+  const effectiveKosu=yasumi?0:kosu;
+  if(!dateStart){showAlert('開始日は必須です','err');return;}
+  if(dateEnd&&dateEnd<dateStart){showAlert('終了日が開始日より前です。日付を確認してください','err');return;}
+  const _wtVal=(document.getElementById('s-work-type')||{}).value||'';
+  if(!_wtVal){showAlert('作業区分を選択してください','err');return;}
+  if(!yasumi && !souko && !genba){showAlert('元請名は必須です（休み・倉庫モード時は不要）','err');return;}
+  // 倉庫モードのとき、倉庫作業タスクが1つ以上選ばれているか（メモ欄に格納）
+  if(souko){
+    const tasks=parseSoukoTasks(memo);
+    if(tasks.length===0){
+      showAlert('倉庫作業を1つ以上選んでください','err');
+      const err=document.getElementById('s-souko-tasks-error');
+      if(err)err.style.display='';
+      return;
+    }
+  }
+  if(!leader){showAlert('代表者を選択してください','err');return;}
+  // 異常値検出
+  if(!yasumi){
+    if(!yakin&&start&&end&&start>=end){showAlert('退勤時刻が出勤時刻以下です。時間を確認してください','err');return;}
+  }
+
+  // 現場名の重複チェック（既存と完全一致しない場合、類似候補を確認）
+  if(loc){
+    const exact=allNippos.some(n=>n.genba===genba&&n.loc===loc);
+    if(!exact){
+      isSubmitting=true;
+      const result=await confirmSimilarLoc(genba,loc);
+      isSubmitting=false;
+      if(result.action==='cancel')return;
+      if(result.action==='existing'){
+        loc=result.loc;
+        document.getElementById('s-location').value=loc;
+        checkLocationJobNo();
+      }
+    }
+  }
+
+  const members=[{name:leader,role:'代表'}];
+  const shokunin=getShokunin();
+  selectedMembers.forEach(i=>{if(shokunin[i]!==leader)members.push({name:shokunin[i],role:'同行'});});
+  const color=selectedColor.s||CAL_COLORS[0];
+  const dates=getDateRange(dateStart,dateEnd);
+
+  const conflicts=[];
+  dates.forEach(date=>{
+    members.forEach(m=>{
+      const existing=allNippos.filter(n=>!n.isGhost&&n.date===date&&n.name===m.name&&n.company===currentCompany&&!n.yotei);
+      if(existing.length>0&&!conflicts.find(c=>c.date===date&&c.name===m.name)){
+        conflicts.push({date,name:m.name});
+      }
+    });
+  });
+  if(conflicts.length>0){
+    const lines=conflicts.map(c=>`・${formatDate(c.date)}　${c.name}`).join('\n');
+    const proceed=confirm(`以下のメンバーは既に予定が入っています。\n\n${lines}\n\nそれでも登録しますか？`);
+    if(!proceed)return;
+  }
+
+  const jobNoDivision=(PRIMARY_COMPANY&&currentCompany===PRIMARY_COMPANY&&document.getElementById('s-jobno-div-wrap').style.display!=='none')?document.getElementById('s-jobno-division').value:'';
+  const workType=(document.getElementById('s-work-type')||{}).value||'現場作業';
+  const vehicle=(document.getElementById('s-vehicle')||{}).value||'';
+  // 車両のダブルブッキング再チェック（他のユーザーが同時に登録した場合の保険）
+  // 複数車両に対応: 選択された各車両を 1 台ずつチェック
+  if(vehicle){
+    const selectedVehs=parseVehicles(vehicle);
+    const conflictPairs=[];
+    dates.forEach(d=>{
+      allNippos.forEach(n=>{
+        if(n.isGhost||n.date!==d||!n.vehicle)return;
+        parseVehicles(n.vehicle).forEach(v=>{
+          if(selectedVehs.includes(v)&&!conflictPairs.find(c=>c.date===d&&c.vehicle===v)){
+            conflictPairs.push({date:d,vehicle:v});
+          }
+        });
+      });
+    });
+    if(conflictPairs.length>0){
+      const lines=conflictPairs.map(c=>`・${formatDate(c.date)}　${c.vehicle}`).join('\n');
+      const proceed=confirm(`以下の車両は既に予約があります:\n${lines}\nそれでも登録しますか？`);
+      if(!proceed){isSubmitting=false;return;}
+    }
+  }
+  const rows=[];
+  dates.forEach(date=>{
+    const dayId=uuid();
+    members.forEach(m=>{rows.push({date,genba,loc,name:m.name,role:m.role,start,end,kosu:effectiveKosu,memo,yakin,yasumi,yotei,souko,company:currentCompany,id:dayId,updatedBy:operator,color,jobNoDivision,workType,vehicle});});
+  });
+  const btn=document.getElementById('submit-btn');
+  isSubmitting=true;btn.textContent=`送信中（${dates.length}日分）...`;btn.disabled=true;
+  try{
+    const res=await fetch(getGasUrl(),{method:'POST',body:JSON.stringify({action:'add',rows}),headers:{'Content-Type':'text/plain'}});
+    const json=await res.json();
+    if(json.status==='ok'){
+      hapticSuccess();
+      showAlert(`✓ ${dates.length}日×${members.length}人分を登録しました！（${currentCompany}）`,'ok');
+      document.getElementById('s-genba').value='';document.getElementById('s-genba-select').value='';document.getElementById('s-genba').style.display='none';document.getElementById('s-location').value='';
+      document.getElementById('s-memo').value='';document.getElementById('s-leader').value='';
+      document.getElementById('s-date-end').value='';
+      const _v=document.getElementById('s-vehicle');if(_v)_v.value='';
+      refreshVehicleSelect('s');
+      const _wt=document.getElementById('s-work-type');if(_wt)_wt.value='';
+      applyWorkTypeLock('s');
+      const _ls=document.getElementById('s-location-select');if(_ls)_ls.value='';
+      const _li=document.getElementById('s-location');if(_li){_li.value='';_li.style.display='none';}
+      const _lse=document.getElementById('s-location-search');if(_lse)_lse.value='';
+      const _lsim=document.getElementById('s-loc-similar');if(_lsim){_lsim.style.display='none';_lsim.innerHTML='';}
+      document.getElementById('s-jobno-hint').style.display='none';
+      document.getElementById('s-jobno-div-wrap').style.display='none';
+      const _jnSel=document.getElementById('s-jobno-division');if(_jnSel){delete _jnSel.dataset.userSet;_jnSel.value='ICT';}
+      applyMode('s','');selectedMembers=[];renderMemberChips('member-selector',selectedMembers,toggleMember);
+      await loadData();
+    }else showAlert('エラー：'+json.message,'err');
+  }catch(err){showAlert('送信エラー：'+err.message,'err');}
+  isSubmitting=false;btn.textContent='登録する';btn.disabled=(currentCompany==='全社');
+}
+
+function showAlert(msg,type){
+  const el=document.getElementById('s-alert');
+  el.className='alert alert-'+(type==='err'?'err':'ok');
+  el.textContent=msg;el.style.display='block';
+  if(type!=='err')setTimeout(()=>el.style.display='none',3000);
+}
+
+function formatTime(v){
+  if(!v&&v!==0)return'';const s=String(v);
+  if(s.match(/^\d{1,2}:\d{2}/))return s.slice(0,5);
+  if(s.includes('T')){const d=new Date(s);if(!isNaN(d)){const j=new Date(d.getTime()+9*3600000);return String(j.getUTCHours()).padStart(2,'0')+':'+String(j.getUTCMinutes()).padStart(2,'0');}}
+  return'';
+}
+
+function parseWorkDate(v){
+  if(!v)return'';const s=String(v);
+  if(/^\d{4}-\d{2}-\d{2}/.test(s))return s.slice(0,10);
+  if(s.includes('T')){const d=new Date(s);if(!isNaN(d)){const j=new Date(d.getTime()+9*3600000);return j.getUTCFullYear()+'-'+String(j.getUTCMonth()+1).padStart(2,'0')+'-'+String(j.getUTCDate()).padStart(2,'0');}}
+  const d=new Date(s);if(!isNaN(d))return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  return s;
+}
+
+function parseRows(rows,company){
+  return(rows||[]).map(r=>({
+    id:String(r['ID']||''),timestamp:String(r['登録日時']||''),
+    date:parseWorkDate(r['作業日']),genba:String(r['元請名']||''),loc:String(r['現場名']||''),
+    name:String(r['氏名']||''),role:String(r['役割']||''),
+    start:formatTime(r['出勤']),end:formatTime(r['退勤']),
+    kosu:parseFloat(r['人工'])||0,memo:String(r['メモ']||''),
+    yakin:String(r['夜勤']||'')==='夜勤',yasumi:String(r['夜勤']||'')==='休み',
+    yotei:String(r['夜勤']||'')==='予定',souko:String(r['夜勤']||'')==='倉庫',
+    company:String(r['会社']||'')||company,
+    updatedBy:String(r['更新者']||''),
+    color:String(r['色']||''),
+    division:String(r['事業部']||''),
+    jobNo:String(r['工番']||''),
+    workType:String(r['作業区分']||''),
+    vehicle:String(r['車両']||'')
+  }));
+}
+
+// 退勤<出勤の日付跨ぎレコードに対し、翌日に表示用の「ゴースト」レコードを生成（クライアント側のみ・人工計算は除外）
+function generateGhosts(nippos){
+  const ghosts=[];
+  nippos.forEach(n=>{
+    if(n.yasumi||n.yotei)return;
+    if(!n.start||!n.end)return;
+    if(n.end==='00:00')return; // 0時ちょうど終わりは day1 で完結扱い
+    if(n.start<=n.end)return;
+    const p=n.date.split('-').map(Number);
+    const d=new Date(p[0],p[1]-1,p[2]+1);
+    const nextDate=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+    ghosts.push(Object.assign({},n,{
+      id:'__GHOST__'+n.id,
+      date:nextDate,
+      start:'00:00',
+      end:n.end,
+      isGhost:true,
+      originalId:n.id,
+      originalDate:n.date,
+      originalStart:n.start
+    }));
+  });
+  return ghosts;
+}
+
+async function loadData(){
+  setLoading(true);
+  try{
+    const res=await fetch(GAS_URL+'?t='+Date.now());
+    const json=await res.json();
+    allNippos=parseRows(json.rows,'');
+    // 日付跨ぎ予定の翌日表示用ゴーストを追加
+    allNippos=allNippos.concat(generateGhosts(allNippos));
+    if(json.members)allMembers=json.members;
+    if(json.genbaMaster){
+      if(json.genbaMaster.length>0&&typeof json.genbaMaster[0]==='object')allGenbaMaster=json.genbaMaster;
+      else allGenbaMaster=json.genbaMaster.map(g=>({name:g,company:'共通'}));
+    }
+    if(json.jobsites)allJobsites=json.jobsites;
+    initMemberUI();initGenbaSelects();renderList();updateAvailability();updateJimu();updateGenbaFilter();refreshGmTab();
+    updateLocationSuggestions();
+    refreshVehicleSelect('s');
+    checkUsername();
+  }catch(e){console.error(e);}
+  setLoading(false);
+}
+
+// 登録日時(ISO or 「YYYY/M/D HH:MM:SS」)を「YYYY/M/D HH:MM」にローカルタイム整形
+function formatTimestamp(s){
+  if(!s)return '';
+  const d=new Date(s);
+  if(isNaN(d))return String(s);
+  const y=d.getFullYear();
+  const m=d.getMonth()+1;
+  const dd=d.getDate();
+  const h=String(d.getHours()).padStart(2,'0');
+  const mn=String(d.getMinutes()).padStart(2,'0');
+  return `${y}/${m}/${dd} ${h}:${mn}`;
+}
+
+// タイムスタンプ文字列を比較可能な数値に変換（無効値は 0）
+// ja-JP形式「2026/5/9 12:34:56」を文字列辞書順で比較すると 5/9 と 5/21 で順序が壊れるため、必ず Date 経由で比較する
+function tsValue(s){
+  if(!s)return 0;
+  const d=new Date(s);
+  return isNaN(d)?0:d.getTime();
+}
+
+function groupNippos(nippos){
+  const groups={};
+  nippos.forEach(n=>{
+    const key=n.id||`${n.date}__${n.genba}__${n.loc}__${n.start}__${n.end}__${n.kosu}__${n.memo}__${n.yakin}__${n.yasumi}__${n.yotei}__${n.souko}`;
+    if(!groups[key])groups[key]={date:n.date,genba:n.genba,loc:n.loc,start:n.start,end:n.end,kosu:n.kosu,memo:n.memo,yakin:n.yakin,yasumi:n.yasumi,yotei:n.yotei,souko:n.souko,company:n.company,members:[],ids:[],updatedBy:n.updatedBy,timestamp:n.timestamp||'',color:n.color,jobNo:n.jobNo,workType:n.workType||'',vehicle:n.vehicle||'',isGhost:!!n.isGhost,originalId:n.originalId||''};
+    groups[key].members.push({name:n.name,role:n.role});
+    if(n.id)groups[key].ids.push(n.id);
+    // グループ内で最新の登録日時 + その時の更新者を採用（Date 経由で比較）
+    if(n.timestamp && tsValue(n.timestamp)>tsValue(groups[key].timestamp)){
+      groups[key].timestamp=n.timestamp;
+      if(n.updatedBy)groups[key].updatedBy=n.updatedBy;
+    }
+  });
+  return Object.values(groups).sort((a,b)=>a.date.localeCompare(b.date));
+}
+
+function formatDate(d){
+  if(!d)return'';const p=d.split('-');const dt=new Date(p[0],p[1]-1,p[2]);
+  const days=['日','月','火','水','木','金','土'];
+  return`${dt.getMonth()+1}/${dt.getDate()}(${days[dt.getDay()]})`;
+}
+
+let calSelectedDate='';
+
+function renderList(){
+  if(!listMonth){const now=new Date();listMonth=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');}
+  const lp=listMonth.split('-');
+  document.getElementById('list-month-label').textContent=lp[0]+'年'+Number(lp[1])+'月';
+  renderCalendar();
+}
+
+function changeListMonth(delta){
+  const p=listMonth.split('-');
+  const d=new Date(Number(p[0]),Number(p[1])-1+delta,1);
+  listMonth=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+  currentDateFilter='';renderList();
+}
+
+function filterDate(d){currentDateFilter=d;renderList();}
+
+function renderCalendar(){
+  const lp=listMonth.split('-');
+  const year=Number(lp[0]),month=Number(lp[1])-1;
+  // 月曜始まりに変換 (Sun=0→6, Mon=1→0, ..., Sat=6→5)
+  const firstDay=(new Date(year,month,1).getDay()+6)%7;
+  const daysInMonth=new Date(year,month+1,0).getDate();
+  const groups=groupNippos(filteredNippos()).filter(g=>g.date.startsWith(listMonth));
+  const byDate={};
+  groups.forEach(g=>{if(!byDate[g.date])byDate[g.date]=[];byDate[g.date].push(g);});
+  const today=new Date();
+  const todayStr=today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0')+'-'+String(today.getDate()).padStart(2,'0');
+  const DOW=['月','火','水','木','金','土','日'];
+  let html='<div class="cal-header">';
+  DOW.forEach(d=>{html+=`<div class="cal-header-cell">${d}</div>`;});
+  html+='</div><div class="cal-grid">';
+  for(let i=0;i<firstDay;i++)html+='<div class="cal-cell empty"></div>';
+  for(let d=1;d<=daysInMonth;d++){
+    const dateStr=year+'-'+String(month+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+    const dow=new Date(year,month,d).getDay();
+    const dayGroups=byDate[dateStr]||[];
+    const isToday=dateStr===todayStr;
+    let cls='cal-cell';
+    if(dow===0)cls+=' sun';
+    if(dow===6)cls+=' sat';
+    if(isToday)cls+=' today';
+    const MAX_SHOW=5;
+    const shown=dayGroups.slice(0,MAX_SHOW);
+    const overflow=dayGroups.length-MAX_SHOW;
+    let eventsHtml='';
+    shown.forEach(g=>{
+      const type=g.yakin?'yakin':g.yasumi?'yasumi':g.souko?'souko':g.yotei?'yotei':'';
+      const defaultColorMap={yakin:'#2C2C5A',yasumi:'#E8384F',souko:'#8B5E3C',yotei:'#3B82F6','':'#1D9E75'};
+      const bg=g.color||defaultColorMap[type]||'#1D9E75';
+      // 休み/倉庫は元請名の有無に関わらず統一表示。倉庫はタスク内容を表示
+      // タスク格納先は メモ欄が現行仕様。旧データで loc に入っているケースは loc にフォールバック
+      let label;
+      if(g.yasumi)label='🏖️ 休み';
+      else if(g.souko){const t=g.memo||g.loc||'';label=t?`🏭 ${t}`:'🏭 倉庫';}
+      else{
+        label=g.loc||g.genba;
+        if(!label){
+          if(g.yotei)label='📌 予定';
+          else if(g.yakin)label='🌙 夜勤';
+          else label='（現場名なし）';
+        }
+      }
+      eventsHtml+=`<div class="cal-event" style="background:${bg}">${esc(label)}</div>`;
+    });
+    if(overflow>0)eventsHtml+=`<div class="cal-overflow">+${overflow}</div>`;
+    html+=`<div class="${cls}" onclick="openCalDay('${dateStr}')">
+      <div class="cal-day-num">${d}</div>
+      ${eventsHtml}
+    </div>`;
+  }
+  html+='</div>';
+  document.getElementById('cal-grid').innerHTML=html;
+}
+
+function openCalDay(dateStr){
+  calSelectedDate=dateStr;
+  const lp=dateStr.split('-');
+  const dt=new Date(Number(lp[0]),Number(lp[1])-1,Number(lp[2]));
+  const DOW=['日','月','火','水','木','金','土'];
+  document.getElementById('cal-day-title').textContent=
+    `${Number(lp[1])}/${Number(lp[2])}（${DOW[dt.getDay()]}）の予定`;
+  const groups=groupNippos(filteredNippos()).filter(g=>g.date===dateStr);
+  const con=document.getElementById('cal-day-content');
+  if(groups.length===0){
+    con.innerHTML='<div class="empty" style="padding:20px">予定がありません</div>';
+  }else{
+    con.innerHTML=groups.map((g,idx)=>{
+      const memberTags=g.members.map(m=>`<span class="member-tag ${m.role==='代表'?'tag-leader':'tag-member'}">${esc(m.name)}</span>`).join('');
+      const color=g.color||'#1D9E75';
+      const modeBadges=(g.souko?'🏭':'')+(g.yakin?'🌙':'')+(g.yasumi?'🏖️':'')+(g.yotei?'📌':'');
+      const ghostMarker=g.isGhost?`<span class="ghost-marker">⏰前日から</span>`:'';
+      const badgesHtml=modeBadges?` <span class="card-mode-badges">${modeBadges}</span>`:'';
+      // 休み/倉庫は元請名を表示せず「休み」「倉庫」で統一
+      let titleText;
+      if(g.yasumi)titleText='休み';
+      else if(g.souko)titleText='倉庫';
+      else{
+        titleText=esc(g.genba)+(g.loc?'　'+esc(g.loc):'');
+        if(!titleText){
+          if(g.yotei)titleText='予定';
+          else if(g.yakin)titleText='夜勤';
+        }
+      }
+      const titleLine=`${ghostMarker}${titleText}${badgesHtml}`;
+      const wtMap={'現場作業':'⛑️','現調':'📐','着打ち':'🔨','カギ借用':'🗝️','材料引き取り':'📦','材料引取・検品':'📦','撤去品返却':'♻️','前乗り':'🚗','倉庫作業':'🏭','休み':'🏖️','その他':'📋'};
+      const wt=g.workType||'現場作業';
+      const wtEmoji=wtMap[wt]||'🏷️';
+      const wtCls=wt==='現場作業'?'worktype-chip worktype-default':'worktype-chip';
+      const wtChip=(g.yasumi||g.souko||g.yotei)?'':`<span class="${wtCls}">${wtEmoji} ${esc(wt)}</span>`;
+      const vehicleLine=g.vehicle?`<div class="yotei-vehicle">🚗 ${esc(g.vehicle)}</div>`:'';
+      return`<div class="yotei-card yotei-card-min${g.isGhost?' yotei-card-ghost':''}" style="border-left:4px solid ${esc(color)}" onclick="openEventDetail(${idx})">
+        <div class="yotei-card-title">${titleLine}${wtChip}</div>
+        <div class="yotei-members">${memberTags}</div>
+        ${vehicleLine}
+      </div>`;
+    }).join('');
+  }
+  document.getElementById('cal-day-modal').classList.add('active');
+}
+
+function getCalDayGroups(){
+  return groupNippos(filteredNippos()).filter(g=>g.date===calSelectedDate);
+}
+
+// ゴースト → 元のレコードのグループを取得（編集・削除・コピーは元の予定を操作する）
+function findOriginalGroup(originalId){
+  if(!originalId)return null;
+  const matching=allNippos.filter(n=>!n.isGhost&&n.id===originalId);
+  if(matching.length===0)return null;
+  return groupNippos(matching)[0]||null;
+}
+
+// ===== 予定詳細フルスクリーン =====
+let detailGroups=[],detailIdx=-1;
+function openEventDetail(idx){
+  detailGroups=getCalDayGroups();
+  if(idx<0||idx>=detailGroups.length)return;
+  detailIdx=idx;
+  renderEventDetail();
+  document.getElementById('cal-detail-modal').classList.add('active');
+}
+function closeEventDetail(){
+  document.getElementById('cal-detail-modal').classList.remove('active');
+}
+function renderEventDetail(){
+  let g=detailGroups[detailIdx];if(!g)return;
+  // ゴーストの場合は元の予定のデータで描画
+  if(g.isGhost){
+    const orig=findOriginalGroup(g.originalId);
+    if(orig)g=orig;
+  }
+  const lp=g.date.split('-').map(Number);
+  const dt=new Date(lp[0],lp[1]-1,lp[2]);
+  const DOW=['日','月','火','水','木','金','土'];
+  const isCross=g.start&&g.end&&g.start>g.end;
+  const dateStr=`${lp[0]}年${lp[1]}月${lp[2]}日 (${DOW[dt.getDay()]})${isCross?' ➜ 翌日':''}`;
+  const color=g.color||'#1D9E75';
+  document.getElementById('detail-fs-title').textContent=`${detailIdx+1} / ${detailGroups.length}`;
+  const leader=g.members.find(m=>m.role==='代表');
+  const fellows=g.members.filter(m=>m.role==='同行');
+  const memberLine=(leader?`<b>${esc(leader.name)}</b>（代表）`:'')+(fellows.length>0?(leader?'<br>':'')+fellows.map(m=>esc(m.name)).join('　'):'');
+  const totalKo=(g.kosu*g.members.length).toFixed(1);
+  const badges=[];
+  if(g.souko)badges.push('🏭 倉庫');
+  if(g.yakin)badges.push('🌙 夜勤');
+  if(g.yasumi)badges.push('🏖️ 休み');
+  if(g.yotei)badges.push('📌 予定');
+  const wt=g.workType&&g.workType!=='現場作業'?g.workType:'現場作業';
+  // 休み/倉庫は元請名を表示せず統一ラベル。倉庫はタスク内容を表示
+  // タスク格納先は メモ欄が現行仕様。旧データで loc に入っているケースは loc にフォールバック
+  let detailTitle;
+  if(g.yasumi)detailTitle='🏖️ 休み';
+  else if(g.souko){const t=g.memo||g.loc||'';detailTitle=t?`🏭 ${esc(t)}`:'🏭 倉庫';}
+  else{
+    detailTitle=esc(g.genba);
+    if(!detailTitle){
+      if(g.yotei)detailTitle='📌 予定';
+      else if(g.yakin)detailTitle='🌙 夜勤';
+    }
+  }
+  // 行の工番列が空でも、現場マスタに発行済みの工番があれば表示する
+  // （工番発行会社以外の代表が登録すると行の工番が空のまま保存されるため）
+  const masterJobNo=(!g.jobNo&&g.genba&&g.loc)?(((allJobsites||[]).find(j=>j.genba===g.genba&&j.loc===g.loc)||{}).jobNo||''):'';
+  const displayJobNo=g.jobNo||masterJobNo;
+  const html=`
+    <div class="detail-title-row">
+      <div class="detail-color-bar" style="background:${esc(color)}"></div>
+      <div class="detail-title">${detailTitle}</div>
+    </div>
+    <div class="detail-period">${dateStr}　${esc(g.start||'')}〜${esc(g.end||'')}</div>
+    ${badges.length?`<div style="padding:0 0 8px 18px">${badges.map(b=>`<span style="display:inline-block;padding:3px 10px;border-radius:12px;font-size:12px;background:#f2f2f7;margin-right:6px">${b}</span>`).join('')}</div>`:''}
+    ${g.loc&&!g.souko?`<div class="detail-row"><div class="detail-row-icon">📍</div><div class="detail-row-content"><div class="detail-row-label">現場名</div>${esc(g.loc)}</div></div>`:''}
+    <div class="detail-row"><div class="detail-row-icon">🏷️</div><div class="detail-row-content"><div class="detail-row-label">作業区分</div>${esc(wt)}</div></div>
+    <div class="detail-row"><div class="detail-row-icon">👥</div><div class="detail-row-content"><div class="detail-row-label">メンバー（${g.members.length}人）</div>${memberLine||'—'}</div></div>
+    ${(g.yasumi||g.yotei)?'':`<div class="detail-row"><div class="detail-row-icon">🔢</div><div class="detail-row-content"><div class="detail-row-label">人工</div>${totalKo}</div></div>`}
+    ${g.company?`<div class="detail-row"><div class="detail-row-icon">🏢</div><div class="detail-row-content"><div class="detail-row-label">会社</div>${esc(g.company)}</div></div>`:''}
+    ${g.vehicle?`<div class="detail-row"><div class="detail-row-icon">🚗</div><div class="detail-row-content"><div class="detail-row-label">車両</div>${esc(g.vehicle)}</div></div>`:''}
+    ${displayJobNo?`<div class="detail-row"><div class="detail-row-icon">🔖</div><div class="detail-row-content"><div class="detail-row-label">工番</div>${esc(displayJobNo)}${masterJobNo&&!g.jobNo?` <span style="color:#888;font-size:11px;margin-left:6px">（現場マスタ参照）</span>`:''}</div></div>`:''}
+    ${g.memo&&!g.souko?`<div class="detail-row"><div class="detail-row-icon">📝</div><div class="detail-row-content"><div class="detail-row-label">メモ</div>${linkify(esc(g.memo).replace(/\n/g,'<br>'))}</div></div>`:''}
+    ${g.updatedBy||g.timestamp?`<div class="detail-row"><div class="detail-row-icon">🔄</div><div class="detail-row-content"><div class="detail-row-label">最終更新</div>${esc(g.updatedBy||'')}${g.timestamp?` <span style="color:#666;font-size:12px;margin-left:6px">${esc(formatTimestamp(g.timestamp))}</span>`:''}</div></div>`:''}
+    ${renderSiteCompletionRow_(g)}
+    <div style="text-align:center;color:#bbb;font-size:11px;padding:20px 0 8px">← 右スワイプで戻る　/　左スワイプで次の予定 →</div>
+  `;
+  document.getElementById('detail-fs-body').innerHTML=html;
+}
+function shiftDetailEvent(delta){
+  if(!detailGroups.length)return;
+  // 同じ日の中で次/前の予定にループ
+  detailIdx=(detailIdx+delta+detailGroups.length)%detailGroups.length;
+  renderEventDetail();
+}
+
+// 現場の「完了」状態を表示＋切替UIを返す
+function renderSiteCompletionRow_(g){
+  if(!g.genba||!g.loc)return ''; // 元請・現場名がそろっている時だけ
+  // この予定の代表者または管理者ならボタン表示
+  const leader=(g.members||[]).find(m=>m.role==='代表');
+  const me=getUsername();
+  const isLeader=leader&&me&&leader.name===me;
+  const canMark=isAdmin||isLeader;
+  const j=(allJobsites||[]).find(x=>x.genba===g.genba&&x.loc===g.loc);
+  const completed=!!(j&&j.completed);
+  if(completed){
+    const btn=canMark?`<button class="btn btn-secondary btn-sm" onclick="toggleSiteCompletion_('${esc(g.genba)}','${esc(g.loc)}',false)" style="margin-left:8px;font-size:12px;padding:4px 10px">進行中に戻す</button>`:'';
+    return `<div class="detail-row"><div class="detail-row-icon">✅</div><div class="detail-row-content"><div class="detail-row-label">現場ステータス</div><span style="color:#1D9E75;font-weight:600">完了済み</span>${btn}</div></div>`;
+  }
+  if(canMark){
+    return `<div class="detail-row"><div class="detail-row-icon">🚧</div><div class="detail-row-content"><div class="detail-row-label">現場ステータス</div>進行中<button class="btn btn-secondary btn-sm" onclick="toggleSiteCompletion_('${esc(g.genba)}','${esc(g.loc)}',true)" style="margin-left:8px;font-size:12px;padding:4px 10px">この現場を完了にする</button></div></div>`;
+  }
+  return ''; // マーク権限ない一般ユーザーには非表示
+}
+
+async function toggleSiteCompletion_(genba,loc,completed){
+  const msg=completed?`「${loc}」を完了にしますか？\n以後、新規の予定登録で現場プルダウンに出なくなります。\n（工番・既存の日報・集計には影響しません）`:`「${loc}」を進行中に戻しますか？`;
+  if(!confirm(msg))return;
+  // 押下中表示：button を少しの間だけ無効化（連打防止）
+  const detailBody=document.getElementById('detail-fs-body');
+  if(detailBody)detailBody.querySelectorAll('button').forEach(b=>{if(b.textContent.includes('完了にする')||b.textContent.includes('進行中に戻す'))b.disabled=true;});
+  try{
+    const res=await fetch(getGasUrl(),{method:'POST',body:JSON.stringify({action:'update_site_status',genba,loc,completed,updatedBy:getUsername()}),headers:{'Content-Type':'text/plain'}});
+    const json=await res.json();
+    if(json.status==='ok'){
+      // 楽観更新 → サーバとも同期するため loadData() で全体リフレッシュ
+      const j=(allJobsites||[]).find(x=>x.genba===genba&&x.loc===loc);
+      if(j)j.completed=completed;
+      else allJobsites.push({genba,loc,jobNo:'',completed});
+      hapticSuccess();
+      // 詳細画面を即時に再描画（楽観更新の結果が見える）
+      if(typeof renderEventDetail==='function')renderEventDetail();
+      showAlert(completed?`✓ 「${loc}」を完了にしました`:`↩ 「${loc}」を進行中に戻しました`,'ok');
+      // サーバから最新データを再取得して全体を再描画
+      await loadData();
+      // 詳細画面がまだ開いていれば最終データで再描画
+      if(document.getElementById('cal-detail-modal')?.classList.contains('active')&&typeof renderEventDetail==='function')renderEventDetail();
+    }else alert('エラー：'+(json.message||'不明'));
+  }catch(e){alert('エラー：'+e.message);}
+}
+function editFromDetail(){
+  const idx=detailIdx;
+  let g=detailGroups[idx];
+  closeEventDetail();
+  if(g&&g.isGhost){
+    const orig=findOriginalGroup(g.originalId);
+    if(orig){openEditModal(0,[orig]);return;}
+  }
+  // 日別モーダルが既に開いている前提で、その index で編集モーダルを開く
+  openEditModal(idx,detailGroups);
+}
+function copyFromDetail(){
+  const idx=detailIdx;
+  let g=detailGroups[idx];
+  closeEventDetail();
+  document.getElementById('cal-day-modal').classList.remove('active');
+  if(g&&g.isGhost){
+    const orig=findOriginalGroup(g.originalId);
+    if(orig){copyGroupToInput_(orig);return;}
+  }
+  calCopyToInput(idx);
+}
+async function deleteFromDetail(){
+  let g=detailGroups[detailIdx];if(!g)return;
+  if(g.isGhost){
+    const orig=findOriginalGroup(g.originalId);
+    if(orig)g=orig;
+  }
+  if(!confirm('この日報を削除しますか？'))return;
+  setLoading(true);
+  try{
+    const res=await fetch(getGasUrl(),{method:'POST',body:JSON.stringify({action:'delete',ids:[...new Set(g.ids)],updatedBy:getUsername()}),headers:{'Content-Type':'text/plain'}});
+    const json=await res.json();
+    if(json.status==='ok'){
+      closeEventDetail();
+      document.getElementById('cal-day-modal').classList.remove('active');
+      await loadData();
+    }else alert('削除エラー：'+json.message);
+  }catch(e){alert('削除エラー：'+e.message);}
+  setLoading(false);
+}
+
+function calGoToInput(){
+  document.getElementById('cal-day-modal').classList.remove('active');
+  switchTab('input');
+  if(calSelectedDate)document.getElementById('s-date').value=calSelectedDate;
+}
+
+function calCopyToInput(idx){
+  const groups=getCalDayGroups();let g=groups[idx];if(!g)return;
+  if(g.isGhost){const orig=findOriginalGroup(g.originalId);if(orig)g=orig;}
+  copyGroupToInput_(g);
+}
+function copyGroupToInput_(g){
+  if(!g)return;
+  document.getElementById('cal-day-modal').classList.remove('active');
+  switchTab('input');
+  setGenbaValue('s',g.genba);
+  document.getElementById('s-location').value=g.loc||'';
+  document.getElementById('s-start').value=g.start||'08:00';
+  document.getElementById('s-end').value=g.end||'17:00';
+  document.getElementById('s-memo').value=g.memo||'';
+  const sWT=document.getElementById('s-work-type');if(sWT)sWT.value=g.workType||'現場作業';
+  document.getElementById('s-date').value=calSelectedDate;
+  document.getElementById('s-date-end').value='';
+  const mode=g.souko?'souko':g.yakin?'yakin':g.yasumi?'yasumi':g.yotei?'yotei':'';
+  applyMode('s',mode);
+  // 作業区分が入った状態でゲート機構を再評価し、登録ボタンを有効化
+  applyWorkTypeLock('s');
+  // 車両もコピー（コピー元の chip 選択状態をそのまま反映）
+  const _v=document.getElementById('s-vehicle');if(_v)_v.value=g.vehicle||'';
+  refreshVehicleSelect('s');
+  const leader=g.members.find(m=>m.role==='代表');
+  document.getElementById('s-leader').value=leader?leader.name:'';
+  selectedMembers=[];
+  const shokunin=getShokunin();
+  g.members.filter(m=>m.role==='同行').forEach(m=>{const i=shokunin.indexOf(m.name);if(i>=0)selectedMembers.push(i);});
+  renderMemberChips('member-selector',selectedMembers,toggleMember);
+  initColorPicker('s', g.color||CAL_COLORS[0]);
+  updateLocationSuggestions();checkLocationJobNo();
+  showAlert('予定をコピーしました。日付を確認して登録してください。','ok');
+}
+
+function calOpenEdit(idx){
+  const groups=getCalDayGroups();
+  let g=groups[idx];if(!g)return;
+  document.getElementById('cal-day-modal').classList.remove('active');
+  if(g.isGhost){
+    const orig=findOriginalGroup(g.originalId);
+    if(orig){openEditModal(0,[orig]);return;}
+  }
+  openEditModal(idx,groups);
+}
+
+async function calDeleteGroup(idx){
+  const groups=getCalDayGroups();
+  let g=groups[idx];if(!g)return;
+  if(g.isGhost){const orig=findOriginalGroup(g.originalId);if(orig)g=orig;}
+  if(!confirm('この日報を削除しますか？'))return;
+  const ids=[...new Set(g.ids)];
+  setLoading(true);
+  try{
+    const res=await fetch(getGasUrl(),{method:'POST',body:JSON.stringify({action:'delete',ids,updatedBy:getUsername()}),headers:{'Content-Type':'text/plain'}});
+    const json=await res.json();
+    if(json.status==='ok'){
+      if(json.deleted===0)alert('削除対象が見つかりませんでした。');
+      document.getElementById('cal-day-modal').classList.remove('active');
+      await loadData();
+    }else{alert('削除エラー：'+json.message);await loadData();}
+  }catch(e){alert('削除エラー：'+e.message);await loadData();}
+  setLoading(false);
+}
+
+// renderListWithDate は旧UI用の死コードだったため削除（list-container 要素は存在しない）
+
+function getDisplayedGroups(){
+  const groups=groupNippos(filteredNippos()).filter(g=>g.date.startsWith(listMonth));
+  return currentDateFilter?groups.filter(g=>g.date===currentDateFilter):groups;
+}
+
+async function deleteGroup(idx){
+  const groups=getDisplayedGroups();
+  const g=groups[idx];if(!g)return;
+  if(!confirm('この日報を削除しますか？'))return;
+  const ids=[...new Set(g.ids)];
+  setLoading(true);
+  try{
+    const res=await fetch(getGasUrl(),{method:'POST',body:JSON.stringify({action:'delete',ids,updatedBy:getUsername()}),headers:{'Content-Type':'text/plain'}});
+    const json=await res.json();
+    if(json.status==='ok'){
+      if(json.deleted===0)alert('削除対象が見つかりませんでした。');
+      await loadData();
+    }else{alert('削除エラー：'+json.message);await loadData();}
+  }catch(e){alert('削除エラー：'+e.message);await loadData();}
+  setLoading(false);
+}
+
+function copyToInput(idx){
+  const groups=getDisplayedGroups();const g=groups[idx];if(!g)return;
+  switchTab('input');
+  setGenbaValue('s',g.genba);
+  document.getElementById('s-location').value=g.loc||'';
+  document.getElementById('s-start').value=g.start||'08:00';
+  document.getElementById('s-end').value=g.end||'17:00';
+  document.getElementById('s-memo').value=g.memo||'';
+  document.getElementById('s-date').value='';document.getElementById('s-date-end').value='';
+  const mode=g.souko?'souko':g.yakin?'yakin':g.yasumi?'yasumi':g.yotei?'yotei':'';
+  applyMode('s',mode);
+  const leader=g.members.find(m=>m.role==='代表');
+  document.getElementById('s-leader').value=leader?leader.name:'';
+  selectedMembers=[];
+  const shokunin=getShokunin();
+  g.members.filter(m=>m.role==='同行').forEach(m=>{const i=shokunin.indexOf(m.name);if(i>=0)selectedMembers.push(i);});
+  renderMemberChips('member-selector',selectedMembers,toggleMember);
+  updateLocationSuggestions();checkLocationJobNo();
+  showAlert('予定をコピーしました。日付を入力して登録してください。','ok');
+}
+
+// 編集モーダルの作業日変更時：車両のダブルブッキング判定を新しい日付で再評価
+function onEditDateChange(){
+  const v=document.getElementById('e-date').value;
+  if(!v)return;
+  window._editDates=[v];
+  if(typeof refreshVehicleSelect==='function')refreshVehicleSelect('e');
+}
+
+function openEditModal(idx,groupsOverride){
+  bulkEditMode=false;
+  const groups=groupsOverride!==null?groupsOverride:getDisplayedGroups();
+  const g=groups[idx];if(!g)return;
+  editIds=[...new Set(g.ids)];editDate=g.date;
+  window._editIds=editIds;window._editDates=[editDate];
+  // 単一編集時は作業日フィールドを表示・入力可能に
+  const dateWrap=document.getElementById('e-date-wrap');if(dateWrap)dateWrap.style.display='';
+  document.getElementById('e-date').value=g.date||'';
+  setGenbaValue('e',g.genba);
+  document.getElementById('e-location').value=g.loc||'';
+  populateLocationSelect('e');
+  document.getElementById('e-start').value=g.start||'08:00';
+  document.getElementById('e-end').value=g.end||'17:00';
+  document.getElementById('e-memo').value=g.memo||'';
+  const eWT=document.getElementById('e-work-type');if(eWT)eWT.value=g.workType||'現場作業';
+  applyWorkTypeLock('e');
+  renderVehicleOptions('e-vehicle',[editDate],g.vehicle||'',editIds);
+  document.getElementById('edit-title').textContent=`編集：${formatDate(g.date)} ${g.genba}`;
+  const mode=g.souko?'souko':g.yakin?'yakin':g.yasumi?'yasumi':g.yotei?'yotei':'';
+  applyMode('e',mode);
+  const leader=g.members.find(m=>m.role==='代表');
+  document.getElementById('e-leader').value=leader?leader.name:'';
+  editSelectedMembers=[];
+  const shokunin=getShokunin();
+  g.members.filter(m=>m.role==='同行').forEach(m=>{const i=shokunin.indexOf(m.name);if(i>=0)editSelectedMembers.push(i);});
+  renderMemberChips('e-member-selector',editSelectedMembers,toggleEditMember);
+  initColorPicker('e', g.color||CAL_COLORS[0]);
+  document.getElementById('edit-modal').classList.add('active');
+}
+
+function closeEditModal(){document.getElementById('edit-modal').classList.remove('active');}
+
+async function saveEdit(){
+  const btn=document.getElementById('save-edit-btn');
+  if(btn.disabled)return;
+  const genba=getGenbaValue('e');
+  const loc=document.getElementById('e-location').value.trim();
+  const start=document.getElementById('e-start').value;
+  const end=document.getElementById('e-end').value;
+  const kosu=1.0;
+  const memo=document.getElementById('e-memo').value;
+  const leader=document.getElementById('e-leader').value;
+  const mode=modeState.e;
+  const yasumi=mode==='yasumi';const yakin=mode==='yakin';const souko=mode==='souko';const yotei=mode==='yotei';
+  const effectiveKosu=yasumi?0:kosu;
+  const _eWtVal=(document.getElementById('e-work-type')||{}).value||'';
+  if(!_eWtVal){alert('作業区分を選択してください');return;}
+  if(!yasumi && !souko && !genba){alert('元請名は必須です（休み・倉庫モード時は不要）');return;}
+  // 倉庫モードのとき、倉庫作業タスクが1つ以上選ばれているか（メモ欄に格納）
+  if(souko){
+    const tasks=parseSoukoTasks(memo);
+    if(tasks.length===0){
+      alert('倉庫作業を1つ以上選んでください');
+      const err=document.getElementById('e-souko-tasks-error');
+      if(err)err.style.display='';
+      return;
+    }
+  }
+  if(!leader){alert('代表者を選択してください');return;}
+  if(!getUsername()){alert('編集者の名前が未設定です。右下の「変更」から名前を設定してください');openUsernameModal();return;}
+  if(!yasumi){
+    if(!yakin&&start&&end&&start>=end){alert('退勤時刻が出勤時刻以下です。時間を確認してください');return;}
+  }
+  const members=[{name:leader,role:'代表'}];
+  const shokunin=getShokunin();
+  editSelectedMembers.forEach(i=>{if(shokunin[i]!==leader)members.push({name:shokunin[i],role:'同行'});});
+  // 全社ビューでの編集は元レコードの会社を保持（空にすると会社別ビューから予定が消える）
+  const _origRec=allNippos.find(n=>!n.isGhost&&(editIds||[]).includes(n.id));
+  const company=currentCompany==='全社'?(_origRec?String(_origRec.company||''):''):currentCompany;
+  const color=selectedColor.e||CAL_COLORS[0];
+  const workType=(document.getElementById('e-work-type')||{}).value||'現場作業';
+  const vehicle=(document.getElementById('e-vehicle')||{}).value||'';
+  // 一括編集時は元の日付配列を維持、単一編集時はフィールドから読み取る
+  let dates;
+  if(bulkEditMode){
+    dates=editDates;
+  }else{
+    const editedDate=document.getElementById('e-date').value;
+    if(!editedDate){alert('作業日が空です');return;}
+    dates=[editedDate];
+  }
+  const excludeIds=new Set(editIds||[]);
+  // メンバー被りチェック（編集中グループ自身は除外、予定モードレコードは除外）
+  if(!yotei){
+    const conflicts=[];
+    dates.forEach(date=>{
+      members.forEach(m=>{
+        const existing=allNippos.filter(n=>!n.isGhost&&!excludeIds.has(n.id)&&n.date===date&&n.name===m.name&&!n.yotei&&(company?n.company===company:true));
+        if(existing.length>0&&!conflicts.find(c=>c.date===date&&c.name===m.name)){
+          conflicts.push({date,name:m.name});
+        }
+      });
+    });
+    if(conflicts.length>0){
+      const lines=conflicts.map(c=>`・${formatDate(c.date)}　${c.name}`).join('\n');
+      const proceed=confirm(`以下のメンバーは既に他の予定が入っています。\n\n${lines}\n\nそれでも保存しますか？`);
+      if(!proceed)return;
+    }
+  }
+  // 車両ダブルブッキング再チェック（編集中グループのIDは除外）
+  // 複数車両に対応
+  if(vehicle){
+    const selectedVehs=parseVehicles(vehicle);
+    const conflictPairs=[];
+    dates.forEach(d=>{
+      allNippos.forEach(n=>{
+        if(n.isGhost||n.date!==d||!n.vehicle||excludeIds.has(n.id))return;
+        parseVehicles(n.vehicle).forEach(v=>{
+          if(selectedVehs.includes(v)&&!conflictPairs.find(c=>c.date===d&&c.vehicle===v)){
+            conflictPairs.push({date:d,vehicle:v});
+          }
+        });
+      });
+    });
+    if(conflictPairs.length>0){
+      const lines=conflictPairs.map(c=>`・${formatDate(c.date)}　${c.vehicle}`).join('\n');
+      const proceed=confirm(`以下の車両は他の予定で予約があります:\n${lines}\nそれでも保存しますか？`);
+      if(!proceed){return;}
+    }
+  }
+  const rows=[];
+  dates.forEach(date=>{
+    const newId=uuid();
+    members.forEach(m=>{rows.push({date,genba,loc,name:m.name,role:m.role,start,end,kosu:effectiveKosu,memo,yakin,yasumi,yotei,souko,company,id:newId,updatedBy:getUsername(),color,workType,vehicle});});
+  });
+  btn.textContent='保存中...';btn.disabled=true;
+  try{
+    const res=await fetch(getGasUrl(),{method:'POST',body:JSON.stringify({action:'update',ids:editIds,rows}),headers:{'Content-Type':'text/plain'}});
+    const json=await res.json();
+    if(json.status==='ok'){closeEditModal();bulkEditMode=false;await loadData();renderGmList();}
+    else alert('保存エラー：'+json.message);
+  }catch(e){alert('保存エラー：'+e.message);}
+  btn.textContent='保存する';btn.disabled=false;
+}
+
+// ========== 現場別管理 ==========
+// 探し方モード: 'genba' | 'person' | 'pin'
+let gmMode = 'genba';
+let pinFilterMode = 'overdue'; // 'overdue' | 'month'
+
+function refreshGmTab() {
+  if (gmMode === 'genba') updateGmSelects();
+  else if (gmMode === 'person') renderPersonFilter();
+  else if (gmMode === 'pin') renderPinFilter();
+}
+
+function setGmMode(mode) {
+  gmMode = mode;
+  ['genba','person','pin'].forEach(m => {
+    const btn = document.getElementById('gm-mode-' + m);
+    if (btn) btn.classList.toggle('active', m === mode);
+  });
+  const cards = {
+    genba: document.getElementById('gm-filter-genba'),
+    person: document.getElementById('gm-filter-person'),
+    pin: document.getElementById('gm-filter-pin'),
+  };
+  Object.entries(cards).forEach(([k, el]) => {
+    if (el) el.style.display = k === mode ? '' : 'none';
+  });
+  document.getElementById('gm-list-wrap').style.display = 'none';
+  refreshGmTab();
+}
+
+function getActiveGmGroups() {
+  if (gmMode === 'person') return getPersonGroups();
+  if (gmMode === 'pin') return getPinGroups();
+  return getGmGroups();
+}
+
+function updateGmSelects(){
+  const nippos=filteredNippos().filter(n=>!n.isGhost);
+  const genbas=[...new Set(nippos.map(n=>n.genba).filter(Boolean))].sort();
+  const gSel=document.getElementById('gm-genba');
+  const curG=gSel.value;
+  gSel.innerHTML='<option value="">元請を選択</option>'+genbas.map(g=>`<option value="${esc(g)}"${g===curG?' selected':''}>${esc(g)}</option>`).join('');
+  // 月セレクタを populate
+  const mSel=document.getElementById('gm-month');
+  if(mSel){
+    const curM=mSel.value;
+    const months=[...new Set(nippos.map(n=>(n.date||'').slice(0,7)).filter(Boolean))].sort().reverse();
+    mSel.innerHTML='<option value="">全期間</option>'+months.map(m=>{
+      const p=m.split('-');
+      return `<option value="${m}"${m===curM?' selected':''}>${p[0]}年${Number(p[1])}月</option>`;
+    }).join('');
+  }
+  onGmGenbaChange();
+}
+
+function onGmGenbaChange(){
+  const genba=document.getElementById('gm-genba').value;
+  const month=(document.getElementById('gm-month')||{}).value||'';
+  let nippos=filteredNippos().filter(n=>!n.isGhost&&n.genba===genba);
+  if(month)nippos=nippos.filter(n=>(n.date||'').startsWith(month));
+  const locs=[...new Set(nippos.map(n=>n.loc).filter(Boolean))].sort();
+  const hasNoLoc=nippos.some(n=>!n.loc);
+  const lSel=document.getElementById('gm-location');
+  const curL=lSel.value;
+  let opts='<option value="">現場を選択</option>';
+  opts+=locs.map(l=>`<option value="${esc(l)}"${l===curL?' selected':''}>${esc(l)}</option>`).join('');
+  if(hasNoLoc)opts+=`<option value="__noloc__"${curL==='__noloc__'?' selected':''}>（現場名なし）</option>`;
+  lSel.innerHTML=opts;
+  if(locs.length===1&&!hasNoLoc)lSel.value=locs[0];
+  renderGmList();
+}
+
+function getGmGroups(){
+  const genba=document.getElementById('gm-genba').value;
+  const loc=document.getElementById('gm-location').value;
+  const month=(document.getElementById('gm-month')||{}).value||'';
+  if(!genba||!loc)return[];
+  let nippos=loc==='__noloc__'
+    ?filteredNippos().filter(n=>!n.isGhost&&n.genba===genba&&!n.loc)
+    :filteredNippos().filter(n=>!n.isGhost&&n.genba===genba&&n.loc===loc);
+  if(month)nippos=nippos.filter(n=>(n.date||'').startsWith(month));
+  return groupNippos(nippos).sort((a,b)=>a.date.localeCompare(b.date));
+}
+
+function renderGmList(){
+  const groups=getActiveGmGroups();
+  const wrap=document.getElementById('gm-list-wrap');
+  if(groups.length===0){wrap.style.display='none';return;}
+  wrap.style.display='block';
+  document.getElementById('gm-select-all-btn').textContent='全選択';
+  document.getElementById('gm-day-list').innerHTML=groups.map((g,idx)=>{
+    const memberNames=g.members.map(m=>m.name).join('・');
+    const badges=[];
+    if(g.yakin)badges.push('<span class="yakin-badge">🌙夜勤</span>');
+    if(g.yasumi)badges.push('<span class="yasumi-badge">🏖️休み</span>');
+    if(g.souko)badges.push('<span class="souko-badge">🏭倉庫</span>');
+    if(g.yotei)badges.push('<span class="yotei-badge-tag">📌予定</span>');
+    const updaterHtml = g.updatedBy ? `<span style="font-size:11px;color:#999;margin-left:8px;">🔄 更新: ${esc(g.updatedBy)}</span>` : '';
+    const _overdueStyle=(gmMode==='pin'&&pinFilterMode==='overdue')?' style="border-left:3px solid #ff3b30;padding-left:12px"':'';
+    return`<div class="gm-day-row"${_overdueStyle}>
+      <input type="checkbox" class="gm-day-check" data-idx="${idx}" onchange="updateGmDeleteBar()">
+      <div class="gm-day-info">
+        <div class="gm-day-date">${formatDate(g.date)}</div>
+        <div class="gm-day-members">${esc(memberNames)}${updaterHtml}</div>
+        ${badges.length?`<div style="margin-top:4px">${badges.join('')}</div>`:''}
+      </div>
+      <button class="gm-edit-btn" onclick="openEditModal(${idx},getActiveGmGroups())">編集</button>
+    </div>`;
+  }).join('');
+  updateGmDeleteBar();
+}
+
+function updateGmDeleteBar(){
+  const checked=document.querySelectorAll('.gm-day-check:checked');
+  const bar=document.getElementById('gm-delete-bar');
+  const btn=document.getElementById('gm-delete-btn');
+  bar.classList.toggle('active',checked.length>0);
+  if(btn)btn.textContent=`チェックした${checked.length}日を削除`;
+}
+
+function toggleGmSelectAll(){
+  const checkboxes=document.querySelectorAll('.gm-day-check');
+  const allChecked=[...checkboxes].every(c=>c.checked);
+  checkboxes.forEach(c=>c.checked=!allChecked);
+  document.getElementById('gm-select-all-btn').textContent=allChecked?'全選択':'全解除';
+  updateGmDeleteBar();
+}
+
+function openBulkEditModal(){
+  const groups=getActiveGmGroups();
+  const checked=[...document.querySelectorAll('.gm-day-check:checked')];
+  if(checked.length===0)return;
+  const targets=checked.map(c=>groups[Number(c.dataset.idx)]).filter(Boolean);
+  if(targets.length===0)return;
+  bulkEditMode=true;
+  editIds=[...new Set(targets.flatMap(g=>g.ids))];
+  editDates=[...new Set(targets.map(g=>g.date))];
+  window._editIds=editIds;window._editDates=editDates;
+  // 一括編集時は作業日フィールドを非表示（複数日まとめて単一日付に変えるのは UI として複雑なので未対応）
+  const dateWrap=document.getElementById('e-date-wrap');if(dateWrap)dateWrap.style.display='none';
+  const g=targets[0];
+  setGenbaValue('e',g.genba);
+  document.getElementById('e-location').value=g.loc||'';
+  populateLocationSelect('e');
+  document.getElementById('e-start').value=g.start||'08:00';
+  document.getElementById('e-end').value=g.end||'17:00';
+  document.getElementById('e-memo').value=g.memo||'';
+  const eWT=document.getElementById('e-work-type');if(eWT)eWT.value=g.workType||'現場作業';
+  applyWorkTypeLock('e');
+  renderVehicleOptions('e-vehicle',editDates,g.vehicle||'',editIds);
+  const dateLabels=targets.map(t=>formatDate(t.date)).join('、');
+  document.getElementById('edit-title').textContent=`一括編集：${targets.length}日分（${dateLabels}）`;
+  const mode=g.souko?'souko':g.yakin?'yakin':g.yasumi?'yasumi':g.yotei?'yotei':'';
+  applyMode('e',mode);
+  const leader=g.members.find(m=>m.role==='代表');
+  document.getElementById('e-leader').value=leader?leader.name:'';
+  editSelectedMembers=[];
+  const shokunin=getShokunin();
+  g.members.filter(m=>m.role==='同行').forEach(m=>{const i=shokunin.indexOf(m.name);if(i>=0)editSelectedMembers.push(i);});
+  renderMemberChips('e-member-selector',editSelectedMembers,toggleEditMember);
+  initColorPicker('e', g.color||CAL_COLORS[0]);
+  document.getElementById('edit-modal').classList.add('active');
+}
+
+async function deleteGmChecked(){
+  const groups=getActiveGmGroups();
+  const checked=[...document.querySelectorAll('.gm-day-check:checked')];
+  if(checked.length===0)return;
+  const targets=checked.map(c=>groups[Number(c.dataset.idx)]).filter(Boolean);
+  const dateList=targets.map(g=>formatDate(g.date)).join('、');
+  if(!confirm(`以下の日程を削除します。\n${dateList}\n\nよろしいですか？`))return;
+  const ids=[...new Set(targets.flatMap(g=>g.ids))];
+  setLoading(true);
+  try{
+    const res=await fetch(getGasUrl(),{method:'POST',body:JSON.stringify({action:'delete',ids,updatedBy:getUsername()}),headers:{'Content-Type':'text/plain'}});
+    const json=await res.json();
+    if(json.status==='ok'){await loadData();renderGmList();}
+    else alert('削除エラー：'+json.message);
+  }catch(e){alert('削除エラー：'+e.message);}
+  setLoading(false);
+}
+
+// ========== 人で探す ==========
+function renderPersonFilter() {
+  const pSel = document.getElementById('gm-person');
+  if (pSel) {
+    const shokunin = getShokunin();
+    const curP = pSel.value;
+    pSel.innerHTML = '<option value="">人を選択</option>' +
+      shokunin.map(s => `<option value="${esc(s)}"${s===curP?' selected':''}>${esc(s)}</option>`).join('');
+  }
+  const mSel = document.getElementById('gm-person-month');
+  if (mSel) {
+    const nippos = filteredNippos().filter(n => !n.isGhost);
+    const months = [...new Set(nippos.map(n => (n.date||'').slice(0,7)).filter(Boolean))].sort().reverse();
+    const curM = mSel.value;
+    mSel.innerHTML = '<option value="">全期間</option>' + months.map(m => {
+      const p = m.split('-');
+      return `<option value="${m}"${m===curM?' selected':''}>${p[0]}年${Number(p[1])}月</option>`;
+    }).join('');
+  }
+  renderGmList();
+}
+
+function getPersonGroups() {
+  const person = (document.getElementById('gm-person')||{}).value || '';
+  const month  = (document.getElementById('gm-person-month')||{}).value || '';
+  if (!person) return [];
+  let nippos = filteredNippos().filter(n => !n.isGhost);
+  if (month) nippos = nippos.filter(n => (n.date||'').startsWith(month));
+  return groupNippos(nippos)
+    .filter(g => g.members.some(m => m.name === person))
+    .sort((a, b) => a.date.localeCompare(b.date));
+}
+
+// ========== 予定ピン一覧 ==========
+function renderPinFilter() {
+  const mSel = document.getElementById('gm-pin-month');
+  if (mSel) {
+    const nippos = filteredNippos().filter(n => !n.isGhost && n.yotei);
+    const months = [...new Set(nippos.map(n => (n.date||'').slice(0,7)).filter(Boolean))].sort().reverse();
+    const curM = mSel.value;
+    mSel.innerHTML = '<option value="">月を選択</option>' + months.map(m => {
+      const p = m.split('-');
+      return `<option value="${m}"${m===curM?' selected':''}>${p[0]}年${Number(p[1])}月</option>`;
+    }).join('');
+  }
+  renderGmList();
+}
+
+function setPinFilterMode(mode) {
+  pinFilterMode = mode;
+  ['overdue','month'].forEach(m => {
+    const btn = document.getElementById('gm-pin-' + m + '-btn');
+    if (btn) btn.classList.toggle('active', m === mode);
+  });
+  const mSel = document.getElementById('gm-pin-month');
+  if (mSel) mSel.style.display = mode === 'month' ? '' : 'none';
+  renderGmList();
+}
+
+function getPinGroups() {
+  const _t = new Date();
+  const today = _t.getFullYear() + '-' + String(_t.getMonth()+1).padStart(2,'0') + '-' + String(_t.getDate()).padStart(2,'0');
+  let nippos = filteredNippos().filter(n => !n.isGhost && n.yotei);
+  if (pinFilterMode === 'overdue') {
+    nippos = nippos.filter(n => (n.date||'') < today);
+  } else {
+    const month = (document.getElementById('gm-pin-month')||{}).value || '';
+    if (month) nippos = nippos.filter(n => (n.date||'').startsWith(month));
+  }
+  return groupNippos(nippos).sort((a, b) => a.date.localeCompare(b.date));
+}
+
+// ========== 空き確認 ==========
+let availWeekStart=null;
+function getMonday(d){const dt=new Date(d);const day=dt.getDay();const diff=dt.getDate()-day+(day===0?-6:1);return new Date(dt.getFullYear(),dt.getMonth(),diff);}
+function initAvailWeek(){availWeekStart=getMonday(new Date());renderAvailWeek();renderAvailList();}
+function changeAvailWeek(delta){availWeekStart=new Date(availWeekStart.getFullYear(),availWeekStart.getMonth(),availWeekStart.getDate()+delta*7);renderAvailWeek();renderAvailList();hapticTap();}
+
+function renderAvailWeek(){
+  const days=[];
+  for(let i=0;i<7;i++){
+    const d=new Date(availWeekStart.getFullYear(),availWeekStart.getMonth(),availWeekStart.getDate()+i);
+    days.push({date:d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'),label:(d.getMonth()+1)+'/'+d.getDate(),dow:d.getDay()});
+  }
+  const dayNames=['日','月','火','水','木','金','土'];
+  document.getElementById('avail-week-label').textContent=days[0].label+'〜'+days[6].label;
+  const cn=filteredNippos();const shokunin=getShokunin();
+  if(shokunin.length===0){document.getElementById('avail-weekly').innerHTML='<div style="color:#999;text-align:center;padding:20px">更新ボタンを押してください</div>';return;}
+  let html='<table class="week-table"><thead><tr><th></th>';
+  days.forEach(d=>{const cls=d.dow===0?' class="week-sun"':d.dow===6?' class="week-sat"':'';html+=`<th${cls}>${d.label}<br>${dayNames[d.dow]}</th>`;});
+  html+='</tr></thead><tbody>';
+  shokunin.forEach(name=>{
+    html+='<tr><td class="name-col">'+esc(name)+'</td>';
+    days.forEach(d=>{
+      const entry=cn.find(n=>n.name===name&&n.date===d.date);
+      let cls='free',label='○';
+      if(entry){if(entry.yasumi){cls='yasumi';label='休';}else if(entry.souko){cls='souko';label='倉';}else{cls='busy';label='出';}}
+      const dowCls=d.dow===0?' week-sun':d.dow===6?' week-sat':'';
+      html+=`<td class="${dowCls}"><div class="week-cell ${cls}">${label}</div></td>`;
+    });
+    html+='</tr>';
+  });
+  html+='</tbody></table>';
+  document.getElementById('avail-weekly').innerHTML=html;
+}
+
+function updateAvailability(){renderAvailWeek();renderAvailList();if(vehicleWeekStart)renderVehicleWeek();renderVehicleList();}
+
+// スマホ用: 空き確認をリスト形式で表示
+function renderAvailList(){
+  if(!availWeekStart)return;
+  const el=document.getElementById('avail-list');if(!el)return;
+  const days=[];
+  for(let i=0;i<7;i++){
+    const d=new Date(availWeekStart.getFullYear(),availWeekStart.getMonth(),availWeekStart.getDate()+i);
+    days.push({date:d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'),m:d.getMonth()+1,dd:d.getDate(),dow:d.getDay()});
+  }
+  const dayNames=['日','月','火','水','木','金','土'];
+  const cn=filteredNippos();const shokunin=getShokunin();
+  let html='';
+  days.forEach(d=>{
+    const buckets={busy:[],yasumi:[],souko:[],free:[]};
+    shokunin.forEach(name=>{
+      const e=cn.find(n=>n.name===name&&n.date===d.date);
+      if(!e)buckets.free.push(name);
+      else if(e.yasumi)buckets.yasumi.push(name);
+      else if(e.souko)buckets.souko.push(name);
+      else buckets.busy.push(name);
+    });
+    const dowCls=d.dow===0?' sun':d.dow===6?' sat':'';
+    const totalBusy=buckets.busy.length+buckets.yasumi.length+buckets.souko.length;
+    html+=`<div class="day-block"><div class="day-block-header"><div class="day-block-date${dowCls}">${d.m}/${d.dd}（${dayNames[d.dow]}）</div><div class="day-block-count">${totalBusy} / ${shokunin.length} 人</div></div>`;
+    const rows=[];
+    if(buckets.busy.length>0)rows.push({label:'出勤',cls:'status-busy',names:buckets.busy});
+    if(buckets.yasumi.length>0)rows.push({label:'休み',cls:'status-yasumi',names:buckets.yasumi});
+    if(buckets.souko.length>0)rows.push({label:'倉庫',cls:'status-souko',names:buckets.souko});
+    if(buckets.free.length>0)rows.push({label:'空き',cls:'status-free',names:buckets.free});
+    rows.forEach(r=>{
+      html+=`<div class="day-row"><div class="day-row-main">${r.names.map(esc).join('、')}</div><div class="day-row-status ${r.cls}">${r.label} ${r.names.length}</div></div>`;
+    });
+    html+='</div>';
+  });
+  el.innerHTML=html;
+}
+
+// スマホ用: 車確認をリスト形式で表示
+function renderVehicleList(){
+  if(!vehicleWeekStart)return;
+  const el=document.getElementById('vehicle-list');if(!el)return;
+  const list=getCompanyVehicles();
+  if(list.length===0){
+    el.innerHTML='<div style="color:#999;text-align:center;padding:20px;font-size:13px">この会社に登録された車両はありません</div>';
+    return;
+  }
+  const vehicleNames=new Set(list.map(v=>v.name));
+  const days=[];
+  for(let i=0;i<7;i++){
+    const d=new Date(vehicleWeekStart.getFullYear(),vehicleWeekStart.getMonth(),vehicleWeekStart.getDate()+i);
+    days.push({date:d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'),m:d.getMonth()+1,dd:d.getDate(),dow:d.getDay()});
+  }
+  const dayNames=['日','月','火','水','木','金','土'];
+  // n.vehicle にカンマ区切りで複数台入る可能性があるので、後段で展開してフィルタする
+  const cn=(allNippos||[]).filter(n=>!n.isGhost&&n.vehicle&&parseVehicles(n.vehicle).some(v=>vehicleNames.has(v)));
+  let html='';
+  days.forEach(d=>{
+    // この日の予約をグループ化（1 予定で複数車両のときは各車両ごとに行を出す）
+    const dayEntries=cn.filter(n=>n.date===d.date);
+    const byKey={};
+    dayEntries.forEach(e=>{
+      parseVehicles(e.vehicle).forEach(veh=>{
+        if(!vehicleNames.has(veh))return;
+        const key=(e.id||'')+'__'+veh;
+        if(!byKey[key])byKey[key]={vehicle:veh,leader:'',members:[],genba:e.genba,loc:e.loc};
+        if(e.role==='代表')byKey[key].leader=e.name;
+        byKey[key].members.push(e.name);
+      });
+    });
+    const groups=Object.values(byKey);
+    const dowCls=d.dow===0?' sun':d.dow===6?' sat':'';
+    const usedCount=new Set(groups.map(g=>g.vehicle)).size;
+    html+=`<div class="day-block"><div class="day-block-header"><div class="day-block-date${dowCls}">${d.m}/${d.dd}（${dayNames[d.dow]}）</div><div class="day-block-count">${usedCount} / ${list.length} 台</div></div>`;
+    if(groups.length===0){
+      html+='<div class="day-row" style="color:#999;font-size:13px">予約なし</div>';
+    }else{
+      groups.sort((a,b)=>list.findIndex(v=>v.name===a.vehicle)-list.findIndex(v=>v.name===b.vehicle));
+      groups.forEach(g=>{
+        const rep=g.leader||(g.members[0]||'');
+        const dest=g.loc||g.genba||'';
+        html+=`<div class="day-row"><div class="day-row-main">🚗 ${esc(g.vehicle)}<div class="day-row-sub">${esc(rep)}${dest?' / '+esc(dest):''}</div></div><div class="day-row-status status-busy">予約</div></div>`;
+      });
+    }
+    html+='</div>';
+  });
+  el.innerHTML=html;
+}
+
+// ========== 車確認 ==========
+let vehicleWeekStart=null;
+function initVehicleWeek(){vehicleWeekStart=getMonday(new Date());}
+function changeVehicleWeek(delta){if(!vehicleWeekStart)initVehicleWeek();vehicleWeekStart=new Date(vehicleWeekStart.getFullYear(),vehicleWeekStart.getMonth(),vehicleWeekStart.getDate()+delta*7);renderVehicleWeek();renderVehicleList();hapticTap();}
+function renderVehicleWeek(){
+  if(!vehicleWeekStart)return;
+  const days=[];
+  for(let i=0;i<7;i++){
+    const d=new Date(vehicleWeekStart.getFullYear(),vehicleWeekStart.getMonth(),vehicleWeekStart.getDate()+i);
+    days.push({date:d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'),label:(d.getMonth()+1)+'/'+d.getDate(),dow:d.getDay()});
+  }
+  const dayNames=['日','月','火','水','木','金','土'];
+  document.getElementById('vehicle-week-label').textContent=days[0].label+'〜'+days[6].label;
+  const list=getCompanyVehicles();
+  if(list.length===0){
+    document.getElementById('vehicle-weekly').innerHTML='<div style="color:#999;text-align:center;padding:20px;font-size:13px">この会社に登録された車両はありません</div>';
+    return;
+  }
+  const cn=(allNippos||[]).filter(n=>!n.isGhost&&n.vehicle);
+  let html='<table class="week-table veh-table"><thead><tr><th></th>';
+  days.forEach(d=>{const cls=d.dow===0?' class="week-sun"':d.dow===6?' class="week-sat"':'';html+=`<th${cls}>${d.label}<br>${dayNames[d.dow]}</th>`;});
+  html+='</tr></thead><tbody>';
+  list.forEach(v=>{
+    html+='<tr><td class="name-col">'+esc(v.name)+'</td>';
+    days.forEach(d=>{
+      const entries=cn.filter(n=>n.date===d.date&&parseVehicles(n.vehicle).includes(v.name));
+      const byGroup={};
+      entries.forEach(e=>{const gid=e.id||(e.date+'__'+e.start+'__'+e.genba);if(!byGroup[gid])byGroup[gid]={leader:'',members:[],genba:e.genba,loc:e.loc};
+        if(e.role==='代表')byGroup[gid].leader=e.name;
+        byGroup[gid].members.push(e.name);
+      });
+      const groups=Object.values(byGroup);
+      const dowCls=d.dow===0?' week-sun':d.dow===6?' week-sat':'';
+      if(groups.length===0){
+        html+=`<td class="${dowCls}"><div class="veh-cell free">○</div></td>`;
+      }else{
+        const g=groups[0];
+        const repName=g.leader||(g.members[0]||'');
+        const dest=g.loc||g.genba||'ー';
+        const multi=groups.length>1?'＋':'';
+        const title=`${repName}\n${g.genba||''}${g.loc?' / '+g.loc:''}${groups.length>1?'\n（他 '+(groups.length-1)+' 件）':''}`;
+        html+=`<td class="${dowCls}"><div class="veh-cell busy" title="${esc(title)}"><div class="veh-driver">${esc(repName.slice(0,4))}${multi}</div><div class="veh-dest">${esc(dest)}</div></div></td>`;
+      }
+    });
+    html+='</tr>';
+  });
+  html+='</tbody></table>';
+  document.getElementById('vehicle-weekly').innerHTML=html;
+}
+
+function updateGenbaFilter(){
+  const gs=[...new Set(filteredNippos().map(n=>n.genba).filter(Boolean))].sort();
+  const gf=document.getElementById('j-genba-filter');const cur=gf.value;
+  gf.innerHTML='<option value="">全元請</option>'+gs.map(g=>`<option${g===cur?' selected':''}>${esc(g)}</option>`).join('');
+}
+
+function calcEffectiveKosu(nippos){
+  const byNameDate={};
+  nippos.forEach(n=>{
+    if(n.isGhost)return;
+    if(n.yasumi||n.yotei)return;
+    const key=n.name+'__'+n.date;
+    if(!byNameDate[key])byNameDate[key]={day:0,night:0,dayCount:false,nightCount:false};
+    if(n.yakin){byNameDate[key].night=Math.max(byNameDate[key].night,n.kosu);byNameDate[key].nightCount=true;}
+    else{byNameDate[key].day=Math.max(byNameDate[key].day,n.kosu);byNameDate[key].dayCount=true;}
+  });
+  const byName={};
+  Object.entries(byNameDate).forEach(([key,v])=>{
+    const name=key.split('__')[0];
+    if(!byName[name])byName[name]={days:0,kosu:0};
+    if(v.dayCount)byName[name].days++;if(v.nightCount)byName[name].days++;
+    byName[name].kosu+=v.day+v.night;
+  });
+  return byName;
+}
+
+function updateJimu(){
+  const month=document.getElementById('j-month').value;
+  const genbaF=document.getElementById('j-genba-filter').value;
+  const nippos=filteredNippos().filter(n=>n.date.startsWith(month)&&(!genbaF||n.genba===genbaF));
+  const byName=calcEffectiveKosu(nippos);
+  const totalKo=Object.values(byName).reduce((s,v)=>s+v.kosu,0);
+  const totalDays=Object.values(byName).reduce((s,v)=>s+v.days,0);
+  document.getElementById('j-total-days').textContent=totalDays;
+  document.getElementById('j-total-ko').textContent=totalKo.toFixed(1);
+  const entries=Object.entries(byName).sort((a,b)=>b[1].kosu-a[1].kosu);
+  document.getElementById('j-shokunin-tbl').innerHTML=entries.length?
+    entries.map(([name,v])=>`<tr><td>${esc(name)}</td><td>${v.days}日</td><td>${v.kosu.toFixed(1)}人工</td></tr>`).join(''):
+    `<tr><td colspan="3" class="empty">データなし</td></tr>`;
+}
+
+async function downloadSheetCSV(){
+  const sheetName=document.getElementById('csv-sheet').value;
+  const btn=document.getElementById('csv-btn');btn.textContent='取得中...';btn.disabled=true;
+  try{
+    const res=await fetch(getGasUrl(),{method:'POST',body:JSON.stringify({action:'get_sheet',sheet:sheetName}),headers:{'Content-Type':'text/plain'}});
+    const json=await res.json();
+    if(json.status==='ok'&&json.data){
+      const BOM='\uFEFF';
+      const csvEsc=v=>{const s=String(v==null?'':v);return s.includes(',')||s.includes('"')||s.includes('\n')?'"'+s.replace(/"/g,'""')+'"':s;};
+      const csv=json.data.map(row=>row.map(csvEsc).join(',')).join('\n');
+      const blob=new Blob([BOM+csv],{type:'text/csv;charset=utf-8;'});
+      const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`${sheetName}.csv`;a.click();
+    }else alert('エラー：'+(json.message||'データなし'));
+  }catch(e){alert('ダウンロードエラー：'+e.message);}
+  btn.textContent='ダウンロード';btn.disabled=false;
+}
+
+async function runSummary(){
+  const btn=document.getElementById('summary-btn');btn.textContent='集計中...';btn.disabled=true;
+  try{
+    const res=await fetch(getGasUrl(),{method:'POST',body:JSON.stringify({action:'summarize'}),headers:{'Content-Type':'text/plain'}});
+    const json=await res.json();
+    if(json.status==='ok')alert('集計シートを更新しました！');else alert('エラー：'+json.message);
+  }catch(e){alert('集計エラー：'+e.message);}
+  btn.textContent='集計を更新';btn.disabled=false;
+}
+
+async function archiveOldData(){
+  if(!confirm('3ヶ月以上前のデータをアーカイブシートに移動します。\nよろしいですか？'))return;
+  try{
+    const res=await fetch(getGasUrl(),{method:'POST',body:JSON.stringify({action:'archive',months:3}),headers:{'Content-Type':'text/plain'}});
+    const json=await res.json();
+    if(json.status==='ok'){alert(`${json.archived}件のデータをアーカイブしました`);await loadData();}
+    else alert('エラー：'+json.message);
+  }catch(e){alert('アーカイブエラー：'+e.message);}
+}
+
+function openSettings(){
+  if(currentCompany==='全社'){alert('会社を選択してから管理してください');return;}
+  renderSettings();document.getElementById('settings-modal').classList.add('active');
+}
+function closeSettings(){
+  document.getElementById('settings-modal').classList.remove('active');
+  initMemberUI();
+  settingsOpenedForSelect=null;
+}
+
+function renderSettings(){
+  document.getElementById('settings-company-name').textContent=currentCompany;
+  const isGrowise=Boolean(PRIMARY_COMPANY&&currentCompany===PRIMARY_COMPANY);
+  const divField=document.getElementById('division-field');
+  if(divField)divField.style.display=isGrowise?'':'none';
+
+  const divOpts=DIVISIONS.map(d=>`<option value="${d}">${d}</option>`).join('');
+  document.getElementById('shokunin-list').innerHTML=getShokunin().map((s,i)=>{
+    const member=allMembers.find(m=>m.name===s&&m.company===currentCompany);
+    const div=(member&&member.division)||'';
+    const divSelect=isGrowise?`<select onchange="updateMemberDivision('${esc(s)}',this.value)" style="width:auto;margin:0;padding:4px 8px;font-size:12px;border:1px solid #ddd;border-radius:6px;background:#f9f9f9">
+      <option value=""${!div?' selected':''}>（なし）</option>
+      ${DIVISIONS.map(d=>`<option value="${d}"${d===div?' selected':''}>${d}</option>`).join('')}
+    </select>`:'';
+    const deleteBtn=`<button class="btn btn-danger btn-sm" onclick="removeShokunin(${i})">削除</button>`;
+    return`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #eee;gap:6px">
+      <span style="font-size:15px;flex:1">${esc(s)}</span>
+      <div style="display:flex;align-items:center;gap:6px">${divSelect}${deleteBtn}</div>
+    </div>`;
+  }).join('')||'<div style="color:#999;padding:12px;text-align:center">職人が登録されていません</div>';
+}
+
+async function addShokunin(){
+  const v=document.getElementById('new-shokunin').value.trim();if(!v)return;
+  const isGrowise=Boolean(PRIMARY_COMPANY&&currentCompany===PRIMARY_COMPANY);
+  const divSel=document.getElementById('new-shokunin-division');
+  const division=isGrowise&&divSel?divSel.value:'';
+  try{
+    const res=await fetch(getGasUrl(),{method:'POST',body:JSON.stringify({action:'add_member',name:v,company:currentCompany,division}),headers:{'Content-Type':'text/plain'}});
+    const json=await res.json();
+    if(json.status==='ok'){
+      allMembers.push({name:v,company:currentCompany,division});
+      document.getElementById('new-shokunin').value='';
+      if(divSel)divSel.value='';
+      renderSettings();initMemberUI();
+      // 呼び出し元セレクトに自動選択
+      if(settingsOpenedForSelect){
+        const sel=document.getElementById(settingsOpenedForSelect);
+        if(sel)sel.value=v;
+        if(settingsOpenedForSelect==='s-operator'){
+          currentUsername=v;
+          try{localStorage.setItem('genba-username',v);}catch(e){}
+          updateUsernameDisplay();
+        }
+        settingsOpenedForSelect=null;
+      }
+    }else alert('エラー：'+json.message);
+  }catch(e){alert('追加エラー：'+e.message);}
+}
+
+async function removeShokunin(i){
+  const name=getShokunin()[i];if(!confirm(name+'を削除しますか？'))return;
+  try{
+    const res=await fetch(getGasUrl(),{method:'POST',body:JSON.stringify({action:'remove_member',name,company:currentCompany}),headers:{'Content-Type':'text/plain'}});
+    const json=await res.json();
+    if(json.status==='ok'){allMembers=allMembers.filter(m=>!(m.name===name&&m.company===currentCompany));renderSettings();initMemberUI();}
+    else alert('エラー：'+json.message);
+  }catch(e){alert('削除エラー：'+e.message);}
+}
+
+function initSelects(){
+  document.getElementById('s-date').valueAsDate=new Date();
+  const sel=document.getElementById('j-month');const now=new Date();let opts='';
+  for(let i=0;i<6;i++){const d=new Date(now.getFullYear(),now.getMonth()-i,1);const val=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;opts+=`<option value="${val}"${i===0?' selected':''}>${d.getFullYear()}年${d.getMonth()+1}月</option>`;}
+  sel.innerHTML=opts;
+}
+
+// ========== 元請マスタ ==========
+function initGenbaSelects(){
+  const gList=getGenbaMasterNames();
+  ['s','e'].forEach(p=>{
+    const sel=document.getElementById(p+'-genba-select');
+    if(!sel)return;
+    const cur=sel.value;
+    let opts='<option value="">選択してください</option>';
+    gList.forEach(g=>{opts+=`<option value="${esc(g)}"${g===cur?' selected':''}>${esc(g)}</option>`;});
+    opts+='<option value="__manual__">直接入力する</option>';
+    sel.innerHTML=opts;
+  });
+}
+
+function onGenbaSelect(p){
+  const sel=document.getElementById(p+'-genba-select');
+  const inp=document.getElementById(p+'-genba');
+  if(sel.value==='__manual__'){
+    inp.style.display='';inp.value='';inp.focus();
+  }else{
+    inp.style.display='none';inp.value=sel.value;
+  }
+  // 元請変更時に現場プルダウンを再populate（現場名と検索ボックスをリセット）
+  const locInput=document.getElementById(p+'-location');
+  const locSelect=document.getElementById(p+'-location-select');
+  const locSearch=document.getElementById(p+'-location-search');
+  if(locInput)locInput.value='';
+  if(locSelect)locSelect.value='';
+  if(locSearch)locSearch.value='';
+  populateLocationSelect(p);
+  if(p==='s'){updateLocationSuggestions();checkLocationJobNo();}
+}
+
+function getGenbaValue(p){
+  const sel=document.getElementById(p+'-genba-select');
+  if(sel.value==='__manual__'||sel.value===''){
+    return document.getElementById(p+'-genba').value.trim();
+  }
+  return sel.value;
+}
+
+function setGenbaValue(p,val){
+  const sel=document.getElementById(p+'-genba-select');
+  const inp=document.getElementById(p+'-genba');
+  const opts=[...sel.options].map(o=>o.value);
+  if(val&&opts.includes(val)){
+    sel.value=val;inp.style.display='none';inp.value=val;
+  }else{
+    sel.value='__manual__';inp.style.display='';inp.value=val||'';
+  }
+}
+
+function openGenbaSettings(){
+  if(currentCompany==='全社'){alert('会社を選択してから管理してください');return;}
+  renderGenbaSettings();
+  document.getElementById('genba-settings-modal').classList.add('active');
+}
+function closeGenbaSettings(){
+  document.getElementById('genba-settings-modal').classList.remove('active');
+  initGenbaSelects();
+  genbaSettingsOpenedForSelect=null;
+}
+
+function getGenbaForCompany(){
+  return allGenbaMaster.filter(g=>g.company===currentCompany||!g.company);
+}
+
+function renderGenbaSettings(){
+  document.getElementById('genba-settings-company-name').textContent=currentCompany;
+  const list=getGenbaForCompany();
+  const deleteBtn=idx=>`<button class="btn btn-danger btn-sm" onclick="removeGenbaMaster(${idx})">削除</button>`;
+  document.getElementById('genba-master-list').innerHTML=list.map((g,i)=>
+    `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #eee">
+      <span style="font-size:15px">${esc(g.name)}${!g.company?'<span style="font-size:11px;color:#999;margin-left:6px">（共通）</span>':''}</span>
+      ${deleteBtn(i)}
+    </div>`).join('')||'<div style="color:#999;padding:12px;text-align:center">元請が登録されていません</div>';
+}
+
+async function addGenbaMaster(){
+  const v=document.getElementById('new-genba-master').value.trim();if(!v)return;
+  try{
+    const res=await fetch(getGasUrl(),{method:'POST',body:JSON.stringify({action:'add_genba',name:v,company:currentCompany}),headers:{'Content-Type':'text/plain'}});
+    const json=await res.json();
+    if(json.status==='ok'){
+      if(!json.duplicate)allGenbaMaster.push({name:v,company:currentCompany});
+      allGenbaMaster.sort((a,b)=>a.name.localeCompare(b.name));
+      document.getElementById('new-genba-master').value='';
+      renderGenbaSettings();initGenbaSelects();
+      // 呼び出し元セレクトに自動選択
+      if(genbaSettingsOpenedForSelect){
+        const sel=document.getElementById(genbaSettingsOpenedForSelect);
+        if(sel){sel.value=v;}
+        const prefix=genbaSettingsOpenedForSelect==='s-genba-select'?'s':genbaSettingsOpenedForSelect==='e-genba-select'?'e':null;
+        if(prefix)onGenbaSelect(prefix);
+        genbaSettingsOpenedForSelect=null;
+      }
+    }else alert('エラー：'+json.message);
+  }catch(e){alert('追加エラー：'+e.message);}
+}
+
+async function removeGenbaMaster(i){
+  const list=getGenbaForCompany();
+  const g=list[i];if(!g)return;
+  const label=g.name+(!g.company?' （共通）':'');
+  if(!confirm(label+'を削除しますか？'))return;
+  const delCompany=g.company||'';
+  try{
+    const res=await fetch(getGasUrl(),{method:'POST',body:JSON.stringify({action:'remove_genba',name:g.name,company:delCompany}),headers:{'Content-Type':'text/plain'}});
+    const json=await res.json();
+    if(json.status==='ok'){
+      allGenbaMaster=allGenbaMaster.filter(x=>!(x.name===g.name&&(x.company||'')===delCompany));
+      renderGenbaSettings();initGenbaSelects();
+    }else alert('エラー：'+json.message);
+  }catch(e){alert('削除エラー：'+e.message);}
+}
+
+// 横スワイプ汎用ハンドラ（左→onLeft、右→onRight）
+function attachSwipe(el,onLeft,onRight,scrollableEl){
+  if(!el)return;
+  let startX=0,startY=0,active=false,startScrollLeft=0;
+  el.addEventListener('touchstart',e=>{
+    if(e.touches.length!==1){active=false;return;}
+    startX=e.touches[0].clientX;startY=e.touches[0].clientY;
+    startScrollLeft=scrollableEl?scrollableEl.scrollLeft:0;
+    active=true;
+  },{passive:true});
+  el.addEventListener('touchend',e=>{
+    if(!active||!e.changedTouches.length)return;
+    const dx=e.changedTouches[0].clientX-startX;
+    const dy=e.changedTouches[0].clientY-startY;
+    // 内側で横スクロールが起きた場合はスワイプを発火しない
+    const scrolled=scrollableEl?(scrollableEl.scrollLeft!==startScrollLeft):false;
+    if(!scrolled&&Math.abs(dx)>50&&Math.abs(dx)>Math.abs(dy)*1.5){
+      if(dx<0)onLeft&&onLeft();
+      else onRight&&onRight();
+    }
+    active=false;
+  },{passive:true});
+}
+
+function initCalSwipe(){
+  // ① カレンダー: 左→次の月、右→前の月
+  attachSwipe(document.getElementById('cal-grid'),
+    ()=>changeListMonth(1),
+    ()=>changeListMonth(-1)
+  );
+  // ② 空き確認: スクリーン全体にスワイプ。表の横スクロールがあった時はスワイプ無視
+  const availScreen=document.getElementById('screen-avail');
+  const availCard=availScreen?availScreen.querySelector('.card'):null;
+  attachSwipe(availScreen,
+    ()=>changeAvailWeek(1),
+    ()=>changeAvailWeek(-1),
+    availCard
+  );
+  // ②-2 車確認: 同上
+  const vehicleScreen=document.getElementById('screen-vehicle');
+  const vehicleCard=vehicleScreen?vehicleScreen.querySelector('.card'):null;
+  attachSwipe(vehicleScreen,
+    ()=>changeVehicleWeek(1),
+    ()=>changeVehicleWeek(-1),
+    vehicleCard
+  );
+  // ③ カレンダー日別モーダル: モーダル全体で左→翌日、右→前日
+  attachSwipe(document.getElementById('cal-day-modal'),
+    ()=>shiftCalDay(1),
+    ()=>shiftCalDay(-1)
+  );
+  // ④ 予定詳細フルスクリーン: 左→次の予定、右→戻る
+  attachSwipe(document.getElementById('cal-detail-modal'),
+    ()=>shiftDetailEvent(1),
+    ()=>closeEventDetail()
+  );
+}
+
+// 日別モーダルで前後の日に移動
+function shiftCalDay(delta){
+  if(!calSelectedDate)return;
+  const p=calSelectedDate.split('-').map(Number);
+  const d=new Date(p[0],p[1]-1,p[2]+delta);
+  const next=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  openCalDay(next);
+}
+
+// ========== モバイル便利機能 ==========
+// ハプティック（短い振動）。iOS Safari は無視するが Chrome 等で発火
+function hapticTap(){try{if(navigator.vibrate)navigator.vibrate(8);}catch(e){}}
+function hapticSuccess(){try{if(navigator.vibrate)navigator.vibrate([10,40,15]);}catch(e){}}
+
+// 引き下げて更新（pull-to-refresh）。アクティブなスクリーンの内側スクロール用
+function initPullToRefresh(){
+  let startY=0,active=false,triggered=false;
+  const indicator=document.createElement('div');
+  indicator.className='ptr-indicator';
+  indicator.textContent='↓ 引き下げて更新';
+  document.body.appendChild(indicator);
+  function getActiveScreen(){return document.querySelector('.screen.active');}
+  document.addEventListener('touchstart',e=>{
+    const sc=getActiveScreen();
+    if(!sc||sc.scrollTop>0||e.touches.length!==1){active=false;return;}
+    // モーダルが開いている時はスキップ
+    if(document.querySelector('.modal-bg.active, .detail-fullscreen.active')){active=false;return;}
+    startY=e.touches[0].clientY;active=true;triggered=false;
+  },{passive:true});
+  document.addEventListener('touchmove',e=>{
+    if(!active)return;
+    const dy=e.touches[0].clientY-startY;
+    if(dy>80){indicator.classList.add('show');indicator.textContent='✓ 離して更新';triggered=true;}
+    else if(dy>30){indicator.classList.add('show');indicator.textContent='↓ 引き下げて更新';}
+    else{indicator.classList.remove('show');}
+  },{passive:true});
+  document.addEventListener('touchend',()=>{
+    if(active&&triggered){indicator.textContent='🔄 更新中…';hapticSuccess();loadData().then(()=>{setTimeout(()=>indicator.classList.remove('show'),400);}).catch(()=>indicator.classList.remove('show'));}
+    else{indicator.classList.remove('show');}
+    active=false;triggered=false;
+  });
+}
+
+// PWAインストールバナー
+let deferredInstallPrompt=null;
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstallPrompt=e;showInstallBanner();});
+function isStandaloneInstalled(){return window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone===true;}
+function showInstallBanner(){
+  if(isStandaloneInstalled())return;
+  try{if(localStorage.getItem('install-banner-dismissed-v1')==='1')return;}catch(e){}
+  let b=document.getElementById('install-banner');
+  if(!b){
+    b=document.createElement('div');b.id='install-banner';b.className='install-banner';
+    const isIOS=/iPhone|iPad|iPod/.test(navigator.userAgent);
+    if(isIOS){
+      b.innerHTML='<div class="ib-text">📲 ホーム画面に追加すると<br>アプリのように使えます<br><span style="font-size:11px;opacity:0.9">Safari下部の<b>共有</b>→<b>ホーム画面に追加</b></span></div><button class="ib-close" onclick="dismissInstallBanner()">×</button>';
+    }else{
+      b.innerHTML='<div class="ib-text">📲 ホーム画面に追加すると<br>アプリのように使えます</div><button onclick="acceptInstall()">追加</button><button class="ib-close" onclick="dismissInstallBanner()">×</button>';
+    }
+    document.body.appendChild(b);
+  }
+  b.classList.add('show');
+}
+function acceptInstall(){
+  if(!deferredInstallPrompt){dismissInstallBanner();return;}
+  deferredInstallPrompt.prompt();
+  deferredInstallPrompt.userChoice.finally(()=>{deferredInstallPrompt=null;dismissInstallBanner();});
+}
+function dismissInstallBanner(){
+  const b=document.getElementById('install-banner');if(b)b.classList.remove('show');
+  try{localStorage.setItem('install-banner-dismissed-v1','1');}catch(e){}
+}
+// iOSは beforeinstallprompt 非対応なので、Safari + 非インストール時に手動で案内
+if(/iPhone|iPad|iPod/.test(navigator.userAgent)&&!isStandaloneInstalled()){
+  setTimeout(showInstallBanner,3000);
+}
+
+// 共有（Web Share API）。未対応端末はクリップボードへコピー
+async function shareGroup(g){
+  if(!g)return;
+  const lp=g.date.split('-').map(Number);
+  const DOW=['日','月','火','水','木','金','土'];
+  const dt=new Date(lp[0],lp[1]-1,lp[2]);
+  const dateStr=`${lp[0]}年${lp[1]}月${lp[2]}日(${DOW[dt.getDay()]})`;
+  const leader=g.members.find(m=>m.role==='代表');
+  const fellows=g.members.filter(m=>m.role==='同行');
+  const memberLine=(leader?leader.name+'（代表）':'')+(fellows.length?'、'+fellows.map(m=>m.name).join('、'):'');
+  const lines=[];
+  lines.push(`【${dateStr} の予定】`);
+  if(g.yasumi)lines.push('🏖️ 休み');
+  else if(g.souko){const t=g.memo||g.loc||'';lines.push(t?`🏭 倉庫: ${t}`:'🏭 倉庫');}
+  else{
+    if(g.genba)lines.push(`元請: ${g.genba}`);
+    if(g.loc)lines.push(`現場: ${g.loc}`);
+    if(g.start||g.end)lines.push(`時間: ${g.start||''}〜${g.end||''}`);
+  }
+  if(memberLine)lines.push(`メンバー: ${memberLine}`);
+  if(g.vehicle)lines.push(`🚗 車両: ${g.vehicle}`);
+  // 倉庫モードのメモは上の「🏭 倉庫: ...」行に既に出ているので重複表示しない
+  if(g.memo && !g.souko)lines.push(`メモ: ${g.memo}`);
+  const text=lines.join('\n');
+  try{
+    if(navigator.share){await navigator.share({title:'予定',text});hapticTap();}
+    else{await navigator.clipboard.writeText(text);showAlert('クリップボードにコピーしました','ok');}
+  }catch(e){}
+}
+function shareFromDetail(){
+  let g=detailGroups[detailIdx];if(!g)return;
+  if(g.isGhost){const orig=findOriginalGroup(g.originalId);if(orig)g=orig;}
+  shareGroup(g);
+}
+
+// ========== 初期化 ==========
+initCompanyBar();initSelects();initAvailWeek();initVehicleWeek();initUsername();initColorPicker('s');renderList();initCalSwipe();initPullToRefresh();applyWorkTypeLock('s');
+// 会社が未設定の場合は会社選択ピッカーを表示し、データロードはスキップ
+if(needsCompanyPicker)showCompanyPicker();
+else loadData();
+
+// 管理者モード以外では事務タブを非表示
+if(!isAdminMode){
+  const t=document.getElementById('tab-jimu');
+  if(t)t.style.display='none';
+}
+</script>
+</body>
+</html>

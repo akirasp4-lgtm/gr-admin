@@ -79,7 +79,8 @@
 <script>
   var CONFIG = {
     GAS_URL: "https://script.google.com/macros/s/AKfycbyS5mrvfGnhDYJvLnGh-mzdAlig7mhiIvDwfpyYTvbh1RcCpWp2qmsZzzSBgSH0jie76A/exec",
-    STORE_KEY: "gr_admin_token"   // パスワードは端末(localStorage)にだけ保存。HTMLには鍵を埋め込まない。
+    STORE_KEY: "gr_admin_token",  // パスワードは端末(localStorage)にだけ保存。HTMLには鍵を埋め込まない。
+    EXPENSE_ADMIN_URL: ""         // 経費の管理者アプリURL（テナント別。未設定ならリンクは出さない＝直書きしない）
   };
   var AUTH = { token: "" };       // パスワード。初回入力→端末に保存→次回は自動。
 </script>
@@ -113,6 +114,7 @@
     <div class="ptab" data-proj="vehicle">🚗車両</div>
     <div class="ptab" data-proj="keiri">📊経営</div>
     <div class="ptab" data-proj="kokyaku">🏢顧客</div>
+    <div class="ptab" data-proj="keihi">💴 経費</div>
     <div class="ptab disabled" data-proj="staff">社員 <span class="soon">準備中</span></div>
   </div>
 
@@ -184,7 +186,7 @@
         <option value="ankenName">案件名</option>
         <option value="uriage_desc">売上見込(高い順)</option>
       </select></label>
-      <label>事業部 <select id="anken-bu"><option value="">全部</option><option>ICT</option><option>INF</option><option>MSC</option><option>GRB</option></select></label>
+      <label>事業部 <select id="anken-bu"><option value="">全部</option><option>電気</option><option>通信</option><option>設備</option><option>その他</option></select></label>
       <label>元請 <select id="anken-motouke"><option value="">全部</option></select></label>
       <span id="anken-count" class="note"></span>
     </div>
@@ -229,6 +231,18 @@
     <main><div id="kokyaku-view" class="panel">読み込み中…</div></main>
   </div>
 
+  <!-- 経費プロジェクト：人別サマリ表示。明細編集・CSVは管理者アプリへ誘導 -->
+  <div id="proj-keihi" class="hidden">
+    <main><div class="panel">
+      <div class="note">💴 経費申請の人別サマリー（件数・合計・最終申請日）。明細編集・CSVは管理者アプリで。</div>
+      <div style="margin:8px 0;">
+        <a id="keihi-admin-link" href="#" target="_blank" rel="noopener">▶ 管理者アプリ（明細編集・CSV出力）を開く</a>
+        <span id="keihi-admin-note"></span>
+      </div>
+      <div id="keihi-body"><div class="note">読み込み中…</div></div>
+    </div></main>
+  </div>
+
   <!-- 準備中プロジェクト共通 -->
   <div id="proj-soon" class="hidden"><main><div class="panel soon-box">このプロジェクトは準備中です。</div></main></div>
 </div>
@@ -237,7 +251,7 @@
 <script>
   /* ===== この会社の設定（開通時にここだけ変える）===== */
   var COMPANIES = ['デモ会社'];        // 複数社で使うなら ['A社','B社',...] と足す
-  var PRIMARY_COMPANY = '';            // 工番を発行する会社名。無ければ '' （工番・車両機能オフ）
+  var PRIMARY_COMPANY = 'デモ会社';     // 工番を発行する会社名。無ければ '' （工番・車両機能オフ）
   /* ================================================= */
 
   var state = { month: "", view: "tsukibetsu", aview: "shinkou", anken: null, q: "", sort: "juchu_desc", fbu: "", fmotouke: "", grb: null, block: null, yi: null, yiBase: null, yiNamesMonth: '' };
@@ -245,7 +259,7 @@
   function yen(n){ return (typeof n === 'number') ? '¥' + n.toLocaleString('ja-JP') : '—'; }
 
   // 事業部(ICT/INF/MSC/GRB)は工番発行会社専用。事業部が付いていれば工番発行会社の案件。
-  var BU_ORDER = ['ICT','INF','MSC','GRB'];
+  var BU_ORDER = ['電気','通信','設備','その他'];
   function companyOfBu(bu){ return (BU_ORDER.indexOf(bu) >= 0) ? (PRIMARY_COMPANY || 'その他（会社未設定）') : 'その他（会社未設定）'; }
 
   function ankenCardHtml(a){
@@ -922,6 +936,54 @@
     v.innerHTML = html;
   }
 
+  // ===== 💴 経費タブ：expense_summary アクションで人別サマリを取得して表示 =====
+  function renderKeihi() {
+    // 管理者アプリURL：CONFIG値（テナント別）から読む。未設定なら直書きせずリンクを出さない。
+    var adminUrl = (CONFIG.EXPENSE_ADMIN_URL || '').trim();
+    var link = document.getElementById('keihi-admin-link');
+    if (link) {
+      if (adminUrl) {
+        link.href = adminUrl;
+        link.style.display = '';
+        link.textContent = '▶ 管理者アプリ（明細編集・CSV出力）を開く';
+      } else {
+        link.removeAttribute('href');
+        link.style.display = 'none';
+      }
+    }
+    var adminNote = document.getElementById('keihi-admin-note');
+    if (adminNote) adminNote.innerHTML = adminUrl ? '' : '<span class="err">管理者アプリURL未設定（CONFIG.EXPENSE_ADMIN_URL を設定してください）</span>';
+
+    var body = document.getElementById('keihi-body');
+    body.innerHTML = '<div class="note">読み込み中…</div>';
+    api('expense_summary', '').then(function (r) {
+      if (!r || r.ok === false) { body.innerHTML = '<div class="note">経費データを取得できませんでした。</div>'; return; }
+      var ppl = r.people || [];
+      if (!ppl.length) {
+        // noteあり＝デモ未準備（フォルダ未設定/取得不可）を明示。単なる「申請なし」と区別する。
+        if (r.note) {
+          body.innerHTML = '<div class="err">⚠️ 経費データを表示できません（' + esc(r.note) +
+            '）。デモの準備が未完了です。seedDemoExpenses() の実行と EXPENSE_DRIVE_FOLDER_ID 設定を確認してください。</div>';
+        } else {
+          body.innerHTML = '<div class="note">経費申請はまだありません。</div>';
+        }
+        return;
+      }
+      var rows = ppl.map(function (x) {
+        return '<tr><td>' + esc(x.name) + '</td><td style="text-align:right;">' + x.count +
+          '</td><td style="text-align:right;">¥' + Number(x.total).toLocaleString() +
+          '</td><td>' + esc(x.lastDate || '') + '</td></tr>';
+      }).join('');
+      body.innerHTML =
+        '<table><thead><tr><th>申請者</th><th>件数</th><th>合計</th><th>最終申請日</th></tr></thead><tbody>' +
+        rows + '</tbody></table>' +
+        '<div class="note" style="margin-top:8px;">総合計 ¥' + Number(r.grandTotal || 0).toLocaleString() +
+        '（as of ' + esc(r.asOf || '') + '）</div>';
+    }).catch(function () {
+      body.innerHTML = '<div class="note">通信エラー。時間をおいて再読み込みしてください。</div>';
+    });
+  }
+
   function initApp(){
     api('months').then(function(res){
       var sel = document.getElementById('month');
@@ -1044,6 +1106,7 @@
         document.getElementById('proj-keiri').classList.add('hidden');
         document.getElementById('proj-kokyaku').classList.add('hidden');
         document.getElementById('proj-vehicle').classList.add('hidden');
+        document.getElementById('proj-keihi').classList.add('hidden');
         document.getElementById('proj-soon').classList.add('hidden');
         if (proj === 'yotei'){ document.getElementById('proj-yotei').classList.remove('hidden'); }
         else if (proj === 'anken'){ document.getElementById('proj-anken').classList.remove('hidden'); if (!state.anken) loadAnken(); }
@@ -1070,6 +1133,10 @@
         else if (proj === 'vehicle'){
           document.getElementById('proj-vehicle').classList.remove('hidden');
           loadVehicles();
+        }
+        else if (proj === 'keihi'){
+          document.getElementById('proj-keihi').classList.remove('hidden');
+          renderKeihi();
         }
         else { document.getElementById('proj-soon').classList.remove('hidden'); }
       };

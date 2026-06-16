@@ -2,6 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
+<script src="config.js"></script>
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>予定管理アプリ リンク集</title>
 <link rel="icon" href="icon.png">
@@ -10,7 +11,7 @@
      理由：manifestの start_url=./index.html に従うと、ホーム画面に追加したアイコンが
      index.html(職人画面)を開いてしまい、この一覧ページに戻れないため。
      manifestを外すと、ホーム画面のショートカットはこのlinks.html自体を開く。 -->
-<meta name="apple-mobile-web-app-title" content="GRリンク集">
+<meta name="apple-mobile-web-app-title" id="links-app-title" content="リンク集">
 <meta name="theme-color" content="#0F3830">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -44,11 +45,11 @@ h1{color:#fff;font-size:22px;margin-bottom:6px;font-weight:600}
   <div class="section-title">🏢 各社 一般ユーザー向け</div>
 
   <!-- 開通時: 会社名を入れて社数分コピーする（会社が1社なら index.html のみでよい） -->
-  <a class="link-card" href="index.html?c=デモ会社" target="_blank">
-    <div class="icon">デモ</div>
+  <a class="link-card" id="company-link" href="#" target="_blank">
+    <div class="icon" id="company-icon">—</div>
     <div class="info">
-      <div class="name">デモ会社</div>
-      <div class="url">index.html?c=デモ会社</div>
+      <div class="name" id="company-name"></div>
+      <div class="url" id="company-url"></div>
     </div>
     <div class="arrow">›</div>
   </a>
@@ -64,18 +65,40 @@ h1{color:#fff;font-size:22px;margin-bottom:6px;font-weight:600}
     <div class="pin-box">🔒</div>
   </a>
 
-  <div class="section-title">🔗 GR管理画面（案件・経理・顧客）</div>
+  <div class="section-title">🔗 管理画面（案件・経理・顧客）</div>
 
-  <a class="link-card admin-card" href="https://akirasp4-lgtm.github.io/gr-admin/demo/kanri/" target="_blank" rel="noopener">
-    <div class="icon">GR</div>
+  <a class="link-card admin-card" id="kanri-link" href="#" target="_blank" rel="noopener">
+    <div class="icon">管</div>
     <div class="info">
-      <div class="name">GR管理画面</div>
-      <div class="url">案件 / GRB割当 / 経理 / 顧客</div>
+      <div class="name" id="kanri-name">管理画面</div>
+      <div class="url">案件 / 経理 / 顧客</div>
     </div>
     <div class="arrow">›</div>
   </a>
 
   <div class="footer">このページをブックマークして使ってください</div>
 </div>
+<script>
+/* 値は config.js（APP_CONFIG）から流し込む。このファイルに会社名/URLを直書きしない。 */
+(function(){
+  var c = window.APP_CONFIG || {};
+  var co = c.COMPANY_NAME || '';
+  var companies = (c.COMPANIES && c.COMPANIES.length) ? c.COMPANIES : (co ? [co] : []);
+  var t = document.getElementById('links-app-title'); if (t && c.APP_TITLE) t.setAttribute('content', c.APP_TITLE);
+  var primary = companies[0] || co;
+  var cl = document.getElementById('company-link');
+  if (cl){
+    if (primary){
+      cl.href = 'index.html?c=' + encodeURIComponent(primary);
+      var ci=document.getElementById('company-icon'); if(ci) ci.textContent = primary.slice(0,2);
+      var cn=document.getElementById('company-name'); if(cn) cn.textContent = primary;
+      var cu=document.getElementById('company-url'); if(cu) cu.textContent = 'index.html?c=' + primary;
+    } else { cl.style.display = 'none'; }
+  }
+  var kl = document.getElementById('kanri-link');
+  if (kl){ if (c.KANRI_APP_URL){ kl.href = c.KANRI_APP_URL; } else { kl.style.display='none'; } }
+  var kn = document.getElementById('kanri-name'); if (kn && c.KANRI_APP_LABEL) kn.textContent = c.KANRI_APP_LABEL;
+})();
+</script>
 </body>
 </html>

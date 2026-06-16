@@ -2,6 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
+<script src="config.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>現場管理</title>
 <link rel="icon" href="icon.png">
@@ -914,7 +915,7 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
 </div>
 
 <script>
-const GAS_URL='https://script.google.com/macros/s/AKfycbzcZAwtMiqwzNjbwX__bbTXqzoQKpidgw76zCUWy2I06rN1EfedOFT9VKoqDlSd_Bg7/exec';
+const GAS_URL=(window.APP_CONFIG&&APP_CONFIG.YOTEI_GAS_URL)||'';  // 値は config.js（YOTEI_GAS_URL）に集約
 
 // ── 合言葉(k)の自動付与（2026-06-10 セキュリティ強化）──────────────
 // URLの ?k=合言葉 を一度受け取ると端末(localStorage)に保存し、
@@ -957,7 +958,7 @@ window.fetch=async function(url,opts){
 };
 
 /* ===== この会社の設定（開通時にここだけ変える）===== */
-const COMPANIES = ['デモ会社'];        // 複数社で使うなら ['A社','B社',...] と足す
+const COMPANIES = (window.APP_CONFIG&&APP_CONFIG.COMPANIES&&APP_CONFIG.COMPANIES.length)?APP_CONFIG.COMPANIES:[];  // 値は config.js（COMPANIES）に集約
 const PRIMARY_COMPANY = '';            // 工番を発行する会社名。無ければ '' （工番・車両機能オフ）
 /* ================================================= */
 const MODES=['souko','yakin','yasumi','yotei'];

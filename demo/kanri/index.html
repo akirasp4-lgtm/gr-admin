@@ -75,12 +75,14 @@
 </head>
 <body>
 
-<!-- 設定（GAS側と合わせる） -->
+<!-- 設定（テナント別。値は config.js に集約。開通時は config.js だけ差し替える） -->
+<script src="config.js"></script>
 <script>
+  window.APP_CONFIG = window.APP_CONFIG || {};   // config.js 未読込でも落とさない保険
   var CONFIG = {
-    GAS_URL: "https://script.google.com/macros/s/AKfycbyS5mrvfGnhDYJvLnGh-mzdAlig7mhiIvDwfpyYTvbh1RcCpWp2qmsZzzSBgSH0jie76A/exec",
-    STORE_KEY: "gr_admin_token",  // パスワードは端末(localStorage)にだけ保存。HTMLには鍵を埋め込まない。
-    EXPENSE_ADMIN_URL: ""         // 経費の管理者アプリURL（テナント別。未設定ならリンクは出さない＝直書きしない）
+    GAS_URL: APP_CONFIG.KANRI_GAS_URL || "",
+    STORE_KEY: APP_CONFIG.STORE_KEY || "gr_admin_token",  // パスワードは端末(localStorage)にだけ保存。HTMLには鍵を埋め込まない。
+    EXPENSE_ADMIN_URL: APP_CONFIG.EXPENSE_ADMIN_URL || ""  // 経費の管理者アプリURL（テナント別。未設定ならリンクは出さない）
   };
   var AUTH = { token: "" };       // パスワード。初回入力→端末に保存→次回は自動。
 </script>
@@ -131,8 +133,9 @@
       <div class="stab" data-view="motouke">元請別 請求集計</div>
     </div>
     <div style="padding:8px 14px;">
-      <a href="https://akirasp4-lgtm.github.io/gr-admin/demo/yotei/" target="_blank" rel="noopener" style="display:inline-block;background:var(--gr-green);color:#fff;text-decoration:none;border-radius:7px;padding:8px 16px;font-weight:700;">🏗 予定管理アプリを開く（現場・人工・請求・Excel）</a>
+      <a id="yotei-app-link" href="#" target="_blank" rel="noopener" style="display:inline-block;background:var(--gr-green);color:#fff;text-decoration:none;border-radius:7px;padding:8px 16px;font-weight:700;">🏗 予定管理アプリを開く（現場・人工・請求・Excel）</a>
       <span class="note" style="margin-left:8px;">現場/人工/請求/Excelは成熟版のこちらで</span>
+      <script>(function(){ var u=(window.APP_CONFIG&&APP_CONFIG.YOTEI_APP_URL)||''; var a=document.getElementById('yotei-app-link'); if(a){ if(u){ a.href=u; } else { a.style.display='none'; } } })();</script>
     </div>
     <main><div id="view" class="panel">読み込み中…</div></main>
   </div>
@@ -199,7 +202,7 @@
       <div class="note">事務所案件の業務に「誰がやるか」を割り当て（変更は履歴に残ります）。</div>
       <div style="margin:10px 0;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
         日付：<input type="date" id="grb-date">
-        操作者：<input type="text" id="grb-by" value="舟田" style="width:90px;">
+        操作者：<input type="text" id="grb-by" value="" placeholder="担当者名" style="width:90px;">
         <button id="grb-load">読み込む</button>
       </div>
       <div id="grb-view" class="panel">日付を選んで「読み込む」を押してください。</div>
@@ -249,10 +252,10 @@
 
 <!-- ロジック（Task4：取得・描画・タブ切替） -->
 <script>
-  /* ===== この会社の設定（開通時にここだけ変える）===== */
-  var COMPANIES = ['デモ会社'];        // 複数社で使うなら ['A社','B社',...] と足す
-  var PRIMARY_COMPANY = 'デモ会社';     // 工番を発行する会社名。無ければ '' （工番・車両機能オフ）
-  /* ================================================= */
+  /* ===== この会社の設定は config.js（APP_CONFIG）に集約 ===== */
+  var COMPANIES = (APP_CONFIG.COMPANIES && APP_CONFIG.COMPANIES.length) ? APP_CONFIG.COMPANIES : [];
+  var PRIMARY_COMPANY = APP_CONFIG.COMPANY_NAME || '';   // 工番を発行する会社名。無ければ '' （工番・車両機能オフ）
+  /* ========================================================= */
 
   var state = { month: "", view: "tsukibetsu", aview: "shinkou", anken: null, q: "", sort: "juchu_desc", fbu: "", fmotouke: "", grb: null, block: null, yi: null, yiBase: null, yiNamesMonth: '' };
 
@@ -684,7 +687,7 @@
     var sel = document.querySelector('.grb-sel[data-idx="' + idx + '"]');
     var assignee = sel ? sel.value : '';
     if (!assignee){ alert('割当先を選んでください。'); return; }
-    var by = (document.getElementById('grb-by').value || '舟田').trim();
+    var by = (document.getElementById('grb-by').value || '担当者').trim();
     btn.disabled = true; btn.textContent = '…';
     api('grb_assign', '&date=' + encodeURIComponent(g.date) + '&name=' + encodeURIComponent(t.name) + '&content=' + encodeURIComponent(t.content) + '&assignee=' + encodeURIComponent(assignee) + '&by=' + encodeURIComponent(by))
       .then(function(res){ if (res && res.ok){ loadGrb(); } else { alert('保存できませんでした（' + ((res && res.error) || '') + '）'); btn.disabled = false; btn.textContent = '割当'; } })

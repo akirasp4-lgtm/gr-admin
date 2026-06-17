@@ -22,5 +22,11 @@ window.APP_CONFIG = {
 
   // 会社名（表示・絞り込みに使用）
   COMPANIES: ['デモ会社'],          // 複数社なら ['A社','B社',...]
-  COMPANY_NAME: 'デモ会社'          // 工番を発行する会社名。無ければ '' （工番・車両機能オフ）
+  COMPANY_NAME: 'デモ会社',         // 工番を発行する会社名。無ければ '' （工番・車両機能オフ）
+
+  // 業種テンプレート（画面の言葉づかいを切り替える。中身のロジックは不変）
+  //   generic（汎用）/ construction（建設）/ real_estate（不動産）/
+  //   car_service（車屋）/ enterprise（大手企業）/ professional_service（士業）
+  //   ※ 未設定なら construction（従来の見た目）。語の定義は index.html の INDUSTRY_LABELS。
+  APP_INDUSTRY: 'generic'
 };

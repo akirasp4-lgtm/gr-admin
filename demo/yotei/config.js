@@ -19,7 +19,7 @@ window.APP_CONFIG = {
 
   // ▼ UIロック用PIN（公開値・秘密ではない／本当の関門はGAS側Property）
   ADMIN_PIN: '1234',            // admin.html の入場PIN
-  PRES_PIN_CLIENT: '1203',      // president.html の入場PIN（サーバ側 PRES_PIN とは別物）
+  PRES_PIN_CLIENT: '1234',      // president.html の入場PIN（デモは1234統一。GAS側 PRES_PIN と一致させること）
 
   // president.html が入場済みフラグを保存する sessionStorage のキー名（識別子）
   STORE_KEY: 'pres-pin-ok-v1',

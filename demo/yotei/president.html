@@ -4,11 +4,11 @@
 <meta charset="UTF-8">
 <script src="config.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>スケジュール</title>
+<title>役員予定表</title>
 <link rel="icon" href="icon.png">
 <link rel="apple-touch-icon" href="icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="スケジュール">
+<meta name="apple-mobile-web-app-title" content="役員予定表">
 <meta name="theme-color" content="#1a1a2e">
 <meta name="robots" content="noindex,nofollow">
 <style>
@@ -131,7 +131,7 @@ button{font-family:inherit}
 <!-- PIN ロック画面 -->
 <div id="lockOverlay" class="lock-overlay">
   <div class="lock-card">
-    <h1>SCHEDULE</h1>
+    <h1>役員予定表</h1>
     <div class="sub">PIN を入力してください</div>
     <input id="pinInput" class="lock-pin-input" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="off" autocorrect="off" autocapitalize="off">
     <button id="pinBtn" class="lock-btn">ロック解除</button>
@@ -141,7 +141,7 @@ button{font-family:inherit}
 
 <!-- ヘッダー -->
 <div id="appHeader" class="app-header hidden">
-  <div class="app-title">スケジュール</div>
+  <div class="app-title">役員予定表</div>
   <div class="btn-row">
     <button id="btnReload">⟳ 更新</button>
     <button id="btnLock">🔒</button>
@@ -235,7 +235,7 @@ button{font-family:inherit}
         <option value="商談">商談</option>
         <option value="社内会議">社内会議</option>
         <option value="来客">来客</option>
-        <option value="現場">現場</option>
+        <option value="現場">対応先</option>
         <option value="出張">出張</option>
         <option value="会食">会食</option>
         <option value="プライベート">プライベート</option>

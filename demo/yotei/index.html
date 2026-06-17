@@ -4,12 +4,12 @@
 <meta charset="UTF-8">
 <script src="config.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>現場管理</title>
+<title>スケジュール管理</title>
 <link rel="icon" href="icon.png">
 <link rel="apple-touch-icon" href="icon.png">
 <link rel="manifest" href="manifest.json">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" id="app-title-meta" content="現場管理">
+<meta name="apple-mobile-web-app-title" id="app-title-meta" content="スケジュール管理">
 <meta name="theme-color" content="#1D9E75">
 <script>
 (function(){
@@ -290,7 +290,7 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
   <label>作業区分<span style="color:#ff3b30;font-weight:600;margin-left:2px">*</span></label>
   <select id="s-work-type" onchange="onWorkTypeChange('s')">
     <option value="">▼ まず作業区分を選んでください</option>
-    <option value="現場作業">⛑️ 現場作業（工番発行）</option>
+    <option value="現場作業">⛑️ 通常対応（工番発行）</option>
     <option value="現調">📐 現調</option>
     <option value="着打ち">🔨 着打ち</option>
     <option value="カギ借用">🗝️ カギ借用</option>
@@ -302,19 +302,19 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
     <option value="その他">📋 その他</option>
   </select>
   <div id="s-worktype-notice" style="color:#dc2626;font-size:13px;font-weight:600;background:#FEE2E2;border:1px solid #FCA5A5;border-radius:8px;padding:8px 12px;margin-bottom:12px">⚠️ 最初に「作業区分」を選択してください。選択するまで以下の項目は入力できません。</div>
-  <label>元請名<span style="color:#ff3b30;font-weight:600;margin-left:2px">*</span></label>
+  <label>取引先名<span style="color:#ff3b30;font-weight:600;margin-left:2px">*</span></label>
   <div class="select-add-wrap">
     <select id="s-genba-select" onchange="onGenbaSelect('s')"><option value="">選択してください</option><option value="__manual__">直接入力する</option></select>
     <button class="btn btn-secondary btn-sm add-inline-btn" onclick="openGenbaSettingsFor('s-genba-select')">➕</button>
   </div>
   <input type="text" id="s-genba" placeholder="例：〇〇電気" style="display:none;margin-bottom:12px">
-  <label>現場名</label>
-  <input type="search" id="s-location-search" placeholder="🔍 現場名で絞り込み（部分一致）" oninput="onLocationSearch('s')" style="margin-bottom:4px;font-size:13px;padding:6px 10px;width:100%;box-sizing:border-box;border:1px solid #ddd;border-radius:6px">
+  <label>対応先名</label>
+  <input type="search" id="s-location-search" placeholder="🔍 対応先名で絞り込み（部分一致）" oninput="onLocationSearch('s')" style="margin-bottom:4px;font-size:13px;padding:6px 10px;width:100%;box-sizing:border-box;border:1px solid #ddd;border-radius:6px">
   <select id="s-location-select" onchange="onLocationSelect('s')" style="margin-bottom:6px">
-    <option value="">既存の現場から選択</option>
-    <option value="__new__" style="color:#1D9E75;font-weight:600">＋ 新規現場として追加</option>
+    <option value="">既存の対応先から選択</option>
+    <option value="__new__" style="color:#1D9E75;font-weight:600">＋ 新規対応先として追加</option>
   </select>
-  <input type="text" id="s-location" placeholder="例：〇〇ビル新築工事" oninput="onLocationInput('s')" style="display:none">
+  <input type="text" id="s-location" placeholder="例：〇〇ビル新築業務" oninput="onLocationInput('s')" style="display:none">
   <div id="s-loc-similar" style="display:none;background:#FEF3C7;border:1px solid #FCD34D;border-radius:8px;padding:8px 10px;margin-bottom:12px;font-size:13px;color:#92400E"></div>
   <datalist id="s-location-list"></datalist>
   <div id="s-vehicle-wrap">
@@ -324,12 +324,12 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
   </div>
   <div class="jobno-hint" id="s-jobno-hint"></div>
   <div id="s-jobno-div-wrap" style="display:none;margin-bottom:12px">
-    <label style="font-size:12px;color:#666">新規現場の工番事業部</label>
+    <label style="font-size:12px;color:#666">新規対応先の工番事業部</label>
     <select id="s-jobno-division" onchange="this.dataset.userSet='1'">
       <option value="ICT">ICT</option>
       <option value="INF">INF</option>
       <option value="MSC">MSC</option>
-      <option value="GRB">GRB</option>
+      <option value="GRB">担当区分</option>
     </select>
   </div>
   <div class="grid2">
@@ -449,21 +449,21 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
 </div>
 
 <div id="screen-genba" class="screen">
-<div class="page-title">現場別管理</div>
+<div class="page-title">拠点別管理</div>
 <div class="gm-mode-bar">
-  <button id="gm-mode-genba" class="btn btn-secondary active" onclick="setGmMode('genba')">🏗️ 現場で探す</button>
+  <button id="gm-mode-genba" class="btn btn-secondary active" onclick="setGmMode('genba')">🏢 対応先で探す</button>
   <button id="gm-mode-person" class="btn btn-secondary" onclick="setGmMode('person')">👤 人で探す</button>
   <button id="gm-mode-pin" class="btn btn-secondary" onclick="setGmMode('pin')">📌 予定だけ</button>
 </div>
 <!-- 現場フィルタ（既存） -->
 <div id="gm-filter-genba" class="card">
-  <label>元請名 / 月</label>
+  <label>取引先名 / 月</label>
   <div style="display:flex;gap:8px;margin-bottom:8px">
-    <select id="gm-genba" onchange="onGmGenbaChange()" style="flex:2;margin-bottom:0"><option value="">元請を選択</option></select>
+    <select id="gm-genba" onchange="onGmGenbaChange()" style="flex:2;margin-bottom:0"><option value="">取引先を選択</option></select>
     <select id="gm-month" onchange="onGmGenbaChange()" style="flex:1;margin-bottom:0"><option value="">全期間</option></select>
   </div>
-  <label>現場名</label>
-  <select id="gm-location" onchange="renderGmList()" style="margin-bottom:0"><option value="">現場を選択</option></select>
+  <label>対応先名</label>
+  <select id="gm-location" onchange="renderGmList()" style="margin-bottom:0"><option value="">対応先を選択</option></select>
 </div>
 <!-- 人フィルタ（新規） -->
 <div id="gm-filter-person" class="card" style="display:none">
@@ -501,17 +501,17 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
 <div id="screen-jimu" class="screen">
 <div class="page-title">事務</div>
 <div class="grid2">
-  <div class="metric"><div class="metric-val" id="j-total-ko">－</div><div class="metric-lbl">今月 総人工</div></div>
+  <div class="metric"><div class="metric-val" id="j-total-ko">－</div><div class="metric-lbl">今月 総工数</div></div>
   <div class="metric"><div class="metric-val" id="j-total-days">－</div><div class="metric-lbl">今月 延べ人数</div></div>
 </div>
 <div class="filter-row">
   <select id="j-month" onchange="updateJimu()"></select>
-  <select id="j-genba-filter" onchange="updateJimu()"><option value="">全元請</option></select>
+  <select id="j-genba-filter" onchange="updateJimu()"><option value="">全取引先</option></select>
 </div>
 <div class="card">
-  <div style="font-size:13px;color:#666;margin-bottom:10px;font-weight:500">職人別集計</div>
+  <div style="font-size:13px;color:#666;margin-bottom:10px;font-weight:500">メンバー別集計</div>
   <table class="tbl">
-    <thead><tr><th>氏名</th><th>出勤日数</th><th>人工合計</th></tr></thead>
+    <thead><tr><th>氏名</th><th>出勤日数</th><th>工数合計</th></tr></thead>
     <tbody id="j-shokunin-tbl"><tr><td colspan="3" class="empty">更新してください</td></tr></tbody>
   </table>
 </div>
@@ -521,8 +521,8 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
   <select id="csv-sheet" style="margin-bottom:8px">
     <option value="日報データ">日報データ</option><option value="アーカイブ">アーカイブ</option>
     <option value="月別集計">月別集計</option><option value="会社別集計">会社別集計</option>
-    <option value="元請マスタ">元請マスタ</option>
-    <option value="現場マスタ">現場マスタ</option>
+    <option value="元請マスタ">取引先マスタ</option>
+    <option value="現場マスタ">対応先マスタ</option>
     <option value="月別確認表">月別確認表</option>
     <!-- 🔒 職人マスタ（単価列＝給料情報入り）と元請別請求集計は現場画面から外した（2026-06-11）。
          管理画面(admin.html・PIN付き)からは引き続きダウンロード可。復活させる前に必ず単価の扱いを確認すること。
@@ -532,8 +532,8 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
   <button class="btn btn-secondary" id="csv-btn" onclick="downloadSheetCSV()">ダウンロード</button>
 </div>
 <div style="display:flex;gap:8px;margin-top:8px">
-  <button class="btn btn-secondary" style="flex:1" onclick="openSettings()">職人を管理</button>
-  <button class="btn btn-secondary" style="flex:1" onclick="openGenbaSettings()">元請を管理</button>
+  <button class="btn btn-secondary" style="flex:1" onclick="openSettings()">メンバーを管理</button>
+  <button class="btn btn-secondary" style="flex:1" onclick="openGenbaSettings()">取引先を管理</button>
 </div>
 <div class="archive-section" style="background:#E8F4FD;border-color:#85B7EB">
   <div class="archive-title" style="color:#0C447C">📊 スプレッドシート集計</div>
@@ -559,7 +559,7 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
 <div class="tab-bar">
   <button class="tab active" onclick="switchTab('list')"><span class="tab-icon">📅</span>カレンダー</button>
   <button class="tab" onclick="switchTab('avail')"><span class="tab-icon">👥</span>空き確認</button>
-  <button class="tab" onclick="switchTab('genba')"><span class="tab-icon">🏗️</span>現場管理</button>
+  <button class="tab" onclick="switchTab('genba')"><span class="tab-icon">🏢</span>拠点管理</button>
   <button class="tab" onclick="switchTab('vehicle')"><span class="tab-icon">🚗</span>車確認</button>
   <button class="tab" id="tab-jimu" onclick="switchTab('jimu')"><span class="tab-icon">📊</span>事務</button>
 </div>
@@ -582,7 +582,7 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
   <label>作業区分<span style="color:#ff3b30;font-weight:600;margin-left:2px">*</span></label>
   <select id="e-work-type" onchange="onWorkTypeChange('e')">
     <option value="">▼ まず作業区分を選んでください</option>
-    <option value="現場作業">⛑️ 現場作業（工番発行）</option>
+    <option value="現場作業">⛑️ 通常対応（工番発行）</option>
     <option value="現調">📐 現調</option>
     <option value="着打ち">🔨 着打ち</option>
     <option value="カギ借用">🗝️ カギ借用</option>
@@ -598,16 +598,16 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
     <label>作業日<span style="color:#ff3b30;font-weight:600;margin-left:2px">*</span></label>
     <input type="date" id="e-date" onchange="onEditDateChange()">
   </div>
-  <label>元請名</label>
+  <label>取引先名</label>
   <select id="e-genba-select" onchange="onGenbaSelect('e')"><option value="">選択してください</option><option value="__manual__">直接入力する</option></select>
   <input type="text" id="e-genba" style="display:none;margin-bottom:12px">
-  <label>現場名</label>
-  <input type="search" id="e-location-search" placeholder="🔍 現場名で絞り込み（部分一致）" oninput="onLocationSearch('e')" style="margin-bottom:4px;font-size:13px;padding:6px 10px;width:100%;box-sizing:border-box;border:1px solid #ddd;border-radius:6px">
+  <label>対応先名</label>
+  <input type="search" id="e-location-search" placeholder="🔍 対応先名で絞り込み（部分一致）" oninput="onLocationSearch('e')" style="margin-bottom:4px;font-size:13px;padding:6px 10px;width:100%;box-sizing:border-box;border:1px solid #ddd;border-radius:6px">
   <select id="e-location-select" onchange="onLocationSelect('e')" style="margin-bottom:6px">
-    <option value="">既存の現場から選択</option>
-    <option value="__new__" style="color:#1D9E75;font-weight:600">＋ 新規現場として追加</option>
+    <option value="">既存の対応先から選択</option>
+    <option value="__new__" style="color:#1D9E75;font-weight:600">＋ 新規対応先として追加</option>
   </select>
-  <input type="text" id="e-location" placeholder="新規現場名を入力" oninput="onLocationInput('e')" style="display:none">
+  <input type="text" id="e-location" placeholder="新規対応先名を入力" oninput="onLocationInput('e')" style="display:none">
   <div id="e-loc-similar" style="display:none;background:#FEF3C7;border:1px solid #FCD34D;border-radius:8px;padding:8px 10px;margin-bottom:12px;font-size:13px;color:#92400E"></div>
   <datalist id="e-location-list"></datalist>
   <div id="e-vehicle-wrap">
@@ -642,7 +642,7 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
 
 <div id="settings-modal" class="modal-bg">
 <div class="modal">
-  <div class="modal-title">職人の管理 <span id="settings-company-name" style="font-size:14px;color:#1D9E75"></span></div>
+  <div class="modal-title">メンバーの管理 <span id="settings-company-name" style="font-size:14px;color:#1D9E75"></span></div>
   <div style="display:flex;gap:8px;margin-bottom:8px">
     <input type="text" id="new-shokunin" placeholder="氏名を入力" style="margin-bottom:0;flex:1">
     <button class="btn btn-sm" onclick="addShokunin()">追加</button>
@@ -653,7 +653,7 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
       <option value="ICT">ICT（情報通信）</option>
       <option value="INF">INF（インフラ）</option>
       <option value="MSC">MSC（ミスク）</option>
-      <option value="GRB">GRB（ビジサポ）</option>
+      <option value="GRB">担当区分</option>
     </select>
   </div>
   <div id="shokunin-list" style="margin-bottom:16px"></div>
@@ -671,29 +671,29 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
       <li><b>操作者</b>（自分の名前）を選択 ※初回のみ、以降は記憶</li>
       <li><b>作業日</b>を選ぶ（連続する複数日は終了日も指定）</li>
       <li><b>作業区分</b>を選ぶ ⚠️ <b>必須・最初に選ぶ</b>（選ぶまで以下の項目が入力できません）</li>
-      <li><b>元請名</b>をプルダウンから選択（なければ ➕ で追加）</li>
-      <li><b>現場名</b>をプルダウンから選ぶ／🔍検索ボックスで絞り込み（最近使った順で並ぶ）。新規は「＋ 新規現場として追加」</li>
+      <li><b>取引先名</b>をプルダウンから選択（なければ ➕ で追加）</li>
+      <li><b>対応先名</b>をプルダウンから選ぶ／🔍検索ボックスで絞り込み（最近使った順で並ぶ）。新規は「＋ 新規対応先として追加」</li>
       <li><b>🚗 車両</b>（任意・工番発行会社のみ・複数選択可）— 同日に他予定で予約済みは選択不可。2 台で行く時は両方の chip を ON</li>
-      <li><b>代表者</b>を選ぶ（その日の現場責任者）</li>
+      <li><b>代表者</b>を選ぶ（その日の拠点責任者）</li>
       <li><b>同行者</b>（代表以外のメンバー）を選ぶ</li>
       <li><b>出勤/退勤時間</b>と<b>メモ</b>を入力</li>
       <li>必要なら 🏭倉庫 / 🌙夜勤 / 🏖️休み / 📌予定 を選択</li>
       <li><b>登録する</b>ボタンで送信</li>
     </ol>
-    <p style="margin-top:6px;color:#1D9E75;font-weight:600">💡 人工は<b>1日=1.0で固定</b>（休み=0、それ以外=1.0）。1日に複数現場行ったら自動で<b>1/Nに按分</b>されます。</p>
+    <p style="margin-top:6px;color:#1D9E75;font-weight:600">💡 工数は<b>1日=1.0で固定</b>（休み=0、それ以外=1.0）。1日に複数対応先に行ったら自動で<b>1/Nに按分</b>されます。</p>
   </div>
 
   <div class="help-section">
     <h3>⚠️ 作業区分ゲート <span style="color:#1D9E75;font-size:12px">🆕</span></h3>
     <p>画面上部に赤い警告バーが出ます: 「最初に『作業区分』を選択してください」。</p>
     <ul>
-      <li>作業区分を選ぶまで、現場名・メンバー・時刻・モードなど<b>下の入力欄はすべてロック</b></li>
-      <li>これは <b>現場名の統一</b> と <b>工番の正しい発番</b> を強制するためのガード</li>
+      <li>作業区分を選ぶまで、対応先名・メンバー・時刻・モードなど<b>下の入力欄はすべてロック</b></li>
+      <li>これは <b>対応先名の統一</b> と <b>工番の正しい発番</b> を強制するためのガード</li>
       <li>編集モーダルでも同様の動作</li>
     </ul>
     <p style="margin-top:6px"><b>作業区分の種類</b>:</p>
     <ul style="font-size:13px">
-      <li><b>現場作業</b>: 通常の現場稼働 → 工番発行会社なら<b>工番が発行</b>される</li>
+      <li><b>通常対応</b>: 通常の業務稼働 → 工番発行会社なら<b>工番が発行</b>される</li>
       <li><b>現調</b>: 現地調査 — 工番なし</li>
       <li><b>着打ち</b>: 着工前の打合せ — 工番なし</li>
       <li><b>カギ借用</b>: カギの貸借や立会のみ — 工番なし</li>
@@ -704,22 +704,22 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
       <li><b>🏖️ 休み</b>: 選ぶと自動的に休みモード ON、他項目は不要 — 工番なし</li>
       <li><b>その他</b>: 上記以外 — 工番なし</li>
     </ul>
-    <p style="font-size:12px;color:#666">集計（人工合計）は全区分を合算。カレンダーでは現場作業以外が黄色いタグで表示されます。</p>
+    <p style="font-size:12px;color:#666">集計（工数合計）は全区分を合算。カレンダーでは通常対応以外が黄色いタグで表示されます。</p>
   </div>
 
   <div class="help-section">
     <h3>🏷 モードの使い分け</h3>
     <ul>
-      <li><b>🏭倉庫</b>: 倉庫作業（工番なし、人工1.0は出勤としてカウント）</li>
+      <li><b>🏭倉庫</b>: 倉庫作業（工番なし、工数1.0は出勤としてカウント）</li>
       <li><b>🌙夜勤</b>: 夜勤（昼勤と独立カウント。詳細は次セクション）</li>
-      <li><b>🏖️休み</b>: 休暇・欠勤（人工は0）</li>
+      <li><b>🏖️休み</b>: 休暇・欠勤（工数は0）</li>
       <li><b>📌予定</b>: 未確定の予定（集計・工番から除外）</li>
     </ul>
     <p style="margin-top:8px;color:#1D9E75;font-weight:600">🆕 休み・倉庫モード時の挙動</p>
     <ul style="font-size:13px">
-      <li>🏖️休み / 🏭倉庫 をONにすると <b>元請・現場・時間・メモ等の入力欄が自動で無効化</b>されます</li>
+      <li>🏖️休み / 🏭倉庫 をONにすると <b>取引先・対応先・時間・メモ等の入力欄が自動で無効化</b>されます</li>
       <li>入力した後にON にすると<b>入力済みの値は自動でクリア</b>されます（操作者・日付・代表者・同行メンバーは残ります）</li>
-      <li>元請名は<b>入力不要</b>になります</li>
+      <li>取引先名は<b>入力不要</b>になります</li>
       <li>もう一度同じトグルを押すと解除され、入力欄が再び有効化されます</li>
     </ul>
     <p style="margin-top:8px;color:#9A3412;font-weight:600">🆕 🏭倉庫モード時の作業内容選択</p>
@@ -737,8 +737,8 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
     </ul>
     <p style="margin-top:8px;color:#1D9E75;font-weight:600">🆕 カレンダー表示</p>
     <ul style="font-size:13px">
-      <li>元請名なしの休み・倉庫はカレンダーに<b>「🏖️ 休み」「🏭 倉庫」</b>と表示されます</li>
-      <li>元請名ありの場合は<b>「🏖️ 〇〇電気」「🏭 〇〇電気」</b>のように先頭にアイコンが付きます</li>
+      <li>取引先名なしの休み・倉庫はカレンダーに<b>「🏖️ 休み」「🏭 倉庫」</b>と表示されます</li>
+      <li>取引先名ありの場合は<b>「🏖️ 〇〇商事」「🏭 〇〇商事」</b>のように先頭にアイコンが付きます</li>
     </ul>
   </div>
 
@@ -752,7 +752,7 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
     </ol>
     <p style="color:#1D9E75">✓ 退勤＜出勤エラーは夜勤モード時は<b>免除</b>されます</p>
     <p style="color:#1D9E75">✓ 翌日のカレンダー・空き確認にも自動で「⏰前日から」表示（集計には影響なし）</p>
-    <p style="color:#1D9E75">✓ 同日に昼勤+夜勤を別登録すると合計2人工（独立カウント）</p>
+    <p style="color:#1D9E75">✓ 同日に昼勤+夜勤を別登録すると合計2工数（独立カウント）</p>
     <p style="color:#c00;font-size:12px;margin-top:6px">❌ よくあるミス: 作業日を翌日にしてしまう / 夜勤モードOFFのまま22:00→05:00入力 / 9-18のまま登録</p>
   </div>
 
@@ -783,26 +783,26 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
   </div>
 
   <div class="help-section">
-    <h3>🔍 現場名プルダウン＋検索 <span style="color:#1D9E75;font-size:12px">🆕</span></h3>
-    <p>元請を選ぶと、その元請に紐付く<b>既存の現場名</b>がプルダウンに自動列挙されます。</p>
+    <h3>🔍 対応先名プルダウン＋検索 <span style="color:#1D9E75;font-size:12px">🆕</span></h3>
+    <p>取引先を選ぶと、その取引先に紐付く<b>既存の対応先名</b>がプルダウンに自動列挙されます。</p>
     <ul>
       <li>並び順は <b>最近使った順</b>（最終使用日が新しい順）</li>
       <li>プルダウンの上に <b>🔍 検索ボックス</b>（部分一致）— 文字を打つと候補が絞り込まれる</li>
-      <li>新規現場は <b>「＋ 新規現場として追加」</b> を選択 → 直接入力欄が出現</li>
-      <li>新規入力時は <b>類似する既存現場</b> が黄色枠でサジェスト → 表記揺れ防止（例: 「○○ビル」と「〇〇ビル新築」を分けないよう促す）</li>
-      <li>送信時にも似た現場名があれば確認ダイアログが出る</li>
+      <li>新規対応先は <b>「＋ 新規対応先として追加」</b> を選択 → 直接入力欄が出現</li>
+      <li>新規入力時は <b>類似する既存対応先</b> が黄色枠でサジェスト → 表記揺れ防止（例: 「○○ビル」と「〇〇ビル新築」を分けないよう促す）</li>
+      <li>送信時にも似た対応先名があれば確認ダイアログが出る</li>
     </ul>
     <p style="color:#1D9E75;font-size:12px">編集モーダルでも同じ動作。会社を切り替えると候補が更新されます。</p>
   </div>
 
   <div class="help-section">
     <h3>🔢 工番事業部セレクタ（工番発行会社のみ）</h3>
-    <p>新規現場を「現場作業」で入力すると「新規現場の工番事業部」セレクタが表示されます。</p>
+    <p>新規対応先を「通常対応」で入力すると「新規対応先の工番事業部」セレクタが表示されます。</p>
     <ul>
       <li>デフォルトは<b>代表者の事業部</b></li>
       <li>初日だけ他事業部の人が代表する場合は手動で変更OK</li>
       <li>選んだ事業部が工番の頭文字になります（例: ICT-26-001）</li>
-      <li><b>工番が発行されないケース</b>: 作業区分が「現場作業」以外 / 🏭倉庫 / 🏖️休み / 📌予定</li>
+      <li><b>工番が発行されないケース</b>: 作業区分が「通常対応」以外 / 🏭倉庫 / 🏖️休み / 📌予定</li>
     </ul>
   </div>
 
@@ -817,7 +817,7 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
     <h3>📅 カレンダータブ</h3>
     <p>月単位で予定をカレンダー表示。</p>
     <ul>
-      <li><b>日付をタップ</b> → 日別モーダル（現場名+メンバーの最小表示）</li>
+      <li><b>日付をタップ</b> → 日別モーダル（対応先名+メンバーの最小表示）</li>
       <li>予定カードをタップ → <b>詳細フルスクリーン画面</b>へ</li>
       <li>該当する <b>モードアイコン</b>（🏭🌙🏖️📌）がカード末尾に表示</li>
       <li>日付跨ぎ予定は翌日に「⏰前日から」のラベル付きで自動表示（集計影響なし）</li>
@@ -829,7 +829,7 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
     <h3>📖 予定詳細フルスクリーン画面</h3>
     <p>日別モーダルでカードをタップで開きます。</p>
     <ul>
-      <li>表示項目: 現場名/期間/モードバッジ/作業区分/メンバー/人工/会社/工番/メモ/最終更新者</li>
+      <li>表示項目: 対応先名/期間/モードバッジ/作業区分/メンバー/工数/会社/工番/メモ/最終更新者</li>
       <li>メモ内のURL（http(s)://）はタップ可能なリンクに自動変換</li>
       <li>左上「←」または<b>右スワイプ</b>で戻る</li>
       <li><b>左スワイプ</b>で同じ日の次の予定にループ</li>
@@ -850,7 +850,7 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
 
   <div class="help-section">
     <h3>👥 空き確認タブ</h3>
-    <p>指定週の全職人の空き状況を一覧表示。休み・倉庫は色分け表示。左右スワイプで前週/次週切替。</p>
+    <p>指定週の全メンバーの空き状況を一覧表示。休み・倉庫は色分け表示。左右スワイプで前週/次週切替。</p>
   </div>
 
   <div class="help-section">
@@ -864,12 +864,12 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
   </div>
 
   <div class="help-section">
-    <h3>🏗️ 現場管理タブ</h3>
-    <p>既存の現場別に登録内容をまとめて確認・編集。複数日まとめて修正する「一括編集」も可能。</p>
+    <h3>🏢 拠点管理タブ</h3>
+    <p>既存の対応先別に登録内容をまとめて確認・編集。複数日まとめて修正する「一括編集」も可能。</p>
     <ul>
-      <li><b>元請名 + 月</b>で絞り込み可能（月は元請の右側、デフォルトは「全期間」）</li>
-      <li>月を選ぶとその月の現場リスト・日程一覧だけが表示される</li>
-      <li>チェックボックスで複数日選択 → <b>一括編集</b>で時間・元請・代表者・メンバー・車両等をまとめて変更</li>
+      <li><b>取引先名 + 月</b>で絞り込み可能（月は取引先の右側、デフォルトは「全期間」）</li>
+      <li>月を選ぶとその月の対応先リスト・日程一覧だけが表示される</li>
+      <li>チェックボックスで複数日選択 → <b>一括編集</b>で時間・取引先・代表者・メンバー・車両等をまとめて変更</li>
       <li>編集保存時、メンバーが他の予定とぶつかる場合は<b>被り警告</b>が出ます</li>
     </ul>
   </div>
@@ -891,9 +891,9 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
 
 <div id="similar-loc-modal" class="modal-bg">
 <div class="modal">
-  <div class="modal-title">現場名の確認</div>
-  <p style="margin:0 0 12px;font-size:14px;color:#333">候補に一致する現場がありますが、これは新規の現場ですか？</p>
-  <div style="font-size:12px;color:#666;margin-bottom:6px">既存の現場から選ぶ（タップ）:</div>
+  <div class="modal-title">対応先名の確認</div>
+  <p style="margin:0 0 12px;font-size:14px;color:#333">候補に一致する対応先がありますが、これは新規の対応先ですか？</p>
+  <div style="font-size:12px;color:#666;margin-bottom:6px">既存の対応先から選ぶ（タップ）:</div>
   <div id="similar-loc-list" style="margin-bottom:16px"></div>
   <div style="display:flex;gap:8px">
     <button class="btn btn-secondary btn-sm" style="flex:1" onclick="cancelSimilarLoc()">キャンセル</button>
@@ -904,9 +904,9 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
 
 <div id="genba-settings-modal" class="modal-bg">
 <div class="modal">
-  <div class="modal-title">元請の管理 <span id="genba-settings-company-name" style="font-size:14px;color:#1D9E75"></span></div>
+  <div class="modal-title">取引先の管理 <span id="genba-settings-company-name" style="font-size:14px;color:#1D9E75"></span></div>
   <div style="display:flex;gap:8px;margin-bottom:12px">
-    <input type="text" id="new-genba-master" placeholder="元請名を入力" style="margin-bottom:0;flex:1">
+    <input type="text" id="new-genba-master" placeholder="取引先名を入力" style="margin-bottom:0;flex:1">
     <button class="btn btn-sm" onclick="addGenbaMaster()">追加</button>
   </div>
   <div id="genba-master-list" style="margin-bottom:16px"></div>

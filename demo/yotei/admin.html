@@ -312,7 +312,7 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
   <label>作業区分<span style="color:#ff3b30;font-weight:600;margin-left:2px">*</span></label>
   <select id="s-work-type" onchange="onWorkTypeChange('s')">
     <option value="">▼ まず作業区分を選んでください</option>
-    <option value="現場作業">⛑️ 現場作業（工番発行）</option>
+    <option value="現場作業">⛑️ 通常対応（工番発行）</option>
     <option value="現調">📐 現調</option>
     <option value="着打ち">🔨 着打ち</option>
     <option value="カギ借用">🗝️ カギ借用</option>
@@ -324,19 +324,19 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
     <option value="その他">📋 その他</option>
   </select>
   <div id="s-worktype-notice" style="color:#dc2626;font-size:13px;font-weight:600;background:#FEE2E2;border:1px solid #FCA5A5;border-radius:8px;padding:8px 12px;margin-bottom:12px">⚠️ 最初に「作業区分」を選択してください。選択するまで以下の項目は入力できません。</div>
-  <label>元請名<span style="color:#ff3b30;font-weight:600;margin-left:2px">*</span></label>
+  <label>取引先名<span style="color:#ff3b30;font-weight:600;margin-left:2px">*</span></label>
   <div class="select-add-wrap">
     <select id="s-genba-select" onchange="onGenbaSelect('s')"><option value="">選択してください</option><option value="__manual__">直接入力する</option></select>
     <button class="btn btn-secondary btn-sm add-inline-btn" onclick="openGenbaSettingsFor('s-genba-select')">➕</button>
   </div>
   <input type="text" id="s-genba" placeholder="例：〇〇電気" style="display:none;margin-bottom:12px">
-  <label>現場名</label>
-  <input type="search" id="s-location-search" placeholder="🔍 現場名で絞り込み（部分一致）" oninput="onLocationSearch('s')" style="margin-bottom:4px;font-size:13px;padding:6px 10px;width:100%;box-sizing:border-box;border:1px solid #ddd;border-radius:6px">
+  <label>対応先名</label>
+  <input type="search" id="s-location-search" placeholder="🔍 対応先名で絞り込み（部分一致）" oninput="onLocationSearch('s')" style="margin-bottom:4px;font-size:13px;padding:6px 10px;width:100%;box-sizing:border-box;border:1px solid #ddd;border-radius:6px">
   <select id="s-location-select" onchange="onLocationSelect('s')" style="margin-bottom:6px">
-    <option value="">既存の現場から選択</option>
-    <option value="__new__" style="color:#1D9E75;font-weight:600">＋ 新規現場として追加</option>
+    <option value="">既存の対応先から選択</option>
+    <option value="__new__" style="color:#1D9E75;font-weight:600">＋ 新規対応先として追加</option>
   </select>
-  <input type="text" id="s-location" placeholder="例：〇〇ビル新築工事" oninput="onLocationInput('s')" style="display:none">
+  <input type="text" id="s-location" placeholder="例：〇〇ビル" oninput="onLocationInput('s')" style="display:none">
   <div id="s-loc-similar" style="display:none;background:#FEF3C7;border:1px solid #FCD34D;border-radius:8px;padding:8px 10px;margin-bottom:12px;font-size:13px;color:#92400E"></div>
   <datalist id="s-location-list"></datalist>
   <div id="s-vehicle-wrap">
@@ -346,12 +346,12 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
   </div>
   <div class="jobno-hint" id="s-jobno-hint"></div>
   <div id="s-jobno-div-wrap" style="display:none;margin-bottom:12px">
-    <label style="font-size:12px;color:#666">新規現場の工番事業部</label>
+    <label style="font-size:12px;color:#666">新規対応先の工番事業部</label>
     <select id="s-jobno-division" onchange="this.dataset.userSet='1'">
       <option value="ICT">ICT</option>
       <option value="INF">INF</option>
       <option value="MSC">MSC</option>
-      <option value="GRB">GRB</option>
+      <option value="GRB">担当区分</option>
     </select>
   </div>
   <div class="grid2">
@@ -467,21 +467,21 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
 
 <!-- 現場別管理 -->
 <div id="screen-genba" class="screen">
-<div class="page-title">現場別管理</div>
+<div class="page-title">拠点別管理</div>
 <div class="gm-mode-bar">
-  <button id="gm-mode-genba" class="btn btn-secondary active" onclick="setGmMode('genba')">🏗️ 現場で探す</button>
+  <button id="gm-mode-genba" class="btn btn-secondary active" onclick="setGmMode('genba')">🏢 拠点で探す</button>
   <button id="gm-mode-person" class="btn btn-secondary" onclick="setGmMode('person')">👤 人で探す</button>
   <button id="gm-mode-pin" class="btn btn-secondary" onclick="setGmMode('pin')">📌 予定だけ</button>
 </div>
 <!-- 現場フィルタ（既存） -->
 <div id="gm-filter-genba" class="card">
-  <label>元請名 / 月</label>
+  <label>取引先名 / 月</label>
   <div style="display:flex;gap:8px;margin-bottom:8px">
-    <select id="gm-genba" onchange="onGmGenbaChange()" style="flex:2;margin-bottom:0"><option value="">元請を選択</option></select>
+    <select id="gm-genba" onchange="onGmGenbaChange()" style="flex:2;margin-bottom:0"><option value="">取引先を選択</option></select>
     <select id="gm-month" onchange="onGmGenbaChange()" style="flex:1;margin-bottom:0"><option value="">全期間</option></select>
   </div>
-  <label>現場名</label>
-  <select id="gm-location" onchange="renderGmList()" style="margin-bottom:0"><option value="">現場を選択</option></select>
+  <label>対応先名</label>
+  <select id="gm-location" onchange="renderGmList()" style="margin-bottom:0"><option value="">対応先を選択</option></select>
 </div>
 <!-- 人フィルタ（新規） -->
 <div id="gm-filter-person" class="card" style="display:none">
@@ -520,17 +520,17 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
 <div id="screen-jimu" class="screen">
 <div class="page-title">事務</div>
 <div class="grid2">
-  <div class="metric"><div class="metric-val" id="j-total-ko">－</div><div class="metric-lbl">今月 総人工</div></div>
+  <div class="metric"><div class="metric-val" id="j-total-ko">－</div><div class="metric-lbl">今月 総工数</div></div>
   <div class="metric"><div class="metric-val" id="j-total-days">－</div><div class="metric-lbl">今月 延べ人数</div></div>
 </div>
 <div class="filter-row">
   <select id="j-month" onchange="updateJimu()"></select>
-  <select id="j-genba-filter" onchange="updateJimu()"><option value="">全元請</option></select>
+  <select id="j-genba-filter" onchange="updateJimu()"><option value="">全取引先</option></select>
 </div>
 <div class="card">
-  <div style="font-size:13px;color:#666;margin-bottom:10px;font-weight:500">職人別集計</div>
+  <div style="font-size:13px;color:#666;margin-bottom:10px;font-weight:500">メンバー別集計</div>
   <table class="tbl">
-    <thead><tr><th>氏名</th><th>会社</th><th>出勤日数</th><th>人工合計</th></tr></thead>
+    <thead><tr><th>氏名</th><th>会社</th><th>出勤日数</th><th>工数合計</th></tr></thead>
     <tbody id="j-shokunin-tbl"><tr><td colspan="4" class="empty">更新してください</td></tr></tbody>
   </table>
 </div>
@@ -540,9 +540,9 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
   <select id="csv-sheet" style="margin-bottom:8px">
     <option value="日報データ">日報データ</option><option value="アーカイブ">アーカイブ</option>
     <option value="月別集計">月別集計</option><option value="会社別集計">会社別集計</option>
-    <option value="職人マスタ">職人マスタ</option><option value="元請マスタ">元請マスタ</option>
-    <option value="現場マスタ">現場マスタ</option>
-    <option value="月別確認表">月別確認表</option><option value="元請別請求集計">元請別請求集計</option><option value="元請別請求集計_フィルタ用">元請別請求集計_フィルタ用</option>
+    <option value="職人マスタ">メンバーマスタ</option><option value="元請マスタ">取引先マスタ</option>
+    <option value="現場マスタ">対応先マスタ</option>
+    <option value="月別確認表">月別確認表</option><option value="元請別請求集計">取引先別請求集計</option><option value="元請別請求集計_フィルタ用">取引先別請求集計_フィルタ用</option>
     <option value="事業部別按分">事業部別按分</option>
     <option value="操作ログ">操作ログ</option>
   </select>
@@ -555,18 +555,18 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
   </div>
   <button class="btn btn-secondary" id="csv-btn" onclick="downloadSheetXlsx()" style="margin-bottom:6px">Excelでダウンロード</button>
   <div style="border-top:1px dashed #ddd;margin-top:8px;padding-top:8px">
-    <div style="font-size:12px;color:#666;margin-bottom:4px;font-weight:500">📊 期間集計Excel（職人×日付の人工マトリクス・合計関数入り）</div>
+    <div style="font-size:12px;color:#666;margin-bottom:4px;font-weight:500">📊 期間集計Excel（メンバー×日付の工数マトリクス・合計関数入り）</div>
     <button class="btn btn-secondary" id="period-kakunin-xlsx-btn" onclick="downloadPeriodKakuninXlsx()">期間指定でExcel出力</button>
     <div style="font-size:11px;color:#999;margin-top:4px">※上で指定した開始日／終了日を使います</div>
   </div>
 </div>
 <div style="display:flex;gap:8px;margin-top:8px">
-  <button class="btn btn-secondary" style="flex:1" onclick="openSettings()">職人を管理</button>
-  <button class="btn btn-secondary" style="flex:1" onclick="openGenbaSettings()">元請を管理</button>
+  <button class="btn btn-secondary" style="flex:1" onclick="openSettings()">メンバーを管理</button>
+  <button class="btn btn-secondary" style="flex:1" onclick="openGenbaSettings()">取引先を管理</button>
 </div>
 <div class="archive-section" style="background:#FFF4E5;border-color:#F59E0B;margin-top:8px">
   <div class="archive-title" style="color:#92400E">🔧 工番事業部の修正</div>
-  <div class="archive-desc" style="color:#92400E">既存の工番の事業部を変更します。新事業部×年度で連番max+1の工番が新規発番され、現場マスタと日報データを一括更新します。</div>
+  <div class="archive-desc" style="color:#92400E">既存の工番の事業部を変更します。新事業部×年度で連番max+1の工番が新規発番され、対応先マスタと日報データを一括更新します。</div>
   <button class="btn btn-secondary btn-sm" onclick="openJobNoFix()">工番を修正する</button>
 </div>
 <div class="archive-section" style="background:#FEF2F2;border-color:#FCA5A5;margin-top:8px">
@@ -575,18 +575,18 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
   <button class="btn btn-secondary btn-sm" onclick="runJobNoCleanup()">休み・倉庫・予定の工番をクリア</button>
 </div>
 <div class="archive-section" style="background:#EFF6FF;border-color:#93C5FD;margin-top:8px">
-  <div class="archive-title" style="color:#1E3A8A">🔀 元請名を統合（マージ）</div>
-  <div class="archive-desc" style="color:#1E3A8A">同じ会社が違う名前で登録されてしまった場合に、片方を残してもう片方のレコードを統合します。日報・アーカイブ・現場マスタ・元請マスタ全部を一括書き換え。</div>
-  <button class="btn btn-secondary btn-sm" onclick="openMergeGenbaModal()">元請名をマージする</button>
+  <div class="archive-title" style="color:#1E3A8A">🔀 取引先名を統合（マージ）</div>
+  <div class="archive-desc" style="color:#1E3A8A">同じ会社が違う名前で登録されてしまった場合に、片方を残してもう片方のレコードを統合します。日報・アーカイブ・対応先マスタ・取引先マスタ全部を一括書き換え。</div>
+  <button class="btn btn-secondary btn-sm" onclick="openMergeGenbaModal()">取引先名をマージする</button>
 </div>
 <div class="archive-section" style="background:#F0F9FF;border-color:#7DD3FC;margin-top:8px">
-  <div class="archive-title" style="color:#075985">🔀 現場名を統合（マージ）</div>
-  <div class="archive-desc" style="color:#075985">同じ現場が表記揺れで別の現場として登録されている場合に統合します（例：「○○ビル」と「○○ビル新築」）。日報・アーカイブ・現場マスタ全部を書き換え、統合先の工番に統一されます。</div>
-  <button class="btn btn-secondary btn-sm" onclick="openMergeLocModal()">現場名をマージする</button>
+  <div class="archive-title" style="color:#075985">🔀 対応先名を統合（マージ）</div>
+  <div class="archive-desc" style="color:#075985">同じ対応先が表記揺れで別の対応先として登録されている場合に統合します（例：「○○ビル」と「○○ビル別館」）。日報・アーカイブ・対応先マスタ全部を書き換え、統合先の工番に統一されます。</div>
+  <button class="btn btn-secondary btn-sm" onclick="openMergeLocModal()">対応先名をマージする</button>
 </div>
 <div class="archive-section" style="background:#E8F4FD;border-color:#85B7EB">
   <div class="archive-title" style="color:#0C447C">📊 スプレッドシート集計</div>
-  <div class="archive-desc" style="color:#0C447C">会社別・月別の出勤日数・人工をスプレッドシートに自動集計します。毎朝6時にも自動更新されます。</div>
+  <div class="archive-desc" style="color:#0C447C">会社別・月別の出勤日数・工数をスプレッドシートに自動集計します。毎朝6時にも自動更新されます。</div>
   <button class="btn btn-secondary btn-sm" id="summary-btn" onclick="runSummary()">集計を更新</button>
 </div>
 <div class="archive-section">
@@ -608,16 +608,16 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
 <div id="screen-billing" class="screen">
 <div class="page-title">💰 請求計算（常用・日当）</div>
 <div class="card">
-  <label>元請名 / 月</label>
+  <label>取引先名 / 月</label>
   <div style="display:flex;gap:8px;margin-bottom:0">
-    <select id="bill-genba" onchange="onBillingScopeChange()" style="flex:2;margin-bottom:0"><option value="">元請を選択</option></select>
+    <select id="bill-genba" onchange="onBillingScopeChange()" style="flex:2;margin-bottom:0"><option value="">取引先を選択</option></select>
     <select id="bill-month" onchange="onBillingScopeChange()" style="flex:1;margin-bottom:0"></select>
   </div>
 </div>
 <div id="bill-table-wrap" style="display:none">
   <div class="card" style="padding:12px 16px;overflow-x:auto">
     <table class="tbl" id="bill-table">
-      <thead><tr><th>現場</th><th>方式</th><th>出面</th><th>単価</th><th>金額</th><th>経費</th></tr></thead>
+      <thead><tr><th>対応先</th><th>方式</th><th>出面</th><th>単価</th><th>金額</th><th>経費</th></tr></thead>
       <tbody id="bill-tbody"></tbody>
     </table>
     <div id="bill-total" style="text-align:right;font-weight:600;margin-top:10px;font-size:15px"></div>
@@ -631,7 +631,7 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
 <div class="tab-bar">
   <button class="tab" onclick="switchTab('list')"><span class="tab-icon">📅</span>カレンダー</button>
   <button class="tab" onclick="switchTab('avail')"><span class="tab-icon">👥</span>空き確認</button>
-  <button class="tab" onclick="switchTab('genba')"><span class="tab-icon">🏗️</span>現場管理</button>
+  <button class="tab" onclick="switchTab('genba')"><span class="tab-icon">🏢</span>拠点管理</button>
   <button class="tab" onclick="switchTab('vehicle')"><span class="tab-icon">🚗</span>車確認</button>
   <button class="tab active" onclick="switchTab('jimu')"><span class="tab-icon">📊</span>事務</button>
   <!-- 💤 請求計算タブは寝かせ中（2026-06-11 お金はGR管理画面📊経営タブに一本化）。復活させる時は display:none を外すだけ。※ボタンを消すとswitchTabの並び順が壊れるので必ず「隠す」こと -->
@@ -657,7 +657,7 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
   <label>作業区分<span style="color:#ff3b30;font-weight:600;margin-left:2px">*</span></label>
   <select id="e-work-type" onchange="onWorkTypeChange('e')">
     <option value="">▼ まず作業区分を選んでください</option>
-    <option value="現場作業">⛑️ 現場作業（工番発行）</option>
+    <option value="現場作業">⛑️ 通常対応（工番発行）</option>
     <option value="現調">📐 現調</option>
     <option value="着打ち">🔨 着打ち</option>
     <option value="カギ借用">🗝️ カギ借用</option>
@@ -673,16 +673,16 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
     <label>作業日<span style="color:#ff3b30;font-weight:600;margin-left:2px">*</span></label>
     <input type="date" id="e-date" onchange="onEditDateChange()">
   </div>
-  <label>元請名</label>
+  <label>取引先名</label>
   <select id="e-genba-select" onchange="onGenbaSelect('e')"><option value="">選択してください</option><option value="__manual__">直接入力する</option></select>
   <input type="text" id="e-genba" style="display:none;margin-bottom:12px">
-  <label>現場名</label>
-  <input type="search" id="e-location-search" placeholder="🔍 現場名で絞り込み（部分一致）" oninput="onLocationSearch('e')" style="margin-bottom:4px;font-size:13px;padding:6px 10px;width:100%;box-sizing:border-box;border:1px solid #ddd;border-radius:6px">
+  <label>対応先名</label>
+  <input type="search" id="e-location-search" placeholder="🔍 対応先名で絞り込み（部分一致）" oninput="onLocationSearch('e')" style="margin-bottom:4px;font-size:13px;padding:6px 10px;width:100%;box-sizing:border-box;border:1px solid #ddd;border-radius:6px">
   <select id="e-location-select" onchange="onLocationSelect('e')" style="margin-bottom:6px">
-    <option value="">既存の現場から選択</option>
-    <option value="__new__" style="color:#1D9E75;font-weight:600">＋ 新規現場として追加</option>
+    <option value="">既存の対応先から選択</option>
+    <option value="__new__" style="color:#1D9E75;font-weight:600">＋ 新規対応先として追加</option>
   </select>
-  <input type="text" id="e-location" placeholder="新規現場名を入力" oninput="onLocationInput('e')" style="display:none">
+  <input type="text" id="e-location" placeholder="新規対応先名を入力" oninput="onLocationInput('e')" style="display:none">
   <div id="e-loc-similar" style="display:none;background:#FEF3C7;border:1px solid #FCD34D;border-radius:8px;padding:8px 10px;margin-bottom:12px;font-size:13px;color:#92400E"></div>
   <datalist id="e-location-list"></datalist>
   <div id="e-vehicle-wrap">
@@ -718,7 +718,7 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
 <!-- 職人管理モーダル -->
 <div id="settings-modal" class="modal-bg">
 <div class="modal">
-  <div class="modal-title">職人の管理 <span id="settings-company-name" style="font-size:14px;color:#1D9E75"></span></div>
+  <div class="modal-title">メンバーの管理 <span id="settings-company-name" style="font-size:14px;color:#1D9E75"></span></div>
   <div style="display:flex;gap:8px;margin-bottom:8px">
     <input type="text" id="new-shokunin" placeholder="氏名を入力" style="margin-bottom:0;flex:1">
     <button class="btn btn-sm" onclick="addShokunin()">追加</button>
@@ -729,7 +729,7 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
       <option value="ICT">ICT（情報通信）</option>
       <option value="INF">INF（インフラ）</option>
       <option value="MSC">MSC（ミスク）</option>
-      <option value="GRB">GRB（ビジサポ）</option>
+      <option value="GRB">担当区分</option>
     </select>
   </div>
   <div id="shokunin-list" style="margin-bottom:16px"></div>
@@ -751,14 +751,14 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
   <div class="help-section">
     <h3>📊 事務タブの使い方</h3>
     <ol>
-      <li><b>月別集計</b>: 月を選ぶと職人別の出勤日数・人工合計が表示</li>
+      <li><b>月別集計</b>: 月を選ぶとメンバー別の出勤日数・工数合計が表示</li>
       <li><b>Excelでダウンロード</b>: 日報・マスタ・集計・操作ログを <b>xlsx</b> で出力（色・罫線そのまま）</li>
-      <li><b>期間指定でExcel出力</b>: 開始日〜終了日の職人×日付マトリクスを Excel で（合計に <b>=SUM</b> 関数入り）</li>
-      <li><b>職人を管理</b>: 氏名・会社・事業部・<b>単価（日当）</b>を登録/編集</li>
-      <li><b>元請を管理</b>: 元請リストの追加/削除</li>
+      <li><b>期間指定でExcel出力</b>: 開始日〜終了日のメンバー×日付マトリクスを Excel で（合計に <b>=SUM</b> 関数入り）</li>
+      <li><b>メンバーを管理</b>: 氏名・会社・事業部・<b>単価（日当）</b>を登録/編集</li>
+      <li><b>取引先を管理</b>: 取引先リストの追加/削除</li>
       <li><b>集計を更新</b>: 全集計シートを一括再生成（毎朝6時も自動）</li>
       <li><b>データアーカイブ</b>: 3ヶ月以上前を退避（毎月1日3時も自動）</li>
-      <li><b>工番を修正する</b>: 事業部変更（金額の入力はGR管理画面📊経営タブへ）</li>
+      <li><b>工番を修正する</b>: 事業部変更（金額の入力は管理画面📊経営タブへ）</li>
     </ol>
   </div>
 
@@ -771,30 +771,30 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
       <li><b>開始日／終了日</b>を入力すると、<b>日報データ・アーカイブ</b>は作業日列で絞り込まれてダウンロードされる（他のシートは全件）</li>
       <li>ファイル名: <code>シート名_開始_終了.xlsx</code> 形式</li>
     </ul>
-    <p style="color:#1D9E75;font-weight:600;margin-top:6px">📊 期間指定でExcel出力（職人×日付マトリクス）</p>
+    <p style="color:#1D9E75;font-weight:600;margin-top:6px">📊 期間指定でExcel出力（メンバー×日付マトリクス）</p>
     <ul>
       <li>開始日・終了日を必ず両方指定して押す</li>
       <li>会社バーで選んだ会社（全社可）で絞り込み</li>
       <li>月別確認表と同じ見た目（タイトル黄・ヘッダ灰・土日色・罫線）で出力</li>
-      <li>各行の合計列、合計行の各日と総合計が <b>SUM 関数</b>になっているので、Excel 側で人工を編集すれば自動で再計算される</li>
+      <li>各行の合計列、合計行の各日と総合計が <b>SUM 関数</b>になっているので、Excel 側で工数を編集すれば自動で再計算される</li>
       <li>「月全部入って合計がズレる」「期間外を手で削除して再計算する」手作業がなくなる</li>
     </ul>
   </div>
 
   <div class="help-section">
     <h3>🔧 工番修正モーダル</h3>
-    <p>現場マスタの全現場が一覧表示されます。各現場で:</p>
+    <p>対応先マスタの全対応先が一覧表示されます。各対応先で:</p>
     <ul>
-      <li>🔍 上部の検索ボックスで <b>元請名・現場名・工番・代表者</b> を横断検索できます</li>
+      <li>🔍 上部の検索ボックスで <b>取引先名・対応先名・工番・代表者</b> を横断検索できます</li>
       <li><b>事業部を変更</b> → 「工番更新」で新事業部×年度の次連番で<b>再発番</b>（旧工番は欠番）</li>
       <li>代表者の事業部が参考表示されるので、選び直しの判断に使える</li>
-      <li style="color:#92400E">💡 売上などの金額入力は <b>GR管理画面の📊経営タブ</b> に一本化しました（このモーダルの売上欄は非表示）</li>
+      <li style="color:#92400E">💡 売上などの金額入力は <b>管理画面の📊経営タブ</b> に一本化しました（このモーダルの売上欄は非表示）</li>
     </ul>
   </div>
 
   <div class="help-section">
     <h3>🧹 おかしい工番をクリア</h3>
-    <p>事務タブの赤いボタン。<b>休み・倉庫・予定</b>モードや「現場作業以外」のレコードに残っている <b>工番・事業部</b> を一括クリアします。</p>
+    <p>事務タブの赤いボタン。<b>休み・倉庫・予定</b>モードや「通常対応以外」のレコードに残っている <b>工番・事業部</b> を一括クリアします。</p>
     <ul>
       <li>仕様変更以前に登録された「休み なのに工番がついている」レコードを清掃</li>
       <li>新規登録時は既に空のまま保存されているため、通常は1回実行すれば十分</li>
@@ -803,39 +803,39 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
   </div>
 
   <div class="help-section">
-    <h3>🔀 元請名をマージ</h3>
+    <h3>🔀 取引先名をマージ</h3>
     <p>事務タブの青いボタン。同じ会社が違う名前で登録されてしまった場合に、片方を残してもう片方のレコードを統合します。</p>
     <ul>
       <li>例: 「A社」と「A社自社」が別名で登録されていた場合に「A社自社」に統合</li>
-      <li><b>統合する元請</b>（消える方）と <b>残す元請</b>（こちらに統一）を選んで実行</li>
-      <li>日報・アーカイブ・現場マスタ・元請マスタ <b>全部を一括書き換え</b></li>
-      <li><b>取り消し不可</b>なので、本当に同じ元請の重複登録か確認してから実行</li>
+      <li><b>統合する取引先</b>（消える方）と <b>残す取引先</b>（こちらに統一）を選んで実行</li>
+      <li>日報・アーカイブ・対応先マスタ・取引先マスタ <b>全部を一括書き換え</b></li>
+      <li><b>取り消し不可</b>なので、本当に同じ取引先の重複登録か確認してから実行</li>
       <li>影響範囲（何件書き換わるか）はプレビューで確認できます</li>
     </ul>
   </div>
 
   <div class="help-section">
-    <h3>🏢 現場マスタの管理 <span style="color:#1D9E75;font-size:12px">🆕</span></h3>
-    <p>現場（工事案件）が増えてきた時の整理ツール。3 種類あり目的別に使い分けます。</p>
-    <p style="color:#1D9E75;font-weight:600;margin-top:8px">🔀 現場名マージ（表記揺れの統合）</p>
+    <h3>🏢 対応先マスタの管理 <span style="color:#1D9E75;font-size:12px">🆕</span></h3>
+    <p>対応先（業務案件）が増えてきた時の整理ツール。3 種類あり目的別に使い分けます。</p>
+    <p style="color:#1D9E75;font-weight:600;margin-top:8px">🔀 対応先名マージ（表記揺れの統合）</p>
     <ul>
-      <li>例: 「○○ビル」と「○○ビル新築工事」のように同じ現場が違う名前で登録されてしまった時</li>
-      <li>現場管理タブ → 該当現場 → 編集 → 「他の現場名にマージ」</li>
+      <li>例: 「○○ビル」と「○○ビル別館」のように同じ対応先が違う名前で登録されてしまった時</li>
+      <li>拠点管理タブ → 該当対応先 → 編集 → 「他の対応先名にマージ」</li>
       <li><b>どっちに合わせるか</b>選択する UI が出る（A の名前にする／B の名前にする）</li>
-      <li>日報・アーカイブ・現場マスタを <b>一括書き換え</b>。工番は影響なし</li>
+      <li>日報・アーカイブ・対応先マスタを <b>一括書き換え</b>。工番は影響なし</li>
       <li><b>取り消し不可</b></li>
     </ul>
-    <p style="color:#9A3412;font-weight:600;margin-top:8px">🗑️ 現場の削除</p>
+    <p style="color:#9A3412;font-weight:600;margin-top:8px">🗑️ 対応先の削除</p>
     <ul>
-      <li>現場管理タブの現場行に <b>🗑️ 削除アイコン</b>。間違って登録した現場を完全に消す</li>
-      <li>条件: <b>日報・アーカイブに参照なし</b>＋<b>売上未入力</b>の現場のみ削除可</li>
+      <li>拠点管理タブの対応先行に <b>🗑️ 削除アイコン</b>。間違って登録した対応先を完全に消す</li>
+      <li>条件: <b>日報・アーカイブに参照なし</b>＋<b>売上未入力</b>の対応先のみ削除可</li>
       <li>条件を満たさない時は削除不可。代わりに <b>マージ or 完了フラグ</b> を案内</li>
     </ul>
     <p style="color:#1D9E75;font-weight:600;margin-top:8px">✅ 完了フラグ（プルダウン非表示）</p>
     <ul>
-      <li>終わった工事を <b>新規入力時のプルダウンから隠す</b> 機能。データは残るので集計・粗利は維持</li>
-      <li>予定詳細を開く → <b>「この現場を完了にする」</b> ボタン</li>
-      <li>権限: その現場の <b>代表者</b> または <b>管理者</b> のみ操作可</li>
+      <li>終わった業務を <b>新規入力時のプルダウンから隠す</b> 機能。データは残るので集計・粗利は維持</li>
+      <li>予定詳細を開く → <b>「この対応先を完了にする」</b> ボタン</li>
+      <li>権限: その対応先の <b>代表者</b> または <b>管理者</b> のみ操作可</li>
       <li>「進行中に戻す」ボタンで完了解除も可能</li>
       <li>工番・売上・過去データは完了後も保持される（参照は可能）</li>
     </ul>
@@ -843,18 +843,18 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
 
   <div class="help-section">
     <h3>💰 粗利・お金の管理について</h3>
-    <p style="color:#92400E;background:#FEF3C7;border-radius:6px;padding:8px 10px;margin:0 0 8px">お金（受注金額・原価・粗利・請求日・入金日）の管理は <b>GR管理画面の「📊経営」タブ</b> に一本化しました（2026-06-11）。このアプリでは入力しません。</p>
-    <p style="font-size:12px;color:#888">※スプレッドシートの「事業部別按分」シート（人工×単価の自動計算）は現在休止中。今入っている数字はテストの残骸なので参考にしないこと。職人マスタの単価は給料・人工管理用としてこのアプリに残ります。</p>
+    <p style="color:#92400E;background:#FEF3C7;border-radius:6px;padding:8px 10px;margin:0 0 8px">お金（受注金額・原価・粗利・請求日・入金日）の管理は <b>管理画面の「📊経営」タブ</b> に一本化しました（2026-06-11）。このアプリでは入力しません。</p>
+    <p style="font-size:12px;color:#888">※スプレッドシートの「事業部別按分」シート（工数×単価の自動計算）は現在休止中。今入っている数字はテストの残骸なので参考にしないこと。メンバーマスタの単価は給料・工数管理用としてこのアプリに残ります。</p>
   </div>
 
   <div class="help-section">
     <h3>📋 スプレッドシートのシート</h3>
     <ul>
-      <li><b>データ</b>: 日報データ / アーカイブ / 職人マスタ / 元請マスタ / 現場マスタ</li>
-      <li><b>集計</b>: 会社別集計 / 月別集計 / 月別確認表 / 元請別請求集計 / 元請別請求集計_フィルタ用 / 事業部別按分</li>
+      <li><b>データ</b>: 日報データ / アーカイブ / メンバーマスタ / 取引先マスタ / 対応先マスタ</li>
+      <li><b>集計</b>: 会社別集計 / 月別集計 / 月別確認表 / 取引先別請求集計 / 取引先別請求集計_フィルタ用 / 事業部別按分</li>
       <li><b>運用</b>: 操作ログ（誰がいつ何を変更したか自動記録）</li>
     </ul>
-    <p style="color:#1D9E75;font-size:12px;margin-top:6px"><b>元請別請求集計_フィルタ用</b>: Excel オートフィルタ用のフラット構造版（月・会社・現場・名前 + 日別人工 + 合計）。事務員が請求用に絞り込みたい時に使う</p>
+    <p style="color:#1D9E75;font-size:12px;margin-top:6px"><b>取引先別請求集計_フィルタ用</b>: Excel オートフィルタ用のフラット構造版（月・会社・対応先・名前 + 日別工数 + 合計）。事務員が請求用に絞り込みたい時に使う</p>
     <p style="color:#c00;font-size:12px">⚠ 集計シートは手動で書き込まない（次回集計で消える）</p>
   </div>
 
@@ -885,7 +885,7 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
   </div>
 
   <div class="help-section">
-    <h3>🌙 夜勤モード（職人画面と共通）</h3>
+    <h3>🌙 夜勤モード（メンバー画面と共通）</h3>
     <ol>
       <li><b>作業日</b>は作業を始める日を選ぶ（翌朝5時に終わる場合は前日）</li>
       <li><b>🌙夜勤モード</b>をON、出勤・退勤を実時刻で入力（例 22:00 〜 05:00）</li>
@@ -897,9 +897,9 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
     <h3>🆕 休み・倉庫モードの仕様</h3>
     <p style="color:#1D9E75;font-weight:600">🏖️休み / 🏭倉庫 トグルON時の挙動</p>
     <ul>
-      <li>元請・現場・作業区分・出勤/退勤・メモ等の入力欄が<b>自動で無効化</b>される</li>
+      <li>取引先・対応先・作業区分・出勤/退勤・メモ等の入力欄が<b>自動で無効化</b>される</li>
       <li>すでに入力されている値は<b>自動でクリア</b>される</li>
-      <li>元請名は<b>入力不要</b>（バリデーションをスキップ）</li>
+      <li>取引先名は<b>入力不要</b>（バリデーションをスキップ）</li>
       <li>操作者・日付・代表者・同行メンバーは引き続き入力可能</li>
       <li>もう一度同じトグルを押すと解除され、入力欄が再び有効化される</li>
     </ul>
@@ -910,65 +910,65 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
     </ul>
     <p style="color:#1D9E75;font-weight:600;margin-top:8px">カレンダー表示</p>
     <ul>
-      <li>元請名なしの休み・倉庫は<b>「🏖️ 休み」「🏭 倉庫」</b>と表示</li>
-      <li>元請名ありは<b>「🏖️ 〇〇電気」「🏭 〇〇電気」</b>のようにアイコン付き表示</li>
+      <li>取引先名なしの休み・倉庫は<b>「🏖️ 休み」「🏭 倉庫」</b>と表示</li>
+      <li>取引先名ありは<b>「🏖️ 〇〇電気」「🏭 〇〇電気」</b>のようにアイコン付き表示</li>
       <li>倉庫モードで作業内容を選んだ場合は<b>「🏭 清掃、備品管理」</b>のようにタスク名が表示</li>
     </ul>
     <p style="color:#9A3412;font-weight:600;margin-top:8px">🆕 倉庫モードの作業内容選択（必須）</p>
     <ul>
       <li>🏭倉庫 ON にすると<b>「今日の倉庫作業」セクション</b>が出現</li>
       <li>選択肢: <b>🧹清掃 / 📦備品管理 / 🔧工具メンテナンス / 🚚入荷対応 / 📤出荷準備 / ♻️廃材処理</b></li>
-      <li><b>1 つ以上必須</b>。複数選択可。保存時に <code>現場名</code> 列にカンマ区切りで保存される</li>
+      <li><b>1 つ以上必須</b>。複数選択可。保存時に <code>対応先名</code> 列にカンマ区切りで保存される</li>
       <li>編集時もチェック状態が復元される</li>
-      <li>誰がいつ何の倉庫作業をやったか後から振り返れる（藤木さんなどの動きを可視化する目的）</li>
+      <li>誰がいつ何の倉庫作業をやったか後から振り返れる（動きを可視化する目的）</li>
     </ul>
     <p style="color:#1D9E75;font-weight:600;margin-top:8px">シート集計での扱い</p>
     <ul>
-      <li><b>休み</b>: 人工=0、出勤日数にもカウントされない</li>
-      <li><b>倉庫</b>: 人工=1.0、出勤日数に+1（通常勤務と同じカウント）</li>
-      <li>倉庫レコードに元請名がない場合、<b>元請別請求集計・事業部別按分には載らない</b>（工番なし・元請なしのため）</li>
+      <li><b>休み</b>: 工数=0、出勤日数にもカウントされない</li>
+      <li><b>倉庫</b>: 工数=1.0、出勤日数に+1（通常勤務と同じカウント）</li>
+      <li>倉庫レコードに取引先名がない場合、<b>取引先別請求集計・事業部別按分には載らない</b>（工番なし・取引先なしのため）</li>
     </ul>
   </div>
 
   <div class="help-section">
-    <h3>📊 1日複数現場の按分ルール（A案）</h3>
-    <p>1人が同じ日に複数現場へ行ったら、自動で 1人工を <b>1/N</b> に按分。</p>
+    <h3>📊 1日複数対応先の按分ルール（A案）</h3>
+    <p>1人が同じ日に複数対応先へ行ったら、自動で 1工数を <b>1/N</b> に按分。</p>
     <ul>
       <li>昼A + 昼B → 各 0.5（合計 1.0）</li>
-      <li>3現場 → 各 1/3</li>
+      <li>3対応先 → 各 1/3</li>
       <li>昼A + 夜B → A=1.0、B=1.0（昼夜は別カウント）</li>
     </ul>
-    <p>影響シート: <b>元請別請求集計</b> / <b>事業部別按分</b>。月別確認表は1日1人工で頭打ち。</p>
+    <p>影響シート: <b>取引先別請求集計</b> / <b>事業部別按分</b>。月別確認表は1日1工数で頭打ち。</p>
   </div>
 
   <div class="help-section">
     <h3>🏷 作業区分（必須・ゲート）</h3>
     <p>登録／編集モーダルでは <b>作業区分を最初に選択するまで他の項目が入力できません</b>（赤い警告バー表示）。表記揺れ防止と工番の正しい発番のためのガード。</p>
     <ul>
-      <li>区分: <b>現場作業 / 現調 / 着打ち / カギ借用 / 材料引取・検品 / 撤去品返却 / 前乗り / 倉庫作業 / 休み / その他</b></li>
+      <li>区分: <b>通常対応 / 現調 / 着打ち / カギ借用 / 材料引取・検品 / 撤去品返却 / 前乗り / 倉庫作業 / 休み / その他</b></li>
       <li><b>🏭 倉庫作業</b>を選ぶと自動で倉庫モードに切替、倉庫タスク選択UIが出現（工番なし）</li>
-      <li><b>🏖️ 休み</b>を選ぶと自動で休みモードに切替（工番なし、人工0）</li>
-      <li>工番発行会社の<b>工番は「現場作業」のみ発行</b>（他の区分・休み・倉庫・予定では工番なし）</li>
+      <li><b>🏖️ 休み</b>を選ぶと自動で休みモードに切替（工番なし、工数0）</li>
+      <li>工番発行会社の<b>工番は「通常対応」のみ発行</b>（他の区分・休み・倉庫・予定では工番なし）</li>
       <li>集計上は<b>全区分を合算</b>。詳細画面・月別確認表では区分が見えるよう表示</li>
     </ul>
   </div>
 
   <div class="help-section">
-    <h3>🔍 現場名プルダウン＋検索 <span style="color:#1D9E75;font-size:12px">🆕</span></h3>
-    <p>元請を選ぶと、その元請に紐付く<b>既存の現場名</b>がプルダウンに表示されます。</p>
+    <h3>🔍 対応先名プルダウン＋検索 <span style="color:#1D9E75;font-size:12px">🆕</span></h3>
+    <p>取引先を選ぶと、その取引先に紐付く<b>既存の対応先名</b>がプルダウンに表示されます。</p>
     <ul>
       <li>並び順は <b>最近使った順</b>（最終使用日の降順）</li>
       <li>プルダウン上の <b>🔍 検索ボックス</b>で部分一致絞り込み — 通常時は「(N件・最近順)」、絞込中は「(ヒット/全件)」表示</li>
-      <li>新規現場は <b>「＋ 新規現場として追加」</b> を選択 → 直接入力欄が出現</li>
-      <li>新規入力時は<b>類似する既存現場</b>が黄色枠でサジェスト（表記揺れ防止）</li>
-      <li>編集モーダルでも同じ動作。元請を切り替えると候補が更新</li>
+      <li>新規対応先は <b>「＋ 新規対応先として追加」</b> を選択 → 直接入力欄が出現</li>
+      <li>新規入力時は<b>類似する既存対応先</b>が黄色枠でサジェスト（表記揺れ防止）</li>
+      <li>編集モーダルでも同じ動作。取引先を切り替えると候補が更新</li>
     </ul>
   </div>
 
   <div class="help-section">
     <h3>📅 カレンダー / 詳細画面 / スワイプ</h3>
     <ul>
-      <li>日付タップ → 日別モーダル（現場名+メンバー+モードアイコンの最小表示）</li>
+      <li>日付タップ → 日別モーダル（対応先名+メンバー+モードアイコンの最小表示）</li>
       <li>予定タップ → 詳細フルスクリーン（編集・削除・コピー集約）</li>
       <li>メモ内URLは自動でタップ可能リンクに変換</li>
       <li><b>横スワイプ</b>: 月切替/前後日/前後週/詳細前後</li>
@@ -976,11 +976,11 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
   </div>
 
   <div class="help-section">
-    <h3>🏗️ 現場管理タブ</h3>
+    <h3>🏢 拠点管理タブ</h3>
     <ul>
-      <li><b>元請名 + 月</b>で絞り込み可能（月は元請の右側、デフォルトは「全期間」）</li>
-      <li>月を選ぶとその月の現場リスト・日程一覧だけが表示される</li>
-      <li>チェックボックスで複数日選択 → <b>一括編集</b>で時間・元請・代表者・メンバー・車両等をまとめて変更</li>
+      <li><b>取引先名 + 月</b>で絞り込み可能（月は取引先の右側、デフォルトは「全期間」）</li>
+      <li>月を選ぶとその月の対応先リスト・日程一覧だけが表示される</li>
+      <li>チェックボックスで複数日選択 → <b>一括編集</b>で時間・取引先・代表者・メンバー・車両等をまとめて変更</li>
       <li>編集保存時、メンバーが他の予定とぶつかる場合は<b>被り警告</b>が出ます</li>
     </ul>
   </div>
@@ -988,12 +988,12 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
   <div class="help-section">
     <h3>🆘 困ったら</h3>
     <ul>
-      <li><b>工番が空欄</b> → 代表者の事業部未設定。職人管理で割当</li>
+      <li><b>工番が空欄</b> → 代表者の事業部未設定。メンバー管理で割当</li>
       <li><b>粗利がマイナス</b> → 売上未入力 or 単価が高すぎる可能性</li>
-      <li><b>原価が0</b> → 職人の単価が未設定</li>
+      <li><b>原価が0</b> → メンバーの単価が未設定</li>
       <li><b>起動が遅い</b> → アーカイブを実行（3ヶ月以前を退避）</li>
-      <li><b>事業部別按分で「不明」</b> → 職人マスタで事業部を割当 or 工番修正で現場の事業部確定</li>
-      <li><b>現場マスタに使ってない現場名が残る</b> → 集計実行時に自動掃除（売上未入力＆日報参照なし）。データを残したい場合は <b>✅完了フラグ</b> でプルダウンから隠す</li>
+      <li><b>事業部別按分で「不明」</b> → メンバーマスタで事業部を割当 or 工番修正で対応先の事業部確定</li>
+      <li><b>対応先マスタに使ってない対応先名が残る</b> → 集計実行時に自動掃除（売上未入力＆日報参照なし）。データを残したい場合は <b>✅完了フラグ</b> でプルダウンから隠す</li>
     </ul>
   </div>
 
@@ -1004,10 +1004,10 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
 <div id="jobno-fix-modal" class="modal-bg">
 <div class="modal" style="max-width:720px">
   <div class="modal-title">工番事業部の修正</div>
-  <p style="margin:0 0 8px;font-size:12px;color:#666">各現場の事業部を選び直して「更新」で反映。新事業部×年度の次連番で新工番を発番し、現場マスタ＋日報データ＋アーカイブを一括更新します。旧工番は欠番として残ります。</p>
-  <p style="margin:0 0 8px;font-size:12px;color:#92400E;background:#FEF3C7;border-radius:6px;padding:6px 10px">💡 金額（受注金額・原価・請求日など）の入力は <b>GR管理画面の「📊経営」タブ</b> に一本化しました。ここでは入力しません。</p>
+  <p style="margin:0 0 8px;font-size:12px;color:#666">各対応先の事業部を選び直して「更新」で反映。新事業部×年度の次連番で新工番を発番し、対応先マスタ＋日報データ＋アーカイブを一括更新します。旧工番は欠番として残ります。</p>
+  <p style="margin:0 0 8px;font-size:12px;color:#92400E;background:#FEF3C7;border-radius:6px;padding:6px 10px">💡 金額（受注金額・原価・請求日など）の入力は <b>管理画面の「📊経営」タブ</b> に一本化しました。ここでは入力しません。</p>
   <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
-    <input type="text" id="jnfix-search" placeholder="🔍 元請名・現場名・工番で検索" oninput="filterJobNoFix()" style="flex:1;margin:0;font-size:14px">
+    <input type="text" id="jnfix-search" placeholder="🔍 取引先名・対応先名・工番で検索" oninput="filterJobNoFix()" style="flex:1;margin:0;font-size:14px">
     <span id="jnfix-count" style="font-size:12px;color:#666;white-space:nowrap"></span>
   </div>
   <div id="jobno-fix-list" style="margin-bottom:16px;max-height:60vh;overflow-y:auto"></div>
@@ -1017,14 +1017,14 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
 
 <div id="merge-genba-modal" class="modal-bg">
 <div class="modal" style="max-width:480px">
-  <div class="modal-title">🔀 元請名をマージ</div>
-  <p style="margin:0 0 12px;font-size:12px;color:#666">「統合する元請」のレコードを「残す元請」の名前に書き換えます。日報・アーカイブ・現場マスタ・元請マスタ全部一括で書き換えます。<b>この操作は取り消せません。</b></p>
-  <label style="font-size:13px;color:#666">統合する元請（消える方）</label>
+  <div class="modal-title">🔀 取引先名をマージ</div>
+  <p style="margin:0 0 12px;font-size:12px;color:#666">「統合する取引先」のレコードを「残す取引先」の名前に書き換えます。日報・アーカイブ・対応先マスタ・取引先マスタ全部一括で書き換えます。<b>この操作は取り消せません。</b></p>
+  <label style="font-size:13px;color:#666">統合する取引先（消える方）</label>
   <select id="merge-from" style="margin-bottom:10px">
     <option value="">選択してください</option>
   </select>
   <label style="font-size:13px;color:#666">↓ こちらに統合</label>
-  <label style="font-size:13px;color:#666">残す元請（こちらに統一）</label>
+  <label style="font-size:13px;color:#666">残す取引先（こちらに統一）</label>
   <select id="merge-to" style="margin-bottom:10px">
     <option value="">選択してください</option>
   </select>
@@ -1038,19 +1038,19 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
 
 <div id="merge-loc-modal" class="modal-bg">
 <div class="modal" style="max-width:520px">
-  <div class="modal-title">🔀 現場名をマージ</div>
-  <p style="margin:0 0 12px;font-size:12px;color:#666">同じ元請の中で表記揺れになっている現場名を統合します。日報・アーカイブ・現場マスタを一括書き換え。<b>統合先に工番がある場合は日報の工番もそちらに統一されます。この操作は取り消せません。</b></p>
-  <label style="font-size:13px;color:#666">元請を選ぶ</label>
+  <div class="modal-title">🔀 対応先名をマージ</div>
+  <p style="margin:0 0 12px;font-size:12px;color:#666">同じ取引先の中で表記揺れになっている対応先名を統合します。日報・アーカイブ・対応先マスタを一括書き換え。<b>統合先に工番がある場合は日報の工番もそちらに統一されます。この操作は取り消せません。</b></p>
+  <label style="font-size:13px;color:#666">取引先を選ぶ</label>
   <select id="mloc-genba" style="margin-bottom:10px" onchange="updateMergeLocSelects()">
     <option value="">選択してください</option>
   </select>
-  <label style="font-size:13px;color:#666">現場 A</label>
+  <label style="font-size:13px;color:#666">対応先 A</label>
   <select id="mloc-a" style="margin-bottom:10px" onchange="updateMergeLocChoice()">
-    <option value="">先に元請を選んでください</option>
+    <option value="">先に取引先を選んでください</option>
   </select>
-  <label style="font-size:13px;color:#666">現場 B</label>
+  <label style="font-size:13px;color:#666">対応先 B</label>
   <select id="mloc-b" style="margin-bottom:10px" onchange="updateMergeLocChoice()">
-    <option value="">先に元請を選んでください</option>
+    <option value="">先に取引先を選んでください</option>
   </select>
   <div id="mloc-choice" style="display:none;background:#EFF6FF;border:1px solid #BFDBFE;border-radius:8px;padding:12px;margin-bottom:12px">
     <div style="font-size:14px;font-weight:600;color:#1E3A8A;margin-bottom:10px">どっちに合わせる？</div>
@@ -1067,9 +1067,9 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
 
 <div id="similar-loc-modal" class="modal-bg">
 <div class="modal">
-  <div class="modal-title">現場名の確認</div>
-  <p style="margin:0 0 12px;font-size:14px;color:#333">候補に一致する現場がありますが、これは新規の現場ですか？</p>
-  <div style="font-size:12px;color:#666;margin-bottom:6px">既存の現場から選ぶ（タップ）:</div>
+  <div class="modal-title">対応先名の確認</div>
+  <p style="margin:0 0 12px;font-size:14px;color:#333">候補に一致する対応先がありますが、これは新規の対応先ですか？</p>
+  <div style="font-size:12px;color:#666;margin-bottom:6px">既存の対応先から選ぶ（タップ）:</div>
   <div id="similar-loc-list" style="margin-bottom:16px"></div>
   <div style="display:flex;gap:8px">
     <button class="btn btn-secondary btn-sm" style="flex:1" onclick="cancelSimilarLoc()">キャンセル</button>
@@ -1080,9 +1080,9 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
 
 <div id="genba-settings-modal" class="modal-bg">
 <div class="modal">
-  <div class="modal-title">元請の管理 <span id="genba-settings-company-name" style="font-size:14px;color:#1D9E75"></span></div>
+  <div class="modal-title">取引先の管理 <span id="genba-settings-company-name" style="font-size:14px;color:#1D9E75"></span></div>
   <div style="display:flex;gap:8px;margin-bottom:12px">
-    <input type="text" id="new-genba-master" placeholder="元請名を入力" style="margin-bottom:0;flex:1">
+    <input type="text" id="new-genba-master" placeholder="取引先名を入力" style="margin-bottom:0;flex:1">
     <button class="btn btn-sm" onclick="addGenbaMaster()">追加</button>
   </div>
   <div id="genba-master-list" style="margin-bottom:16px"></div>

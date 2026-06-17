@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="経費精算">
+<title>経費精算</title>
+<script src="config.js"></script>
+<style>
+  :root{ --gr-orange:#E8731A; --gr-green:#1d7a46; --bg:#f5f6f7; --line:#e2e5e8; --ink:#222; --muted:#888; }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body{ margin:0; font-family:system-ui,-apple-system,"Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;
+        background:var(--bg); color:var(--ink); }
+  header{ background:var(--gr-green); color:#fff; padding:14px 16px; font-weight:700; font-size:18px; }
+  header .sub{ font-weight:400; font-size:12px; opacity:.85; margin-top:2px; }
+  main{ max-width:520px; margin:0 auto; padding:14px 14px 40px; }
+  .card{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:14px; margin-bottom:14px; }
+  label{ display:block; font-size:13px; font-weight:700; margin:0 0 6px; }
+  input[type=text],input[type=number],input[type=date],select,textarea{
+    width:100%; padding:11px 12px; font-size:16px; border:1px solid var(--line); border-radius:9px; background:#fff; }
+  textarea{ min-height:70px; resize:vertical; }
+  .row{ margin-bottom:14px; }
+  .photo-btn{ display:flex; align-items:center; justify-content:center; gap:8px; width:100%;
+    background:var(--gr-orange); color:#fff; font-weight:700; font-size:16px; border:0; border-radius:10px; padding:14px; cursor:pointer; }
+  #photo-input{ display:none; }
+  #preview-wrap{ margin-top:10px; display:none; }
+  #preview{ width:100%; border-radius:10px; border:1px solid var(--line); }
+  .preview-note{ font-size:12px; color:var(--muted); margin-top:6px; }
+  .submit{ width:100%; background:var(--gr-green); color:#fff; font-weight:700; font-size:17px; border:0; border-radius:10px; padding:15px; cursor:pointer; }
+  .submit:disabled{ opacity:.5; }
+  .err{ color:#c0392b; font-size:13px; margin-top:10px; min-height:18px; }
+  .done{ text-align:center; padding:28px 14px; }
+  .done .check{ font-size:54px; }
+  .done h2{ margin:8px 0 4px; }
+  .done .detail{ background:#fff; border:1px solid var(--line); border-radius:10px; padding:14px; margin:14px 0; text-align:left; font-size:15px; }
+  .done .detail div{ margin:4px 0; }
+  .ghost{ background:#fff; color:var(--gr-green); border:1px solid var(--gr-green); font-weight:700; border-radius:10px; padding:13px; width:100%; cursor:pointer; font-size:15px; }
+  .hint{ font-size:12px; color:var(--muted); margin:2px 0 12px; }
+</style>
+</head>
+<body>
+<header>
+  💴 経費精算（デモ）
+  <div class="sub">レシートを撮影して申請 → 管理画面の経費に反映されます</div>
+</header>
+
+<main>
+  <!-- 申請フォーム -->
+  <div id="form-view">
+    <div class="card">
+      <div class="row">
+        <label>レシート写真</label>
+        <button type="button" class="photo-btn" id="photo-trigger">📷 レシートを撮影 / 選ぶ</button>
+        <input type="file" id="photo-input" accept="image/*" capture="environment">
+        <div id="preview-wrap">
+          <img id="preview" alt="プレビュー">
+          <div class="preview-note">※ デモのため写真は保存されません（この画面で確認するだけ）</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="row">
+        <label for="applicant">申請者</label>
+        <select id="applicant"></select>
+      </div>
+      <div class="row">
+        <label for="date">日付</label>
+        <input type="date" id="date">
+      </div>
+      <div class="row">
+        <label for="amount">金額（円）</label>
+        <input type="number" id="amount" inputmode="numeric" min="1" max="1000000" placeholder="例: 3200">
+      </div>
+      <div class="row">
+        <label for="category">用途</label>
+        <input type="text" id="category" maxlength="40" placeholder="例: ガソリン / 消耗品 / 駐車場代">
+      </div>
+      <div class="row" style="margin-bottom:6px;">
+        <label for="memo">メモ（任意）</label>
+        <textarea id="memo" maxlength="200" placeholder="例: 現場までの移動分"></textarea>
+      </div>
+    </div>
+
+    <button type="button" class="submit" id="submit-btn">この内容で申請する</button>
+    <div class="err" id="err"></div>
+  </div>
+
+  <!-- 完了 -->
+  <div id="done-view" class="done" style="display:none;">
+    <div class="check">✅</div>
+    <h2>申請しました</h2>
+    <div class="hint">管理画面の「💴 経費」タブに反映されます</div>
+    <div class="detail" id="done-detail"></div>
+    <button type="button" class="ghost" id="again-btn">続けて申請する</button>
+  </div>
+</main>
+
+<script>
+(function(){
+  var CFG = window.KEIHI_CONFIG || {};
+  var $ = function(id){ return document.getElementById(id); };
+
+  // 申請者プルダウン
+  var apps = CFG.APPLICANTS || [];
+  $('applicant').innerHTML = '<option value="">（申請者を選ぶ）</option>' +
+    apps.map(function(n){ return '<option>'+n+'</option>'; }).join('');
+
+  // 日付 既定=今日
+  (function(){ var d=new Date(); $('date').value = d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2); })();
+
+  // 写真：撮影→プレビューのみ（送信しない）
+  $('photo-trigger').onclick = function(){ $('photo-input').click(); };
+  $('photo-input').onchange = function(){
+    var f = this.files && this.files[0];
+    if(!f){ return; }
+    var url = URL.createObjectURL(f);
+    $('preview').src = url;
+    $('preview-wrap').style.display = 'block';
+  };
+
+  function setErr(m){ $('err').textContent = m || ''; }
+
+  $('submit-btn').onclick = function(){
+    setErr('');
+    var applicant = $('applicant').value;
+    var date = $('date').value;
+    var amount = Number($('amount').value);
+    var category = ($('category').value||'').trim();
+    var memo = ($('memo').value||'').trim();
+
+    if(!applicant){ setErr('申請者を選んでください。'); return; }
+    if(!date){ setErr('日付を入れてください。'); return; }
+    if(!(amount>0)){ setErr('金額を正しく入れてください。'); return; }
+    if(amount>1000000){ setErr('金額が大きすぎます（上限100万円）。'); return; }
+    if(!category){ setErr('用途を入れてください。'); return; }
+    if(!CFG.GAS_URL){ setErr('設定エラー（GAS_URL未設定）。'); return; }
+
+    var btn = $('submit-btn'); btn.disabled = true; var old = btn.textContent; btn.textContent = '送信中…';
+    fetch(CFG.GAS_URL, {
+      method:'POST',
+      headers:{ 'Content-Type':'text/plain' },   // プリフライト回避
+      body: JSON.stringify({
+        action:'expense_submit',
+        applicant: applicant, date: date, amount: amount, category: category, memo: memo
+      })
+    })
+    .then(function(r){ return r.json(); })
+    .then(function(res){
+      if(res && res.ok){
+        $('done-detail').innerHTML =
+          '<div>申請者：'+applicant+'</div>'+
+          '<div>日付：'+date+'</div>'+
+          '<div>金額：¥'+amount.toLocaleString('ja-JP')+'</div>'+
+          '<div>用途：'+(category||'—')+'</div>';
+        $('form-view').style.display='none';
+        $('done-view').style.display='block';
+        window.scrollTo(0,0);
+      } else {
+        setErr('申請できませんでした（'+((res&&res.error)||'不明')+'）。');
+        btn.disabled=false; btn.textContent=old;
+      }
+    })
+    .catch(function(){ setErr('通信に失敗しました。電波の良い所で再度お試しください。'); btn.disabled=false; btn.textContent=old; });
+  };
+
+  $('again-btn').onclick = function(){
+    $('amount').value=''; $('category').value=''; $('memo').value='';
+    $('preview-wrap').style.display='none'; $('photo-input').value='';
+    var btn=$('submit-btn'); btn.disabled=false; btn.textContent='この内容で申請する';
+    $('done-view').style.display='none'; $('form-view').style.display='block';
+    window.scrollTo(0,0);
+  };
+})();
+</script>
+</body>
+</html>

@@ -748,7 +748,7 @@
     var el = document.getElementById('view');
     el.innerHTML = '読み込み中…';
     api(state.view, "&month=" + encodeURIComponent(state.month)).then(function(res){
-      if (!res.ok){ el.innerHTML = '<div class="err">読み込めませんでした（' + esc(res.error) + '）。更新で再試行してください。</div>'; return; }
+      if (!res.ok){ el.innerHTML = '<div class="note">' + L('scheduleWord') + 'アプリ側で登録された' + L('workforce') + '・請求データが、ここに集計されます。<br>（現在表示できるデータはありません）</div>'; return; }
       state.block = res.block || null;
       var caption = state.view === 'tsukibetsu'
         ? '<div class="note">' + esc(state.month) + ' ／ 名前×日の' + L('workforce') + '（' + L('labor') + 'の確認用）</div>'
@@ -1111,6 +1111,8 @@
     api('months').then(function(res){
       var sel = document.getElementById('month');
       var months = (res.ok && res.months) || [];
+      // データ未同期で空のときは、見た目が壊れないよう直近6か月を出す（既定=今月）
+      if (!months.length){ var _n0 = new Date(); for (var _i = 0; _i < 6; _i++){ var _d = new Date(_n0.getFullYear(), _n0.getMonth() - _i, 1); months.push(_d.getFullYear() + '-' + ('0'+(_d.getMonth()+1)).slice(-2)); } }
       sel.innerHTML = months.map(function(m){ return '<option value="' + m + '">' + m.replace(/^(\d{4})-0?(\d+)$/, '$1年$2') + '月</option>'; }).join('');
       var nowM = (function(){ var n = new Date(); return n.getFullYear() + '-' + ('0'+(n.getMonth()+1)).slice(-2); })();
       state.month = (months.indexOf(nowM) >= 0) ? nowM : (months[0] || "");  // 既定は“今月”（無ければ最新）
@@ -1283,7 +1285,10 @@
     var yiReload = document.getElementById('yi-reload'); if (yiReload) yiReload.onclick = loadYoteiInput;
     var yiPrev = document.getElementById('yi-prev'); if (yiPrev) yiPrev.onclick = function(){ shiftYiWeek(-1); };
     var yiNext = document.getElementById('yi-next'); if (yiNext) yiNext.onclick = function(){ shiftYiWeek(1); };
-    updateToolbar('yotei'); // 初期タブ(予定管理)に合わせる
+    updateToolbar('yotei'); // 既定のツールバー初期化
+    // 初期表示は「業務(案件)」タブ＝開いた瞬間にDEMO案件が見える（スケジュールの工数集計はアプリ同期前は空のため）
+    var _firstTab = document.querySelector('.ptab[data-proj="anken"]');
+    if (_firstTab) _firstTab.click();
   }
 
   // パスワードログイン（パスワードはHTMLに埋めない＝Git公開先に鍵を出さない。サーバー(GAS)に照合→通れば端末に保存）

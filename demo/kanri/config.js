@@ -17,8 +17,8 @@ window.APP_CONFIG = {
   // 経費の管理者アプリURL（テナント別）。未設定ならリンクを出さない＝空のまま。
   EXPENSE_ADMIN_URL: "",
 
-  // 予定管理アプリ（現場/人工/請求/Excel）へのリンク先
-  YOTEI_APP_URL: "https://akirasp4-lgtm.github.io/gr-admin/demo/yotei/",
+  // スケジュール入力・集計アプリ（入力・管理用＝admin.html）へのリンク先
+  YOTEI_APP_URL: "https://akirasp4-lgtm.github.io/gr-admin/demo/yotei/admin.html",
 
   // 会社名（表示・絞り込みに使用）
   COMPANIES: ['デモ会社'],          // 複数社なら ['A社','B社',...]

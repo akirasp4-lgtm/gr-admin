@@ -93,7 +93,7 @@
       tabs: { yotei:'🗓 スケジュール', anken:'📁 業務', grb:'🧭 担当区分', 'yotei-input':'🗓 予定登録',
               vehicle:'📦 資産', keiri:'📈 レポート', kokyaku:'🤝 取引先', keihi:'💴 経費', staff:'👥 メンバー' },
       yoteiTsukibetsu:'月別確認表（人件費）', yoteiMotouke:'取引先別 集計',
-      yoteiLink:'📁 スケジュールアプリを開く（対応先・工数・請求・Excel）', yoteiLinkNote:'対応先/工数/請求/Excelはこちらで',
+      yoteiLink:'📝 スケジュール入力・集計を開く（対応先・工数・請求・Excel）', yoteiLinkNote:'予定の入力・集計・請求・Excelはこちらで（入力・管理用）',
       site:'対応先', customer:'取引先', dept:'部門', photo:'記録写真', asset:'資産',
       kokyakuNote:'🤝 取引先別｜件数・売上見込・粗利見込・請求待ちを集計（売上見込の多い順）。'
     },
@@ -234,8 +234,8 @@
       <div class="stab" data-view="motouke">元請別 請求集計</div>
     </div>
     <div style="padding:8px 14px;">
-      <a id="yotei-app-link" href="#" target="_blank" rel="noopener" style="display:inline-block;background:var(--gr-green);color:#fff;text-decoration:none;border-radius:7px;padding:8px 16px;font-weight:700;">🏗 予定管理アプリを開く（現場・人工・請求・Excel）</a>
-      <span id="yotei-link-note" class="note" style="margin-left:8px;">現場/人工/請求/Excelは成熟版のこちらで</span>
+      <a id="yotei-app-link" href="#" target="_blank" rel="noopener" style="display:inline-block;background:var(--gr-green);color:#fff;text-decoration:none;border-radius:7px;padding:8px 16px;font-weight:700;">📝 スケジュール入力・集計を開く（対応先・工数・請求・Excel）</a>
+      <span id="yotei-link-note" class="note" style="margin-left:8px;">予定の入力・集計・請求・Excelはこちらで（入力・管理用）</span>
       <script>(function(){ var u=(window.APP_CONFIG&&APP_CONFIG.YOTEI_APP_URL)||''; var a=document.getElementById('yotei-app-link'); if(a){ if(u){ a.href=u; } else { a.style.display='none'; } } })();</script>
     </div>
     <main><div id="view" class="panel">読み込み中…</div></main>

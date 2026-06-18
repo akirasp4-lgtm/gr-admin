@@ -313,15 +313,13 @@
   <!-- 予定入力プロジェクト（事務所の予定を画面から入力＝裏のシートに書き戻し） -->
   <div id="proj-yotei-input" class="hidden">
     <main><div class="panel">
-      <div id="yi-note" class="note">GRB（事務）の人が「自分の予定」を入力する画面です。①氏名を選ぶ → ②各日に作業を入れる → ③「保存」。裏の予定表に反映され、朝のLINE配信にも出ます。</div>
-      <div style="margin:10px 0;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-        氏名：<select id="yi-name"></select>
-        <button id="yi-prev">← 前の週</button>
-        <span id="yi-label" class="note" style="margin:0;font-weight:700;color:#333;"></span>
-        <button id="yi-next">次の週 →</button>
-        <button id="yi-reload">読み込む</button>
+      <div class="note" style="font-size:15px;color:#333;margin:4px 0 16px;line-height:1.7;">
+        予定は <b>スケジュールアプリ（カレンダー）</b> で登録します。<br>
+        メンバーがカレンダーで日付を選んで予定を入れると、<b>予定表</b>と<b>朝のLINE</b>に反映されます。
       </div>
-      <div id="yi-view" class="panel">氏名を選んで「読み込む」を押してください。</div>
+      <a id="yi-open-cal" href="#" target="_blank" rel="noopener" style="display:inline-block;background:var(--gr-green);color:#fff;text-decoration:none;border-radius:8px;padding:14px 26px;font-weight:700;font-size:16px;">📝 スケジュール（カレンダー）を開いて予定を入力</a>
+      <div class="note" style="margin-top:16px;">※ 確認だけなら「スケジュール」タブ（集計）や予定表でも見られます。</div>
+      <script>(function(){ var u=(window.APP_CONFIG&&APP_CONFIG.YOTEI_APP_URL)||''; var a=document.getElementById('yi-open-cal'); if(a){ if(u){ a.href=u; } else { a.style.display='none'; } } })();</script>
     </div></main>
   </div>
 

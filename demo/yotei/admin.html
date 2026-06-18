@@ -298,7 +298,7 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
 
 <!-- 日報入力 -->
 <div id="screen-input" class="screen">
-<div class="page-title">日報入力</div>
+<div class="page-title">業務入力</div>
 <div class="card">
   <label>操作者（あなたの名前）<span style="color:#ff3b30;font-weight:600;margin-left:2px">*</span></label>
   <div class="select-add-wrap">
@@ -309,21 +309,21 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
     <div><label>開始日<span style="color:#ff3b30;font-weight:600;margin-left:2px">*</span></label><input type="date" id="s-date" onchange="refreshVehicleSelect('s')"></div>
     <div><label>終了日（連続入力）</label><input type="date" id="s-date-end" onchange="refreshVehicleSelect('s')"></div>
   </div>
-  <label>作業区分<span style="color:#ff3b30;font-weight:600;margin-left:2px">*</span></label>
+  <label>業務区分<span style="color:#ff3b30;font-weight:600;margin-left:2px">*</span></label>
   <select id="s-work-type" onchange="onWorkTypeChange('s')">
-    <option value="">▼ まず作業区分を選んでください</option>
-    <option value="現場作業">⛑️ 通常対応（工番発行）</option>
-    <option value="現調">📐 現調</option>
-    <option value="着打ち">🔨 着打ち</option>
-    <option value="カギ借用">🗝️ カギ借用</option>
-    <option value="材料引取・検品">📦 材料引取・検品</option>
-    <option value="撤去品返却">♻️ 撤去品返却</option>
-    <option value="前乗り">🚗 前乗り</option>
-    <option value="倉庫作業">🏭 倉庫作業</option>
+    <option value="">▼ まず業務区分を選んでください</option>
+    <option value="現場作業">⛑️ 通常対応</option>
+    <option value="現調">📐 事前確認</option>
+    <option value="着打ち">🔨 開始確認</option>
+    <option value="カギ借用">🗝️ 備品・鍵の受取</option>
+    <option value="材料引取・検品">📦 資材・備品の確認</option>
+    <option value="撤去品返却">♻️ 返却・片付け</option>
+    <option value="前乗り">🚗 前日準備</option>
+    <option value="倉庫作業">🏭 保管場所業務</option>
     <option value="休み">🏖️ 休み</option>
     <option value="その他">📋 その他</option>
   </select>
-  <div id="s-worktype-notice" style="color:#dc2626;font-size:13px;font-weight:600;background:#FEE2E2;border:1px solid #FCA5A5;border-radius:8px;padding:8px 12px;margin-bottom:12px">⚠️ 最初に「作業区分」を選択してください。選択するまで以下の項目は入力できません。</div>
+  <div id="s-worktype-notice" style="color:#dc2626;font-size:13px;font-weight:600;background:#FEE2E2;border:1px solid #FCA5A5;border-radius:8px;padding:8px 12px;margin-bottom:12px">⚠️ 最初に「業務区分」を選択してください。選択するまで以下の項目は入力できません。</div>
   <label>取引先名<span style="color:#ff3b30;font-weight:600;margin-left:2px">*</span></label>
   <div class="select-add-wrap">
     <select id="s-genba-select" onchange="onGenbaSelect('s')"><option value="">選択してください</option><option value="__manual__">直接入力する</option></select>
@@ -346,7 +346,7 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
   </div>
   <div class="jobno-hint" id="s-jobno-hint"></div>
   <div id="s-jobno-div-wrap" style="display:none;margin-bottom:12px">
-    <label style="font-size:12px;color:#666">新規対応先の工番事業部</label>
+    <label style="font-size:12px;color:#666">新規対応先の管理番号区分</label>
     <select id="s-jobno-division" onchange="this.dataset.userSet='1'">
       <option value="ICT">ICT</option>
       <option value="INF">INF</option>
@@ -358,11 +358,11 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
     <div><label>出勤</label><input type="time" id="s-start" value="08:00"></div>
     <div><label>退勤</label><input type="time" id="s-end" value="17:00"></div>
   </div>
-  <div class="toggle-row toggle-souko" id="s-souko-toggle" onclick="setMode('s','souko')"><span class="t-icon">🏭</span><span class="t-label">倉庫</span></div>
+  <div class="toggle-row toggle-souko" id="s-souko-toggle" onclick="setMode('s','souko')"><span class="t-icon">🏭</span><span class="t-label">保管場所</span></div>
   <div id="s-souko-tasks-wrap" style="display:none;background:#FFF7ED;border:2px solid #FED7AA;border-radius:10px;padding:12px;margin-bottom:10px">
-    <div style="font-size:14px;font-weight:700;color:#9A3412;margin-bottom:10px">🏭 今日の倉庫作業<span style="color:#dc2626;margin-left:6px">*</span><span style="font-size:11px;font-weight:400;color:#9A3412;margin-left:6px">(複数選択可・1つ以上必須)</span></div>
+    <div style="font-size:14px;font-weight:700;color:#9A3412;margin-bottom:10px">🏭 今日の保管場所業務<span style="color:#dc2626;margin-left:6px">*</span><span style="font-size:11px;font-weight:400;color:#9A3412;margin-left:6px">(複数選択可・1つ以上必須)</span></div>
     <div id="s-souko-tasks" style="display:flex;flex-wrap:wrap;gap:8px"></div>
-    <div id="s-souko-tasks-error" style="display:none;color:#dc2626;font-size:12px;margin-top:8px;font-weight:600">⚠️ 倉庫作業を1つ以上タップして選んでください</div>
+    <div id="s-souko-tasks-error" style="display:none;color:#dc2626;font-size:12px;margin-top:8px;font-weight:600">⚠️ 保管場所業務を1つ以上タップして選んでください</div>
   </div>
   <div class="toggle-row toggle-yakin" id="s-yakin-toggle" onclick="setMode('s','yakin')"><span class="t-icon">🌙</span><span class="t-label">夜勤</span></div>
   <div class="toggle-row toggle-yasumi" id="s-yasumi-toggle" onclick="setMode('s','yasumi')"><span class="t-icon">🏖️</span><span class="t-label">休み</span></div>
@@ -376,7 +376,7 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
   </div>
   <div class="member-section"><div class="member-label">同行メンバー（タップで選択）</div><div id="member-selector" class="member-grid"></div></div>
   <label>メモ <span style="font-size:11px;color:#999;font-weight:400">🎤 キーボードのマイクで音声入力できます</span></label>
-  <textarea id="s-memo" placeholder="作業内容など"></textarea>
+  <textarea id="s-memo" placeholder="内容など"></textarea>
   <label>カレンダーの色</label>
   <div id="s-color-picker" class="color-picker-wrap"></div>
   <div id="s-alert" class="alert"></div>
@@ -538,7 +538,7 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
 <div class="card" style="margin-top:8px">
   <div style="font-size:13px;color:#666;margin-bottom:10px;font-weight:500">📥 Excel（.xlsx）ダウンロード — 色・罫線・合計関数そのまま</div>
   <select id="csv-sheet" style="margin-bottom:8px">
-    <option value="日報データ">日報データ</option><option value="アーカイブ">アーカイブ</option>
+    <option value="日報データ">業務データ</option><option value="アーカイブ">業務記録・アーカイブ</option>
     <option value="月別集計">月別集計</option><option value="会社別集計">会社別集計</option>
     <option value="職人マスタ">メンバーマスタ</option><option value="元請マスタ">取引先マスタ</option>
     <option value="現場マスタ">対応先マスタ</option>
@@ -546,7 +546,7 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
     <option value="事業部別按分">事業部別按分</option>
     <option value="操作ログ">操作ログ</option>
   </select>
-  <div style="font-size:12px;color:#666;margin-bottom:4px;margin-top:4px">期間フィルタ（任意・日報データ／アーカイブのみ有効）</div>
+  <div style="font-size:12px;color:#666;margin-bottom:4px;margin-top:4px">期間フィルタ（任意・業務データ／アーカイブのみ有効）</div>
   <div style="display:flex;gap:6px;align-items:center;margin-bottom:8px;font-size:13px">
     <input type="date" id="csv-date-from" style="flex:1;padding:6px;font-size:13px">
     <span style="color:#999">〜</span>
@@ -565,23 +565,23 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
   <button class="btn btn-secondary" style="flex:1" onclick="openGenbaSettings()">取引先を管理</button>
 </div>
 <div class="archive-section" style="background:#FFF4E5;border-color:#F59E0B;margin-top:8px">
-  <div class="archive-title" style="color:#92400E">🔧 工番事業部の修正</div>
-  <div class="archive-desc" style="color:#92400E">既存の工番の事業部を変更します。新事業部×年度で連番max+1の工番が新規発番され、対応先マスタと日報データを一括更新します。</div>
-  <button class="btn btn-secondary btn-sm" onclick="openJobNoFix()">工番を修正する</button>
+  <div class="archive-title" style="color:#92400E">🔧 管理番号区分の修正</div>
+  <div class="archive-desc" style="color:#92400E">既存の管理番号の区分を変更します。新区分×年度で連番max+1の管理番号が新規発番され、対応先マスタと業務データを一括更新します。</div>
+  <button class="btn btn-secondary btn-sm" onclick="openJobNoFix()">管理番号を修正する</button>
 </div>
 <div class="archive-section" style="background:#FEF2F2;border-color:#FCA5A5;margin-top:8px">
-  <div class="archive-title" style="color:#991B1B">🧹 おかしい工番をクリア</div>
-  <div class="archive-desc" style="color:#991B1B">休み・倉庫・予定モードのレコードに残っている工番・事業部をクリアします（旧仕様時代のデータ清掃用）。</div>
-  <button class="btn btn-secondary btn-sm" onclick="runJobNoCleanup()">休み・倉庫・予定の工番をクリア</button>
+  <div class="archive-title" style="color:#991B1B">🧹 不要な管理番号をクリア</div>
+  <div class="archive-desc" style="color:#991B1B">休み・保管場所・予定モードのレコードに残っている管理番号・区分をクリアします（旧仕様時代のデータ清掃用）。</div>
+  <button class="btn btn-secondary btn-sm" onclick="runJobNoCleanup()">休み・保管場所・予定の管理番号をクリア</button>
 </div>
 <div class="archive-section" style="background:#EFF6FF;border-color:#93C5FD;margin-top:8px">
   <div class="archive-title" style="color:#1E3A8A">🔀 取引先名を統合（マージ）</div>
-  <div class="archive-desc" style="color:#1E3A8A">同じ会社が違う名前で登録されてしまった場合に、片方を残してもう片方のレコードを統合します。日報・アーカイブ・対応先マスタ・取引先マスタ全部を一括書き換え。</div>
+  <div class="archive-desc" style="color:#1E3A8A">同じ会社が違う名前で登録されてしまった場合に、片方を残してもう片方のレコードを統合します。業務記録・アーカイブ・対応先マスタ・取引先マスタ全部を一括書き換え。</div>
   <button class="btn btn-secondary btn-sm" onclick="openMergeGenbaModal()">取引先名をマージする</button>
 </div>
 <div class="archive-section" style="background:#F0F9FF;border-color:#7DD3FC;margin-top:8px">
   <div class="archive-title" style="color:#075985">🔀 対応先名を統合（マージ）</div>
-  <div class="archive-desc" style="color:#075985">同じ対応先が表記揺れで別の対応先として登録されている場合に統合します（例：「○○ビル」と「○○ビル別館」）。日報・アーカイブ・対応先マスタ全部を書き換え、統合先の工番に統一されます。</div>
+  <div class="archive-desc" style="color:#075985">同じ対応先が表記揺れで別の対応先として登録されている場合に統合します（例：「○○ビル」と「○○ビル別館」）。業務記録・アーカイブ・対応先マスタ全部を書き換え、統合先の管理番号に統一されます。</div>
   <button class="btn btn-secondary btn-sm" onclick="openMergeLocModal()">対応先名をマージする</button>
 </div>
 <div class="archive-section" style="background:#E8F4FD;border-color:#85B7EB">
@@ -654,23 +654,23 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
 <div id="edit-modal" class="modal-bg">
 <div class="modal">
   <div class="modal-title" id="edit-title">編集</div>
-  <label>作業区分<span style="color:#ff3b30;font-weight:600;margin-left:2px">*</span></label>
+  <label>業務区分<span style="color:#ff3b30;font-weight:600;margin-left:2px">*</span></label>
   <select id="e-work-type" onchange="onWorkTypeChange('e')">
-    <option value="">▼ まず作業区分を選んでください</option>
-    <option value="現場作業">⛑️ 通常対応（工番発行）</option>
-    <option value="現調">📐 現調</option>
-    <option value="着打ち">🔨 着打ち</option>
-    <option value="カギ借用">🗝️ カギ借用</option>
-    <option value="材料引取・検品">📦 材料引取・検品</option>
-    <option value="撤去品返却">♻️ 撤去品返却</option>
-    <option value="前乗り">🚗 前乗り</option>
-    <option value="倉庫作業">🏭 倉庫作業</option>
+    <option value="">▼ まず業務区分を選んでください</option>
+    <option value="現場作業">⛑️ 通常対応</option>
+    <option value="現調">📐 事前確認</option>
+    <option value="着打ち">🔨 開始確認</option>
+    <option value="カギ借用">🗝️ 備品・鍵の受取</option>
+    <option value="材料引取・検品">📦 資材・備品の確認</option>
+    <option value="撤去品返却">♻️ 返却・片付け</option>
+    <option value="前乗り">🚗 前日準備</option>
+    <option value="倉庫作業">🏭 保管場所業務</option>
     <option value="休み">🏖️ 休み</option>
     <option value="その他">📋 その他</option>
   </select>
-  <div id="e-worktype-notice" style="display:none;color:#dc2626;font-size:13px;font-weight:600;background:#FEE2E2;border:1px solid #FCA5A5;border-radius:8px;padding:8px 12px;margin-bottom:12px">⚠️ 最初に「作業区分」を選択してください。選択するまで以下の項目は編集できません。</div>
+  <div id="e-worktype-notice" style="display:none;color:#dc2626;font-size:13px;font-weight:600;background:#FEE2E2;border:1px solid #FCA5A5;border-radius:8px;padding:8px 12px;margin-bottom:12px">⚠️ 最初に「業務区分」を選択してください。選択するまで以下の項目は編集できません。</div>
   <div id="e-date-wrap">
-    <label>作業日<span style="color:#ff3b30;font-weight:600;margin-left:2px">*</span></label>
+    <label>日付<span style="color:#ff3b30;font-weight:600;margin-left:2px">*</span></label>
     <input type="date" id="e-date" onchange="onEditDateChange()">
   </div>
   <label>取引先名</label>
@@ -694,11 +694,11 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
     <div><label>出勤</label><input type="time" id="e-start"></div>
     <div><label>退勤</label><input type="time" id="e-end"></div>
   </div>
-  <div class="toggle-row toggle-souko" id="e-souko-toggle" onclick="setMode('e','souko')"><span class="t-icon">🏭</span><span class="t-label">倉庫</span></div>
+  <div class="toggle-row toggle-souko" id="e-souko-toggle" onclick="setMode('e','souko')"><span class="t-icon">🏭</span><span class="t-label">保管場所</span></div>
   <div id="e-souko-tasks-wrap" style="display:none;background:#FFF7ED;border:2px solid #FED7AA;border-radius:10px;padding:12px;margin-bottom:10px">
-    <div style="font-size:14px;font-weight:700;color:#9A3412;margin-bottom:10px">🏭 今日の倉庫作業<span style="color:#dc2626;margin-left:6px">*</span><span style="font-size:11px;font-weight:400;color:#9A3412;margin-left:6px">(複数選択可・1つ以上必須)</span></div>
+    <div style="font-size:14px;font-weight:700;color:#9A3412;margin-bottom:10px">🏭 今日の保管場所業務<span style="color:#dc2626;margin-left:6px">*</span><span style="font-size:11px;font-weight:400;color:#9A3412;margin-left:6px">(複数選択可・1つ以上必須)</span></div>
     <div id="e-souko-tasks" style="display:flex;flex-wrap:wrap;gap:8px"></div>
-    <div id="e-souko-tasks-error" style="display:none;color:#dc2626;font-size:12px;margin-top:8px;font-weight:600">⚠️ 倉庫作業を1つ以上タップして選んでください</div>
+    <div id="e-souko-tasks-error" style="display:none;color:#dc2626;font-size:12px;margin-top:8px;font-weight:600">⚠️ 保管場所業務を1つ以上タップして選んでください</div>
   </div>
   <div class="toggle-row toggle-yakin" id="e-yakin-toggle" onclick="setMode('e','yakin')"><span class="t-icon">🌙</span><span class="t-label">夜勤</span></div>
   <div class="toggle-row toggle-yasumi" id="e-yasumi-toggle" onclick="setMode('e','yasumi')"><span class="t-icon">🏖️</span><span class="t-label">休み</span></div>
@@ -752,13 +752,13 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
     <h3>📊 事務タブの使い方</h3>
     <ol>
       <li><b>月別集計</b>: 月を選ぶとメンバー別の出勤日数・工数合計が表示</li>
-      <li><b>Excelでダウンロード</b>: 日報・マスタ・集計・操作ログを <b>xlsx</b> で出力（色・罫線そのまま）</li>
+      <li><b>Excelでダウンロード</b>: 業務記録・マスタ・集計・操作ログを <b>xlsx</b> で出力（色・罫線そのまま）</li>
       <li><b>期間指定でExcel出力</b>: 開始日〜終了日のメンバー×日付マトリクスを Excel で（合計に <b>=SUM</b> 関数入り）</li>
       <li><b>メンバーを管理</b>: 氏名・会社・事業部・<b>単価（日当）</b>を登録/編集</li>
       <li><b>取引先を管理</b>: 取引先リストの追加/削除</li>
       <li><b>集計を更新</b>: 全集計シートを一括再生成（毎朝6時も自動）</li>
       <li><b>データアーカイブ</b>: 3ヶ月以上前を退避（毎月1日3時も自動）</li>
-      <li><b>工番を修正する</b>: 事業部変更（金額の入力は管理画面📊経営タブへ）</li>
+      <li><b>管理番号を修正する</b>: 区分変更（金額の入力は管理画面📊経営タブへ）</li>
     </ol>
   </div>
 
@@ -768,7 +768,7 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
     <ul>
       <li><b>色・罫線・フォント</b>がそのまま Excel で開ける</li>
       <li>月別確認表・期間集計の <b>合計列・合計行に <code>=SUM(...)</code> 関数</b>が入る → Excel で値を変えれば合計が自動再計算</li>
-      <li><b>開始日／終了日</b>を入力すると、<b>日報データ・アーカイブ</b>は作業日列で絞り込まれてダウンロードされる（他のシートは全件）</li>
+      <li><b>開始日／終了日</b>を入力すると、<b>業務データ・アーカイブ</b>は日付列で絞り込まれてダウンロードされる（他のシートは全件）</li>
       <li>ファイル名: <code>シート名_開始_終了.xlsx</code> 形式</li>
     </ul>
     <p style="color:#1D9E75;font-weight:600;margin-top:6px">📊 期間指定でExcel出力（メンバー×日付マトリクス）</p>
@@ -782,21 +782,21 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
   </div>
 
   <div class="help-section">
-    <h3>🔧 工番修正モーダル</h3>
+    <h3>🔧 管理番号修正モーダル</h3>
     <p>対応先マスタの全対応先が一覧表示されます。各対応先で:</p>
     <ul>
-      <li>🔍 上部の検索ボックスで <b>取引先名・対応先名・工番・代表者</b> を横断検索できます</li>
-      <li><b>事業部を変更</b> → 「工番更新」で新事業部×年度の次連番で<b>再発番</b>（旧工番は欠番）</li>
-      <li>代表者の事業部が参考表示されるので、選び直しの判断に使える</li>
+      <li>🔍 上部の検索ボックスで <b>取引先名・対応先名・管理番号・代表者</b> を横断検索できます</li>
+      <li><b>区分を変更</b> → 「管理番号更新」で新区分×年度の次連番で<b>再発番</b>（旧管理番号は欠番）</li>
+      <li>代表者の区分が参考表示されるので、選び直しの判断に使える</li>
       <li style="color:#92400E">💡 売上などの金額入力は <b>管理画面の📊経営タブ</b> に一本化しました（このモーダルの売上欄は非表示）</li>
     </ul>
   </div>
 
   <div class="help-section">
-    <h3>🧹 おかしい工番をクリア</h3>
-    <p>事務タブの赤いボタン。<b>休み・倉庫・予定</b>モードや「通常対応以外」のレコードに残っている <b>工番・事業部</b> を一括クリアします。</p>
+    <h3>🧹 不要な管理番号をクリア</h3>
+    <p>事務タブの赤いボタン。<b>休み・保管場所・予定</b>モードや「通常対応以外」のレコードに残っている <b>管理番号・区分</b> を一括クリアします。</p>
     <ul>
-      <li>仕様変更以前に登録された「休み なのに工番がついている」レコードを清掃</li>
+      <li>仕様変更以前に登録された「休み なのに管理番号がついている」レコードを清掃</li>
       <li>新規登録時は既に空のまま保存されているため、通常は1回実行すれば十分</li>
       <li>クリア後は <b>「集計を更新」</b> で集計シートを再計算してください</li>
     </ul>
@@ -808,7 +808,7 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
     <ul>
       <li>例: 「A社」と「A社自社」が別名で登録されていた場合に「A社自社」に統合</li>
       <li><b>統合する取引先</b>（消える方）と <b>残す取引先</b>（こちらに統一）を選んで実行</li>
-      <li>日報・アーカイブ・対応先マスタ・取引先マスタ <b>全部を一括書き換え</b></li>
+      <li>業務記録・アーカイブ・対応先マスタ・取引先マスタ <b>全部を一括書き換え</b></li>
       <li><b>取り消し不可</b>なので、本当に同じ取引先の重複登録か確認してから実行</li>
       <li>影響範囲（何件書き換わるか）はプレビューで確認できます</li>
     </ul>
@@ -822,13 +822,13 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
       <li>例: 「○○ビル」と「○○ビル別館」のように同じ対応先が違う名前で登録されてしまった時</li>
       <li>拠点管理タブ → 該当対応先 → 編集 → 「他の対応先名にマージ」</li>
       <li><b>どっちに合わせるか</b>選択する UI が出る（A の名前にする／B の名前にする）</li>
-      <li>日報・アーカイブ・対応先マスタを <b>一括書き換え</b>。工番は影響なし</li>
+      <li>業務記録・アーカイブ・対応先マスタを <b>一括書き換え</b>。管理番号は影響なし</li>
       <li><b>取り消し不可</b></li>
     </ul>
     <p style="color:#9A3412;font-weight:600;margin-top:8px">🗑️ 対応先の削除</p>
     <ul>
       <li>拠点管理タブの対応先行に <b>🗑️ 削除アイコン</b>。間違って登録した対応先を完全に消す</li>
-      <li>条件: <b>日報・アーカイブに参照なし</b>＋<b>売上未入力</b>の対応先のみ削除可</li>
+      <li>条件: <b>業務記録・アーカイブに参照なし</b>＋<b>売上未入力</b>の対応先のみ削除可</li>
       <li>条件を満たさない時は削除不可。代わりに <b>マージ or 完了フラグ</b> を案内</li>
     </ul>
     <p style="color:#1D9E75;font-weight:600;margin-top:8px">✅ 完了フラグ（プルダウン非表示）</p>
@@ -837,7 +837,7 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
       <li>予定詳細を開く → <b>「この対応先を完了にする」</b> ボタン</li>
       <li>権限: その対応先の <b>代表者</b> または <b>管理者</b> のみ操作可</li>
       <li>「進行中に戻す」ボタンで完了解除も可能</li>
-      <li>工番・売上・過去データは完了後も保持される（参照は可能）</li>
+      <li>管理番号・売上・過去データは完了後も保持される（参照は可能）</li>
     </ul>
   </div>
 
@@ -850,7 +850,7 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
   <div class="help-section">
     <h3>📋 スプレッドシートのシート</h3>
     <ul>
-      <li><b>データ</b>: 日報データ / アーカイブ / メンバーマスタ / 取引先マスタ / 対応先マスタ</li>
+      <li><b>データ</b>: 業務データ / アーカイブ / メンバーマスタ / 取引先マスタ / 対応先マスタ</li>
       <li><b>集計</b>: 会社別集計 / 月別集計 / 月別確認表 / 取引先別請求集計 / 取引先別請求集計_フィルタ用 / 事業部別按分</li>
       <li><b>運用</b>: 操作ログ（誰がいつ何を変更したか自動記録）</li>
     </ul>
@@ -879,7 +879,7 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
       <li>連続入力（複数日）の場合は、その期間中いずれかの日で予約済みなら選択不可</li>
       <li>編集モーダルでも同じ動作（自分自身のグループは除外して判定）</li>
       <li>複数選んだ場合、シート・詳細・共有テキストには「メビウス、ヤリス」のようにカンマ区切りで保存</li>
-      <li>🏖️休み / 🏭倉庫 をONにすると車両セレクタも自動ロック＆クリア</li>
+      <li>🏖️休み / 🏭保管場所 をONにすると車両セレクタも自動ロック＆クリア</li>
     </ul>
     <p style="color:#1D9E75;font-size:12px;margin-top:6px">登録できる車両: ダブルキャブ / ユニック / 高所作業車 / ハイエース（白・シルバー・白2）/ タウンエース / ProBox / ジムニー / クリッパー（シルバー）</p>
   </div>
@@ -887,46 +887,46 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
   <div class="help-section">
     <h3>🌙 夜勤モード（メンバー画面と共通）</h3>
     <ol>
-      <li><b>作業日</b>は作業を始める日を選ぶ（翌朝5時に終わる場合は前日）</li>
+      <li><b>日付</b>は業務を始める日を選ぶ（翌朝5時に終わる場合は前日）</li>
       <li><b>🌙夜勤モード</b>をON、出勤・退勤を実時刻で入力（例 22:00 〜 05:00）</li>
     </ol>
     <p>退勤＜出勤エラーは夜勤モード時のみ免除。翌日のカレンダー・空き確認に「⏰前日から」表示が自動で出ますが、集計には影響しません。</p>
   </div>
 
   <div class="help-section">
-    <h3>🆕 休み・倉庫モードの仕様</h3>
-    <p style="color:#1D9E75;font-weight:600">🏖️休み / 🏭倉庫 トグルON時の挙動</p>
+    <h3>🆕 休み・保管場所モードの仕様</h3>
+    <p style="color:#1D9E75;font-weight:600">🏖️休み / 🏭保管場所 トグルON時の挙動</p>
     <ul>
-      <li>取引先・対応先・作業区分・出勤/退勤・メモ等の入力欄が<b>自動で無効化</b>される</li>
+      <li>取引先・対応先・業務区分・出勤/退勤・メモ等の入力欄が<b>自動で無効化</b>される</li>
       <li>すでに入力されている値は<b>自動でクリア</b>される</li>
       <li>取引先名は<b>入力不要</b>（バリデーションをスキップ）</li>
       <li>操作者・日付・代表者・同行メンバーは引き続き入力可能</li>
       <li>もう一度同じトグルを押すと解除され、入力欄が再び有効化される</li>
     </ul>
-    <p style="color:#1D9E75;font-weight:600;margin-top:8px">工番が発行されないモード</p>
+    <p style="color:#1D9E75;font-weight:600;margin-top:8px">管理番号が発行されないモード</p>
     <ul>
-      <li>🏖️休み / 🏭倉庫 / 📌予定 のいずれかがONの場合は<b>工番が発行されない</b></li>
-      <li>🌙夜勤は通常通り工番発行対象</li>
+      <li>🏖️休み / 🏭保管場所 / 📌予定 のいずれかがONの場合は<b>管理番号が発行されない</b></li>
+      <li>🌙夜勤は通常通り管理番号発行対象</li>
     </ul>
     <p style="color:#1D9E75;font-weight:600;margin-top:8px">カレンダー表示</p>
     <ul>
-      <li>取引先名なしの休み・倉庫は<b>「🏖️ 休み」「🏭 倉庫」</b>と表示</li>
+      <li>取引先名なしの休み・保管場所は<b>「🏖️ 休み」「🏭 保管場所」</b>と表示</li>
       <li>取引先名ありは<b>「🏖️ 〇〇電気」「🏭 〇〇電気」</b>のようにアイコン付き表示</li>
-      <li>倉庫モードで作業内容を選んだ場合は<b>「🏭 清掃、備品管理」</b>のようにタスク名が表示</li>
+      <li>保管場所モードで業務内容を選んだ場合は<b>「🏭 清掃、備品管理」</b>のようにタスク名が表示</li>
     </ul>
-    <p style="color:#9A3412;font-weight:600;margin-top:8px">🆕 倉庫モードの作業内容選択（必須）</p>
+    <p style="color:#9A3412;font-weight:600;margin-top:8px">🆕 保管場所モードの業務内容選択（必須）</p>
     <ul>
-      <li>🏭倉庫 ON にすると<b>「今日の倉庫作業」セクション</b>が出現</li>
+      <li>🏭保管場所 ON にすると<b>「今日の保管場所業務」セクション</b>が出現</li>
       <li>選択肢: <b>🧹清掃 / 📦備品管理 / 🔧工具メンテナンス / 🚚入荷対応 / 📤出荷準備 / ♻️廃材処理</b></li>
       <li><b>1 つ以上必須</b>。複数選択可。保存時に <code>対応先名</code> 列にカンマ区切りで保存される</li>
       <li>編集時もチェック状態が復元される</li>
-      <li>誰がいつ何の倉庫作業をやったか後から振り返れる（動きを可視化する目的）</li>
+      <li>誰がいつ何の保管場所業務をやったか後から振り返れる（動きを可視化する目的）</li>
     </ul>
     <p style="color:#1D9E75;font-weight:600;margin-top:8px">シート集計での扱い</p>
     <ul>
       <li><b>休み</b>: 工数=0、出勤日数にもカウントされない</li>
-      <li><b>倉庫</b>: 工数=1.0、出勤日数に+1（通常勤務と同じカウント）</li>
-      <li>倉庫レコードに取引先名がない場合、<b>取引先別請求集計・事業部別按分には載らない</b>（工番なし・取引先なしのため）</li>
+      <li><b>保管場所</b>: 工数=1.0、出勤日数に+1（通常勤務と同じカウント）</li>
+      <li>保管場所レコードに取引先名がない場合、<b>取引先別請求集計・事業部別按分には載らない</b>（管理番号なし・取引先なしのため）</li>
     </ul>
   </div>
 
@@ -942,13 +942,13 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
   </div>
 
   <div class="help-section">
-    <h3>🏷 作業区分（必須・ゲート）</h3>
-    <p>登録／編集モーダルでは <b>作業区分を最初に選択するまで他の項目が入力できません</b>（赤い警告バー表示）。表記揺れ防止と工番の正しい発番のためのガード。</p>
+    <h3>🏷 業務区分（必須・ゲート）</h3>
+    <p>登録／編集モーダルでは <b>業務区分を最初に選択するまで他の項目が入力できません</b>（赤い警告バー表示）。表記揺れ防止と管理番号の正しい発番のためのガード。</p>
     <ul>
-      <li>区分: <b>通常対応 / 現調 / 着打ち / カギ借用 / 材料引取・検品 / 撤去品返却 / 前乗り / 倉庫作業 / 休み / その他</b></li>
-      <li><b>🏭 倉庫作業</b>を選ぶと自動で倉庫モードに切替、倉庫タスク選択UIが出現（工番なし）</li>
-      <li><b>🏖️ 休み</b>を選ぶと自動で休みモードに切替（工番なし、工数0）</li>
-      <li>工番発行会社の<b>工番は「通常対応」のみ発行</b>（他の区分・休み・倉庫・予定では工番なし）</li>
+      <li>区分: <b>通常対応 / 事前確認 / 開始確認 / 備品・鍵の受取 / 資材・備品の確認 / 返却・片付け / 前日準備 / 保管場所業務 / 休み / その他</b></li>
+      <li><b>🏭 保管場所業務</b>を選ぶと自動で保管場所モードに切替、業務タスク選択UIが出現（管理番号なし）</li>
+      <li><b>🏖️ 休み</b>を選ぶと自動で休みモードに切替（管理番号なし、工数0）</li>
+      <li>管理番号発行会社の<b>管理番号は「通常対応」のみ発行</b>（他の区分・休み・保管場所・予定では管理番号なし）</li>
       <li>集計上は<b>全区分を合算</b>。詳細画面・月別確認表では区分が見えるよう表示</li>
     </ul>
   </div>
@@ -988,12 +988,12 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
   <div class="help-section">
     <h3>🆘 困ったら</h3>
     <ul>
-      <li><b>工番が空欄</b> → 代表者の事業部未設定。メンバー管理で割当</li>
+      <li><b>管理番号が空欄</b> → 代表者の区分未設定。メンバー管理で割当</li>
       <li><b>粗利がマイナス</b> → 売上未入力 or 単価が高すぎる可能性</li>
       <li><b>原価が0</b> → メンバーの単価が未設定</li>
       <li><b>起動が遅い</b> → アーカイブを実行（3ヶ月以前を退避）</li>
-      <li><b>事業部別按分で「不明」</b> → メンバーマスタで事業部を割当 or 工番修正で対応先の事業部確定</li>
-      <li><b>対応先マスタに使ってない対応先名が残る</b> → 集計実行時に自動掃除（売上未入力＆日報参照なし）。データを残したい場合は <b>✅完了フラグ</b> でプルダウンから隠す</li>
+      <li><b>事業部別按分で「不明」</b> → メンバーマスタで事業部を割当 or 管理番号修正で対応先の区分確定</li>
+      <li><b>対応先マスタに使ってない対応先名が残る</b> → 集計実行時に自動掃除（売上未入力＆業務記録参照なし）。データを残したい場合は <b>✅完了フラグ</b> でプルダウンから隠す</li>
     </ul>
   </div>
 
@@ -1003,11 +1003,11 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
 
 <div id="jobno-fix-modal" class="modal-bg">
 <div class="modal" style="max-width:720px">
-  <div class="modal-title">工番事業部の修正</div>
-  <p style="margin:0 0 8px;font-size:12px;color:#666">各対応先の事業部を選び直して「更新」で反映。新事業部×年度の次連番で新工番を発番し、対応先マスタ＋日報データ＋アーカイブを一括更新します。旧工番は欠番として残ります。</p>
+  <div class="modal-title">管理番号区分の修正</div>
+  <p style="margin:0 0 8px;font-size:12px;color:#666">各対応先の区分を選び直して「更新」で反映。新区分×年度の次連番で新管理番号を発番し、対応先マスタ＋業務データ＋アーカイブを一括更新します。旧管理番号は欠番として残ります。</p>
   <p style="margin:0 0 8px;font-size:12px;color:#92400E;background:#FEF3C7;border-radius:6px;padding:6px 10px">💡 金額（受注金額・原価・請求日など）の入力は <b>管理画面の「📊経営」タブ</b> に一本化しました。ここでは入力しません。</p>
   <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
-    <input type="text" id="jnfix-search" placeholder="🔍 取引先名・対応先名・工番で検索" oninput="filterJobNoFix()" style="flex:1;margin:0;font-size:14px">
+    <input type="text" id="jnfix-search" placeholder="🔍 取引先名・対応先名・管理番号で検索" oninput="filterJobNoFix()" style="flex:1;margin:0;font-size:14px">
     <span id="jnfix-count" style="font-size:12px;color:#666;white-space:nowrap"></span>
   </div>
   <div id="jobno-fix-list" style="margin-bottom:16px;max-height:60vh;overflow-y:auto"></div>
@@ -1018,7 +1018,7 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
 <div id="merge-genba-modal" class="modal-bg">
 <div class="modal" style="max-width:480px">
   <div class="modal-title">🔀 取引先名をマージ</div>
-  <p style="margin:0 0 12px;font-size:12px;color:#666">「統合する取引先」のレコードを「残す取引先」の名前に書き換えます。日報・アーカイブ・対応先マスタ・取引先マスタ全部一括で書き換えます。<b>この操作は取り消せません。</b></p>
+  <p style="margin:0 0 12px;font-size:12px;color:#666">「統合する取引先」のレコードを「残す取引先」の名前に書き換えます。業務記録・アーカイブ・対応先マスタ・取引先マスタ全部一括で書き換えます。<b>この操作は取り消せません。</b></p>
   <label style="font-size:13px;color:#666">統合する取引先（消える方）</label>
   <select id="merge-from" style="margin-bottom:10px">
     <option value="">選択してください</option>
@@ -1039,7 +1039,7 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
 <div id="merge-loc-modal" class="modal-bg">
 <div class="modal" style="max-width:520px">
   <div class="modal-title">🔀 対応先名をマージ</div>
-  <p style="margin:0 0 12px;font-size:12px;color:#666">同じ取引先の中で表記揺れになっている対応先名を統合します。日報・アーカイブ・対応先マスタを一括書き換え。<b>統合先に工番がある場合は日報の工番もそちらに統一されます。この操作は取り消せません。</b></p>
+  <p style="margin:0 0 12px;font-size:12px;color:#666">同じ取引先の中で表記揺れになっている対応先名を統合します。業務記録・アーカイブ・対応先マスタを一括書き換え。<b>統合先に管理番号がある場合は業務記録の管理番号もそちらに統一されます。この操作は取り消せません。</b></p>
   <label style="font-size:13px;color:#666">取引先を選ぶ</label>
   <select id="mloc-genba" style="margin-bottom:10px" onchange="updateMergeLocSelects()">
     <option value="">選択してください</option>
@@ -1145,6 +1145,8 @@ window.fetch=async function(url,opts){
 /* ===== この会社の設定（開通時にここだけ変える）===== */
 const COMPANIES = (window.APP_CONFIG&&APP_CONFIG.COMPANIES&&APP_CONFIG.COMPANIES.length)?APP_CONFIG.COMPANIES:[];  // 値は config.js（COMPANIES）に集約
 const PRIMARY_COMPANY = '';            // 工番を発行する会社名。無ければ '' （工番・車両機能オフ）
+const WT_DISP={'現場作業':'通常対応','現調':'事前確認','着打ち':'開始確認','カギ借用':'備品・鍵の受取','材料引取・検品':'資材・備品の確認','材料引き取り':'資材・備品の確認','撤去品返却':'返却・片付け','前乗り':'前日準備','倉庫作業':'保管場所業務'};
+function wtDisp(v){return WT_DISP[v]||v;}  // 表示用ラベル（値・保存・集計は元のまま）
 /* ================================================= */
 const MODES=['souko','yakin','yasumi','yotei'];
 const VEHICLES=[
@@ -1406,15 +1408,15 @@ async function shareGroup(g){
   const lines=[];
   lines.push(`【${dateStr} の予定】`);
   if(g.yasumi)lines.push('🏖️ 休み');
-  else if(g.souko){const t=g.memo||g.loc||'';lines.push(t?`🏭 倉庫: ${t}`:'🏭 倉庫');}
+  else if(g.souko){const t=g.memo||g.loc||'';lines.push(t?`🏭 保管場所: ${t}`:'🏭 保管場所');}
   else{
-    if(g.genba)lines.push(`元請: ${g.genba}`);
-    if(g.loc)lines.push(`現場: ${g.loc}`);
+    if(g.genba)lines.push(`取引先: ${g.genba}`);
+    if(g.loc)lines.push(`対応先: ${g.loc}`);
     if(g.start||g.end)lines.push(`時間: ${g.start||''}〜${g.end||''}`);
   }
   if(memberLine)lines.push(`メンバー: ${memberLine}`);
   if(g.vehicle)lines.push(`🚗 車両: ${g.vehicle}`);
-  // 倉庫モードのメモは上の「🏭 倉庫: ...」行に既に出ているので重複表示しない
+  // 倉庫モードのメモは上の「🏭 保管場所: ...」行に既に出ているので重複表示しない
   if(g.memo && !g.souko)lines.push(`メモ: ${g.memo}`);
   const text=lines.join('\n');
   try{
@@ -1920,7 +1922,7 @@ function populateLocationSelect(p){
   const labelTxt=q?`既存から選択（${locs.length}/${totalCount}件）`:`既存から選択（${totalCount}件・最近順）`;
   let html=`<option value="">${esc(labelTxt)}</option>`;
   locs.forEach(l=>{html+=`<option value="${esc(l)}"${l===currentVal?' selected':''}>${esc(l)}</option>`;});
-  html+='<option value="__new__" style="color:#1D9E75;font-weight:600">＋ 新規現場として追加</option>';
+  html+='<option value="__new__" style="color:#1D9E75;font-weight:600">＋ 新規対応先として追加</option>';
   sel.innerHTML=html;
   const input=document.getElementById(p+'-location');
   if(currentVal && !inList){
@@ -1980,7 +1982,7 @@ function showSimilarSuggest(p){
     if(lower1.includes(lower2)||lower2.includes(lower1))matches.push(l);
   });
   if(matches.length===0){sim.style.display='none';sim.innerHTML='';return;}
-  let html='<div style="font-weight:600;margin-bottom:4px">⚠️ 似ている既存の現場があります。同じ現場ならタップして選んでください:</div>';
+  let html='<div style="font-weight:600;margin-bottom:4px">⚠️ 似ている既存の対応先があります。同じ対応先ならタップして選んでください:</div>';
   matches.slice(0,5).forEach(m=>{
     html+=`<button type="button" onclick="pickSimilarLoc('${p}','${esc(m).replace(/'/g,"&apos;")}')" style="display:block;width:100%;text-align:left;background:#fff;border:1px solid #FCD34D;border-radius:6px;padding:6px 10px;margin-top:4px;cursor:pointer;font-size:13px">📌 ${esc(m)}</button>`;
   });
@@ -2002,7 +2004,7 @@ function checkLocationJobNo(){
   const genba=getGenbaValue('s');const loc=document.getElementById('s-location').value.trim();
   if(loc&&genba){
     const match=allNippos.find(n=>n.genba===genba&&n.loc===loc&&n.jobNo);
-    if(match){hint.textContent='既存の工番 '+match.jobNo+' を使用します';hint.style.display='block';if(divWrap)divWrap.style.display='none';}
+    if(match){hint.textContent='既存の管理番号 '+match.jobNo+' を使用します';hint.style.display='block';if(divWrap)divWrap.style.display='none';}
     else{
       hint.style.display='none';
       if(divWrap){
@@ -2043,13 +2045,13 @@ async function submitNippo(){
   if(!dateStart){showAlert('開始日は必須です','err');return;}
   if(dateEnd&&dateEnd<dateStart){showAlert('終了日が開始日より前です。日付を確認してください','err');return;}
   const _wtVal=(document.getElementById('s-work-type')||{}).value||'';
-  if(!_wtVal){showAlert('作業区分を選択してください','err');return;}
-  if(!yasumi && !souko && !genba){showAlert('元請名は必須です（休み・倉庫モード時は不要）','err');return;}
+  if(!_wtVal){showAlert('業務区分を選択してください','err');return;}
+  if(!yasumi && !souko && !genba){showAlert('取引先名は必須です（休み・保管場所モード時は不要）','err');return;}
   // 倉庫モードのとき、倉庫作業タスクが1つ以上選ばれているか（メモ欄に格納）
   if(souko){
     const tasks=parseSoukoTasks(memo);
     if(tasks.length===0){
-      showAlert('倉庫作業を1つ以上選んでください','err');
+      showAlert('保管場所業務を1つ以上選んでください','err');
       const err=document.getElementById('s-souko-tasks-error');
       if(err)err.style.display='';
       return;
@@ -2216,13 +2218,13 @@ function renderCalendar(){
       // タスク格納先は メモ欄が現行仕様。旧データで loc に入っているケースは loc にフォールバック
       let label;
       if(g.yasumi)label='🏖️ 休み';
-      else if(g.souko){const t=g.memo||g.loc||'';label=t?`🏭 ${t}`:'🏭 倉庫';}
+      else if(g.souko){const t=g.memo||g.loc||'';label=t?`🏭 ${t}`:'🏭 保管場所';}
       else{
         label=g.loc||g.genba;
         if(!label){
           if(g.yotei)label='📌 予定';
           else if(g.yakin)label='🌙 夜勤';
-          else label='（現場名なし）';
+          else label='（対応先名なし）';
         }
       }
       eventsHtml+=`<div class="cal-event" style="background:${g.color||map[type]}">${esc(label)}</div>`;
@@ -2252,7 +2254,7 @@ function openCalDay(dateStr){
       // 休み/倉庫は元請名を表示せず「休み」「倉庫」で統一
       let titleText;
       if(g.yasumi)titleText='休み';
-      else if(g.souko)titleText='倉庫';
+      else if(g.souko)titleText='保管場所';
       else{
         titleText=esc(g.genba)+(g.loc?'　'+esc(g.loc):'');
         if(!titleText){
@@ -2265,7 +2267,7 @@ function openCalDay(dateStr){
       const wt=g.workType||'現場作業';
       const wtEmoji=wtMap[wt]||'🏷️';
       const wtCls=wt==='現場作業'?'worktype-chip worktype-default':'worktype-chip';
-      const wtChip=(g.yasumi||g.souko||g.yotei)?'':`<span class="${wtCls}">${wtEmoji} ${esc(wt)}</span>`;
+      const wtChip=(g.yasumi||g.souko||g.yotei)?'':`<span class="${wtCls}">${wtEmoji} ${esc(wtDisp(wt))}</span>`;
       const vehicleLine=g.vehicle?`<div class="yotei-vehicle">🚗 ${esc(g.vehicle)}</div>`:'';
       return`<div class="yotei-card yotei-card-min${g.isGhost?' yotei-card-ghost':''}" style="border-left:4px solid ${esc(color)}" onclick="openEventDetail(${idx})">
         <div class="yotei-card-title">${titleLine}${wtChip}</div>
@@ -2308,13 +2310,13 @@ function renderEventDetail(){
   const fellows=g.members.filter(m=>m.role==='同行');
   const memberLine=(leader?`<b>${esc(leader.name)}</b>（代表）`:'')+(fellows.length>0?(leader?'<br>':'')+fellows.map(m=>esc(m.name)).join('　'):'');
   const totalKo=(g.kosu*g.members.length).toFixed(1);
-  const badges=[];if(g.souko)badges.push('🏭 倉庫');if(g.yakin)badges.push('🌙 夜勤');if(g.yasumi)badges.push('🏖️ 休み');if(g.yotei)badges.push('📌 予定');
+  const badges=[];if(g.souko)badges.push('🏭 保管場所');if(g.yakin)badges.push('🌙 夜勤');if(g.yasumi)badges.push('🏖️ 休み');if(g.yotei)badges.push('📌 予定');
   const wt=g.workType&&g.workType!=='現場作業'?g.workType:'現場作業';
   // 休み/倉庫は元請名を表示せず統一ラベル。倉庫はタスク内容を表示
   // タスク格納先は メモ欄が現行仕様。旧データで loc に入っているケースは loc にフォールバック
   let detailTitle;
   if(g.yasumi)detailTitle='🏖️ 休み';
-  else if(g.souko){const t=g.memo||g.loc||'';detailTitle=t?`🏭 ${esc(t)}`:'🏭 倉庫';}
+  else if(g.souko){const t=g.memo||g.loc||'';detailTitle=t?`🏭 ${esc(t)}`:'🏭 保管場所';}
   else{
     detailTitle=esc(g.genba);
     if(!detailTitle){
@@ -2333,13 +2335,13 @@ function renderEventDetail(){
     </div>
     <div class="detail-period">${dateStr}　${esc(g.start||'')}〜${esc(g.end||'')}</div>
     ${badges.length?`<div style="padding:0 0 8px 18px">${badges.map(b=>`<span style="display:inline-block;padding:3px 10px;border-radius:12px;font-size:12px;background:#f2f2f7;margin-right:6px">${b}</span>`).join('')}</div>`:''}
-    ${g.loc&&!g.souko?`<div class="detail-row"><div class="detail-row-icon">📍</div><div class="detail-row-content"><div class="detail-row-label">現場名</div>${esc(g.loc)}</div></div>`:''}
-    <div class="detail-row"><div class="detail-row-icon">🏷️</div><div class="detail-row-content"><div class="detail-row-label">作業区分</div>${esc(wt)}</div></div>
+    ${g.loc&&!g.souko?`<div class="detail-row"><div class="detail-row-icon">📍</div><div class="detail-row-content"><div class="detail-row-label">対応先名</div>${esc(g.loc)}</div></div>`:''}
+    <div class="detail-row"><div class="detail-row-icon">🏷️</div><div class="detail-row-content"><div class="detail-row-label">業務区分</div>${esc(wtDisp(wt))}</div></div>
     <div class="detail-row"><div class="detail-row-icon">👥</div><div class="detail-row-content"><div class="detail-row-label">メンバー（${g.members.length}人）</div>${memberLine||'—'}</div></div>
-    ${(g.yasumi||g.yotei)?'':`<div class="detail-row"><div class="detail-row-icon">🔢</div><div class="detail-row-content"><div class="detail-row-label">人工</div>${totalKo}</div></div>`}
+    ${(g.yasumi||g.yotei)?'':`<div class="detail-row"><div class="detail-row-icon">🔢</div><div class="detail-row-content"><div class="detail-row-label">工数</div>${totalKo}</div></div>`}
     ${g.company?`<div class="detail-row"><div class="detail-row-icon">🏢</div><div class="detail-row-content"><div class="detail-row-label">会社</div>${esc(g.company)}</div></div>`:''}
     ${g.vehicle?`<div class="detail-row"><div class="detail-row-icon">🚗</div><div class="detail-row-content"><div class="detail-row-label">車両</div>${esc(g.vehicle)}</div></div>`:''}
-    ${displayJobNo?`<div class="detail-row"><div class="detail-row-icon">🔖</div><div class="detail-row-content"><div class="detail-row-label">工番</div>${esc(displayJobNo)}${masterJobNo&&!g.jobNo?` <span style="color:#888;font-size:11px;margin-left:6px">（現場マスタ参照）</span>`:''}</div></div>`:''}
+    ${displayJobNo?`<div class="detail-row"><div class="detail-row-icon">🔖</div><div class="detail-row-content"><div class="detail-row-label">管理番号</div>${esc(displayJobNo)}${masterJobNo&&!g.jobNo?` <span style="color:#888;font-size:11px;margin-left:6px">（対応先マスタ参照）</span>`:''}</div></div>`:''}
     ${g.memo&&!g.souko?`<div class="detail-row"><div class="detail-row-icon">📝</div><div class="detail-row-content"><div class="detail-row-label">メモ</div>${linkify(esc(g.memo).replace(/\n/g,'<br>'))}</div></div>`:''}
     ${g.updatedBy||g.timestamp?`<div class="detail-row"><div class="detail-row-icon">🔄</div><div class="detail-row-content"><div class="detail-row-label">最終更新</div>${esc(g.updatedBy||'')}${g.timestamp?` <span style="color:#666;font-size:12px;margin-left:6px">${esc(formatTimestamp(g.timestamp))}</span>`:''}</div></div>`:''}
     ${renderSiteCompletionRow_(g)}
@@ -2354,13 +2356,13 @@ function renderSiteCompletionRow_(g){
   const j=(allJobsites||[]).find(x=>x.genba===g.genba&&x.loc===g.loc);
   const completed=!!(j&&j.completed);
   if(completed){
-    return `<div class="detail-row"><div class="detail-row-icon">✅</div><div class="detail-row-content"><div class="detail-row-label">現場ステータス</div><span style="color:#1D9E75;font-weight:600">完了済み</span><button class="btn btn-secondary btn-sm" onclick="toggleSiteCompletion_('${esc(g.genba)}','${esc(g.loc)}',false)" style="margin-left:8px;font-size:12px;padding:4px 10px">進行中に戻す</button></div></div>`;
+    return `<div class="detail-row"><div class="detail-row-icon">✅</div><div class="detail-row-content"><div class="detail-row-label">対応先ステータス</div><span style="color:#1D9E75;font-weight:600">完了済み</span><button class="btn btn-secondary btn-sm" onclick="toggleSiteCompletion_('${esc(g.genba)}','${esc(g.loc)}',false)" style="margin-left:8px;font-size:12px;padding:4px 10px">進行中に戻す</button></div></div>`;
   }
-  return `<div class="detail-row"><div class="detail-row-icon">🚧</div><div class="detail-row-content"><div class="detail-row-label">現場ステータス</div>進行中<button class="btn btn-secondary btn-sm" onclick="toggleSiteCompletion_('${esc(g.genba)}','${esc(g.loc)}',true)" style="margin-left:8px;font-size:12px;padding:4px 10px">この現場を完了にする</button></div></div>`;
+  return `<div class="detail-row"><div class="detail-row-icon">🚧</div><div class="detail-row-content"><div class="detail-row-label">対応先ステータス</div>進行中<button class="btn btn-secondary btn-sm" onclick="toggleSiteCompletion_('${esc(g.genba)}','${esc(g.loc)}',true)" style="margin-left:8px;font-size:12px;padding:4px 10px">この対応先を完了にする</button></div></div>`;
 }
 
 async function toggleSiteCompletion_(genba,loc,completed){
-  const msg=completed?`「${loc}」を完了にしますか？\n以後、新規の予定登録で現場プルダウンに出なくなります。\n（工番・既存の日報・集計には影響しません）`:`「${loc}」を進行中に戻しますか？`;
+  const msg=completed?`「${loc}」を完了にしますか？\n以後、新規の予定登録で対応先プルダウンに出なくなります。\n（管理番号・既存の業務記録・集計には影響しません）`:`「${loc}」を進行中に戻しますか？`;
   if(!confirm(msg))return;
   // 押下中は連打防止
   const detailBody=document.getElementById('detail-fs-body');
@@ -2414,7 +2416,7 @@ function copyFromDetail(){
 async function deleteFromDetail(){
   let g=detailGroups[detailIdx];if(!g)return;
   if(g.isGhost){const orig=findOriginalGroup(g.originalId);if(orig)g=orig;}
-  if(!confirm('この日報を削除しますか？'))return;
+  if(!confirm('この予定を削除しますか？'))return;
   setLoading(true);
   try{
     const res=await fetch(getGasUrl(),{method:'POST',body:JSON.stringify({action:'delete',ids:[...new Set(g.ids)],updatedBy:getUsername()}),headers:{'Content-Type':'text/plain'}});
@@ -2458,7 +2460,7 @@ function calOpenEdit(idx){
 async function calDeleteGroup(idx){
   let g=getCalDayGroups()[idx];if(!g)return;
   if(g.isGhost){const orig=findOriginalGroup(g.originalId);if(orig)g=orig;}
-  if(!confirm('この日報を削除しますか？'))return;
+  if(!confirm('この予定を削除しますか？'))return;
   setLoading(true);
   try{const res=await fetch(getGasUrl(),{method:'POST',body:JSON.stringify({action:'delete',ids:[...new Set(g.ids)],updatedBy:getUsername()}),headers:{'Content-Type':'text/plain'}});
     const json=await res.json();if(json.status==='ok'){document.getElementById('cal-day-modal').classList.remove('active');await loadData();}
@@ -2507,13 +2509,13 @@ async function saveEdit(){
   const leader=document.getElementById('e-leader').value;const mode=modeState.e;
   const yasumi=mode==='yasumi';const yakin=mode==='yakin';const souko=mode==='souko';const yotei=mode==='yotei';
   const _eWtVal=(document.getElementById('e-work-type')||{}).value||'';
-  if(!_eWtVal){alert('作業区分を選択してください');return;}
-  if(!yasumi && !souko && !genba){alert('元請名は必須です（休み・倉庫モード時は不要）');return;}
+  if(!_eWtVal){alert('業務区分を選択してください');return;}
+  if(!yasumi && !souko && !genba){alert('取引先名は必須です（休み・保管場所モード時は不要）');return;}
   // 倉庫モードのとき、倉庫作業タスクが1つ以上選ばれているか（メモ欄に格納）
   if(souko){
     const tasks=parseSoukoTasks(memo);
     if(tasks.length===0){
-      alert('倉庫作業を1つ以上選んでください');
+      alert('保管場所業務を1つ以上選んでください');
       const err=document.getElementById('e-souko-tasks-error');
       if(err)err.style.display='';
       return;
@@ -2537,7 +2539,7 @@ async function saveEdit(){
     dates=editDates;
   }else{
     const editedDate=document.getElementById('e-date').value;
-    if(!editedDate){alert('作業日が空です');return;}
+    if(!editedDate){alert('日付が空です');return;}
     dates=[editedDate];
   }
   const excludeIds=new Set(editIds||[]);
@@ -2625,7 +2627,7 @@ function updateGmSelects(){
   const nippos=filteredNippos().filter(n=>!n.isGhost);
   const genbas=[...new Set(nippos.map(n=>n.genba).filter(Boolean))].sort();
   const gSel=document.getElementById('gm-genba');const curG=gSel.value;
-  gSel.innerHTML='<option value="">元請を選択</option>'+genbas.map(g=>`<option value="${esc(g)}"${g===curG?' selected':''}>${esc(g)}</option>`).join('');
+  gSel.innerHTML='<option value="">取引先を選択</option>'+genbas.map(g=>`<option value="${esc(g)}"${g===curG?' selected':''}>${esc(g)}</option>`).join('');
   const mSel=document.getElementById('gm-month');
   if(mSel){
     const curM=mSel.value;
@@ -2645,9 +2647,9 @@ function onGmGenbaChange(){
   const locs=[...new Set(nippos.map(n=>n.loc).filter(Boolean))].sort();
   const hasNoLoc=nippos.some(n=>!n.loc);
   const lSel=document.getElementById('gm-location');const curL=lSel.value;
-  let opts='<option value="">現場を選択</option>';
+  let opts='<option value="">対応先を選択</option>';
   opts+=locs.map(l=>`<option value="${esc(l)}"${l===curL?' selected':''}>${esc(l)}</option>`).join('');
-  if(hasNoLoc)opts+=`<option value="__noloc__"${curL==='__noloc__'?' selected':''}>（現場名なし）</option>`;
+  if(hasNoLoc)opts+=`<option value="__noloc__"${curL==='__noloc__'?' selected':''}>（対応先名なし）</option>`;
   lSel.innerHTML=opts;if(locs.length===1&&!hasNoLoc)lSel.value=locs[0];renderGmList();
 }
 function getGmGroups(){
@@ -2663,7 +2665,7 @@ function renderGmList(){
   if(groups.length===0){wrap.style.display='none';return;}
   wrap.style.display='block';document.getElementById('gm-select-all-btn').textContent='全選択';
   document.getElementById('gm-day-list').innerHTML=groups.map((g,idx)=>{
-    const badges=(g.yakin?'<span class="yakin-badge">🌙夜勤</span>':'')+(g.yasumi?'<span class="yasumi-badge">🏖️休み</span>':'')+(g.souko?'<span class="souko-badge">🏭倉庫</span>':'')+(g.yotei?'<span class="yotei-badge-tag">📌予定</span>':'');
+    const badges=(g.yakin?'<span class="yakin-badge">🌙夜勤</span>':'')+(g.yasumi?'<span class="yasumi-badge">🏖️休み</span>':'')+(g.souko?'<span class="souko-badge">🏭保管場所</span>':'')+(g.yotei?'<span class="yotei-badge-tag">📌予定</span>':'');
     const updaterHtml=g.updatedBy?`<span style="font-size:11px;color:#999;margin-left:8px;">🔄 ${esc(g.updatedBy)}</span>`:'';
     const _overdueStyle=(gmMode==='pin'&&pinFilterMode==='overdue')?' style="border-left:3px solid #ff3b30;padding-left:12px"':'';
     return`<div class="gm-day-row"${_overdueStyle}>
@@ -2810,7 +2812,7 @@ function populateBillingSelectors(){
   const genbas=[...new Set(nippos.map(n=>n.genba).filter(Boolean))].sort();
   const gSel=document.getElementById('bill-genba');
   const curG=gSel.value;
-  gSel.innerHTML='<option value="">元請を選択</option>'+genbas.map(g=>`<option value="${esc(g)}"${g===curG?' selected':''}>${esc(g)}</option>`).join('');
+  gSel.innerHTML='<option value="">取引先を選択</option>'+genbas.map(g=>`<option value="${esc(g)}"${g===curG?' selected':''}>${esc(g)}</option>`).join('');
   const mSel=document.getElementById('bill-month');
   const months=[...new Set(nippos.map(n=>(n.date||'').slice(0,7)).filter(Boolean))].sort().reverse();
   const curM=mSel.value;
@@ -2946,7 +2948,7 @@ function updateBillingTotal(){
 async function exportBillingXlsx(){
   const genba=document.getElementById('bill-genba').value;
   const month=document.getElementById('bill-month').value;
-  if(!genba||!month){alert('元請と月を選んでください');return;}
+  if(!genba||!month){alert('取引先と月を選んでください');return;}
   const btn=document.getElementById('bill-export-btn');
   btn.disabled=true;btn.textContent='出力中...';
   try{
@@ -3037,7 +3039,7 @@ function renderAvailList(){
     const rows=[];
     if(buckets.busy.length>0)rows.push({label:'出勤',cls:'status-busy',names:buckets.busy});
     if(buckets.yasumi.length>0)rows.push({label:'休み',cls:'status-yasumi',names:buckets.yasumi});
-    if(buckets.souko.length>0)rows.push({label:'倉庫',cls:'status-souko',names:buckets.souko});
+    if(buckets.souko.length>0)rows.push({label:'保管場所',cls:'status-souko',names:buckets.souko});
     if(buckets.free.length>0)rows.push({label:'空き',cls:'status-free',names:buckets.free});
     rows.forEach(r=>{
       html+=`<div class="day-row"><div class="day-row-main">${r.names.map(esc).join('、')}</div><div class="day-row-status ${r.cls}">${r.label} ${r.names.length}</div></div>`;
@@ -3156,7 +3158,7 @@ function initSelects(){
 function updateGenbaFilter(){
   const gs=[...new Set(filteredNippos().map(n=>n.genba).filter(Boolean))].sort();
   const gf=document.getElementById('j-genba-filter');const cur=gf.value;
-  gf.innerHTML='<option value="">全元請</option>'+gs.map(g=>`<option${g===cur?' selected':''}>${esc(g)}</option>`).join('');
+  gf.innerHTML='<option value="">全取引先</option>'+gs.map(g=>`<option${g===cur?' selected':''}>${esc(g)}</option>`).join('');
 }
 function updateJimu(){
   const month=document.getElementById('j-month').value;const genbaF=document.getElementById('j-genba-filter').value;
@@ -3179,10 +3181,10 @@ function updateJimu(){
   document.getElementById('j-total-ko').textContent=Object.values(byName).reduce((s,v)=>s+v.kosu,0).toFixed(1);
   const entries=Object.entries(byName).sort((a,b)=>b[1].kosu-a[1].kosu);
   document.getElementById('j-shokunin-tbl').innerHTML=entries.length?
-    entries.map(([name,v])=>`<tr><td>${esc(name)}</td><td><span class="company-badge">${esc(v.company)}</span></td><td>${v.days}日</td><td>${v.kosu.toFixed(1)}人工</td></tr>`).join(''):
+    entries.map(([name,v])=>`<tr><td>${esc(name)}</td><td><span class="company-badge">${esc(v.company)}</span></td><td>${v.days}日</td><td>${v.kosu.toFixed(1)} 工数</td></tr>`).join(''):
     `<tr><td colspan="4" class="empty">データなし</td></tr>`;
 }
-// Excel(xlsx) ダウンロード（任意で期間フィルタ。日報データ／アーカイブのみ GAS 側でフィルタされる）
+// Excel(xlsx) ダウンロード（任意で期間フィルタ。業務データ／アーカイブのみ GAS 側でフィルタされる）
 async function downloadSheetXlsx(){
   const sheetName=document.getElementById('csv-sheet').value;const btn=document.getElementById('csv-btn');btn.textContent='生成中...';btn.disabled=true;
   const dateFrom=(document.getElementById('csv-date-from')||{}).value||'';
@@ -3247,13 +3249,13 @@ async function archiveOldData(){
 
 // ===== 工番クリーンアップ =====
 async function runJobNoCleanup(){
-  if(!confirm('休み・倉庫・予定モードのレコードから工番・事業部をクリアします。\n（新規登録時は既に空のまま保存されています。旧データの清掃です）\n\n実行しますか？'))return;
+  if(!confirm('休み・保管場所・予定モードのレコードから管理番号・区分をクリアします。\n（新規登録時は既に空のまま保存されています。旧データの清掃です）\n\n実行しますか？'))return;
   try{
     setLoading(true);
     const res=await fetch(GAS_URL,{method:'POST',body:JSON.stringify({action:'cleanup_orphan_jobnos',updatedBy:getUsername()}),headers:{'Content-Type':'text/plain'}});
     const json=await res.json();
     if(json.status==='ok'){
-      alert(`✓ ${json.cleaned}件の工番・事業部をクリアしました`);
+      alert(`✓ ${json.cleaned}件の管理番号・区分をクリアしました`);
       await loadData();
     }else alert('エラー: '+json.message);
   }catch(e){alert('エラー: '+e.message);}
@@ -3283,25 +3285,25 @@ function updateMergePreview(){
   const to=document.getElementById('merge-to').value;
   const prev=document.getElementById('merge-preview');
   if(!from||!to){prev.style.display='none';return;}
-  if(from===to){prev.style.display='';prev.innerHTML='<span style="color:#dc2626">⚠️ 同じ元請名を選んでます</span>';return;}
+  if(from===to){prev.style.display='';prev.innerHTML='<span style="color:#dc2626">⚠️ 同じ取引先名を選んでます</span>';return;}
   // Count records that will be affected
   const fromCount=(allNippos||[]).filter(n=>!n.isGhost&&n.genba===from).length;
   prev.style.display='';
-  prev.innerHTML=`📊 影響範囲（プレビュー）<br>「${esc(from)}」の日報 約 <b>${fromCount}</b> 件が「${esc(to)}」に書き換えられます。`;
+  prev.innerHTML=`📊 影響範囲（プレビュー）<br>「${esc(from)}」の予定 約 <b>${fromCount}</b> 件が「${esc(to)}」に書き換えられます。`;
 }
 
 async function runMergeGenba(){
   const from=document.getElementById('merge-from').value;
   const to=document.getElementById('merge-to').value;
-  if(!from||!to){alert('「統合する元請」と「残す元請」両方を選んでください');return;}
-  if(from===to){alert('同じ元請名です');return;}
+  if(!from||!to){alert('「統合する取引先」と「残す取引先」両方を選んでください');return;}
+  if(from===to){alert('同じ取引先名です');return;}
   if(!confirm(`本当に統合しますか？\n\n「${from}」→「${to}」\n\nこの操作は取り消せません。`))return;
   try{
     setLoading(true);
     const res=await fetch(GAS_URL,{method:'POST',body:JSON.stringify({action:'merge_genba',from,to,updatedBy:getUsername()}),headers:{'Content-Type':'text/plain'}});
     const json=await res.json();
     if(json.status==='ok'){
-      alert(`✓ マージ完了\n\n日報更新: ${json.nippoUpdated||0}件\nアーカイブ更新: ${json.archiveUpdated||0}件\n現場マスタ更新: ${json.jobsiteUpdated||0}件\n元請マスタ: ${json.masterAction||'-'}`);
+      alert(`✓ マージ完了\n\n業務記録更新: ${json.nippoUpdated||0}件\nアーカイブ更新: ${json.archiveUpdated||0}件\n対応先マスタ更新: ${json.jobsiteUpdated||0}件\n取引先マスタ: ${json.masterAction||'-'}`);
       document.getElementById('merge-genba-modal').classList.remove('active');
       await loadData();
     }else alert('エラー: '+json.message);
@@ -3320,7 +3322,7 @@ function openMergeLocModal(){
   }
   ['mloc-a','mloc-b'].forEach(id=>{
     const s=document.getElementById(id);
-    if(s)s.innerHTML='<option value="">先に元請を選んでください</option>';
+    if(s)s.innerHTML='<option value="">先に取引先を選んでください</option>';
   });
   document.getElementById('mloc-choice').style.display='none';
   document.getElementById('merge-loc-modal').classList.add('active');
@@ -3332,11 +3334,11 @@ function updateMergeLocSelects(){
   const aSel=document.getElementById('mloc-a');
   const bSel=document.getElementById('mloc-b');
   if(!genba){
-    [aSel,bSel].forEach(s=>{if(s)s.innerHTML='<option value="">先に元請を選んでください</option>';});
+    [aSel,bSel].forEach(s=>{if(s)s.innerHTML='<option value="">先に取引先を選んでください</option>';});
     document.getElementById('mloc-choice').style.display='none';
     return;
   }
-  // 日報・アーカイブから その元請の現場名一覧（最近使った順）
+  // 業務記録・アーカイブから その元請の現場名一覧（最近使った順）
   const lastUsed={};
   (allNippos||[]).forEach(n=>{
     if(n.isGhost||!n.loc||n.genba!==genba)return;
@@ -3368,7 +3370,7 @@ function updateMergeLocChoice(){
   if(!genba||!a||!b){choice.style.display='none';return;}
   if(a===b){
     choice.style.display='';
-    choice.innerHTML='<div style="color:#dc2626;font-weight:600">⚠️ A と B に同じ現場名が選ばれています</div>';
+    choice.innerHTML='<div style="color:#dc2626;font-weight:600">⚠️ A と B に同じ対応先名が選ばれています</div>';
     return;
   }
   // それぞれの件数と工番を取得
@@ -3382,11 +3384,11 @@ function updateMergeLocChoice(){
     <div style="display:flex;flex-direction:column;gap:8px">
       <button class="btn btn-sm" style="background:#075985;color:#fff;text-align:left;padding:10px 12px;line-height:1.4" onclick="runMergeLocChoice('a')">
         <div style="font-weight:700;font-size:14px">A「${esc(a)}」 に統一する</div>
-        <div style="font-size:11px;opacity:0.9;margin-top:4px">B「${esc(b)}」（日報 ${countB} 件${jobNoB?' / 工番 '+esc(jobNoB):''}）が A に書き換えられます${jobNoA?'。工番は '+esc(jobNoA)+' に統一':''}</div>
+        <div style="font-size:11px;opacity:0.9;margin-top:4px">B「${esc(b)}」（業務記録 ${countB} 件${jobNoB?' / 管理番号 '+esc(jobNoB):''}）が A に書き換えられます${jobNoA?'。管理番号は '+esc(jobNoA)+' に統一':''}</div>
       </button>
       <button class="btn btn-sm" style="background:#075985;color:#fff;text-align:left;padding:10px 12px;line-height:1.4" onclick="runMergeLocChoice('b')">
         <div style="font-weight:700;font-size:14px">B「${esc(b)}」 に統一する</div>
-        <div style="font-size:11px;opacity:0.9;margin-top:4px">A「${esc(a)}」（日報 ${countA} 件${jobNoA?' / 工番 '+esc(jobNoA):''}）が B に書き換えられます${jobNoB?'。工番は '+esc(jobNoB)+' に統一':''}</div>
+        <div style="font-size:11px;opacity:0.9;margin-top:4px">A「${esc(a)}」（業務記録 ${countA} 件${jobNoA?' / 管理番号 '+esc(jobNoA):''}）が B に書き換えられます${jobNoB?'。管理番号は '+esc(jobNoB)+' に統一':''}</div>
       </button>
     </div>`;
   choice.style.display='';
@@ -3400,14 +3402,14 @@ async function runMergeLocChoice(keep){
   // keep='a' なら A が残り、B が消える / keep='b' なら逆
   const fromLoc=keep==='a'?b:a;
   const toLoc=keep==='a'?a:b;
-  if(!confirm(`本当に統合しますか？\n\n元請: ${genba}\n消える: ${fromLoc}\n残る: ${toLoc}\n\nこの操作は取り消せません。`))return;
+  if(!confirm(`本当に統合しますか？\n\n取引先: ${genba}\n消える: ${fromLoc}\n残る: ${toLoc}\n\nこの操作は取り消せません。`))return;
   try{
     setLoading(true);
     const res=await fetch(GAS_URL,{method:'POST',body:JSON.stringify({action:'merge_loc',genba,fromLoc,toLoc,updatedBy:getUsername()}),headers:{'Content-Type':'text/plain'}});
     const json=await res.json();
     if(json.status==='ok'){
       const masterMsg={deleted_duplicate:'統合元行を削除',renamed:'統合元行を改名',to_only:'統合先のみ存在',none:'操作なし'}[json.masterAction]||json.masterAction;
-      alert(`✓ マージ完了\n\n日報更新: ${json.nippoUpdated||0}件\nアーカイブ更新: ${json.archiveUpdated||0}件\n現場マスタ: ${masterMsg}${json.toJobNo?`\n統一された工番: ${json.toJobNo}`:''}`);
+      alert(`✓ マージ完了\n\n業務記録更新: ${json.nippoUpdated||0}件\nアーカイブ更新: ${json.archiveUpdated||0}件\n対応先マスタ: ${masterMsg}${json.toJobNo?`\n統一された管理番号: ${json.toJobNo}`:''}`);
       document.getElementById('merge-loc-modal').classList.remove('active');
       await loadData();
     }else alert('エラー: '+json.message);
@@ -3427,7 +3429,7 @@ async function openJobNoFix(){
     const json=await res.json();
     if(json.status!=='ok'){list.innerHTML='<div style="color:#c00">エラー：'+esc(json.message||'')+'</div>';return;}
     const rows=(json.data||[]).slice(1);
-    if(rows.length===0){list.innerHTML='<div style="text-align:center;color:#999;padding:20px">現場マスタにデータがありません</div>';return;}
+    if(rows.length===0){list.innerHTML='<div style="text-align:center;color:#999;padding:20px">対応先マスタにデータがありません</div>';return;}
     // 代表者の逆引き: 元請|現場 → 最初の代表者
     const leaderMap={};
     allNippos.forEach(n=>{
@@ -3450,12 +3452,12 @@ async function openJobNoFix(){
       const border=completed?'#86EFAC':'#ddd';
       const statusBadge=completed?'<span style="background:#1D9E75;color:#fff;font-size:10px;padding:2px 6px;border-radius:10px;margin-left:6px">✅ 完了</span>':'';
       return `<div data-search="${esc(searchText)}" data-completed="${completed?'1':'0'}" style="border:1px solid ${border};border-radius:8px;padding:10px;margin-bottom:8px;background:${bg}">
-        <div style="font-size:13px;margin-bottom:4px"><b>${esc(genba)}</b> / ${esc(loc||'（現場名なし）')}${statusBadge}</div>
+        <div style="font-size:13px;margin-bottom:4px"><b>${esc(genba)}</b> / ${esc(loc||'（対応先名なし）')}${statusBadge}</div>
         <div style="font-size:12px;color:#666;margin-bottom:6px">現在: <b>${esc(jobNo)}</b>（${esc(div)}）${ldName?`　代表: ${esc(ldName)}${ldDiv?`（${esc(ldDiv)}）`:''}`:''}</div>
         <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">
-          <label style="font-size:11px;color:#666;white-space:nowrap;margin:0">事業部:</label>
+          <label style="font-size:11px;color:#666;white-space:nowrap;margin:0">区分:</label>
           <select id="jnfix-div-${idx}" style="flex:1;margin-bottom:0">${divOpts}</select>
-          <button class="btn btn-sm" style="flex-shrink:0;background:#1D9E75;color:#fff" onclick="saveJobNoFix(${idx},this.dataset.genba,this.dataset.loc)" data-genba="${esc(genba)}" data-loc="${esc(loc)}">工番更新</button>
+          <button class="btn btn-sm" style="flex-shrink:0;background:#1D9E75;color:#fff" onclick="saveJobNoFix(${idx},this.dataset.genba,this.dataset.loc)" data-genba="${esc(genba)}" data-loc="${esc(loc)}">管理番号更新</button>
         </div>
         <!-- 💤 売上入力は寝かせ中（2026-06-11 金額はGR管理画面📊経営タブに一本化）。復活時は display:none を外す -->
         <div style="display:none;gap:6px;align-items:center;margin-bottom:6px">
@@ -3467,11 +3469,11 @@ async function openJobNoFix(){
           <label style="font-size:11px;color:#666;white-space:nowrap;margin:0">ステータス:</label>
           <label style="font-size:12px;flex:1;display:flex;align-items:center;gap:6px;cursor:pointer">
             <input type="checkbox" ${completed?'checked':''} onchange="toggleJnfixCompleted(this,this.dataset.genba,this.dataset.loc,${idx})" data-genba="${esc(genba)}" data-loc="${esc(loc)}" style="width:18px;height:18px;margin:0">
-            <span>完了にする（現場名プルダウンから非表示／工番・既存日報は不変）</span>
+            <span>完了にする（対応先名プルダウンから非表示／管理番号・既存業務記録は不変）</span>
           </label>
         </div>
         <div style="display:flex;gap:6px;align-items:center;justify-content:flex-end">
-          <button class="btn btn-sm" style="background:#fff;color:#dc2626;border:1px solid #FCA5A5;font-size:11px;padding:4px 10px" onclick="deleteSiteFromJnfix(this.dataset.genba,this.dataset.loc)" data-genba="${esc(genba)}" data-loc="${esc(loc)}">🗑️ この現場を削除</button>
+          <button class="btn btn-sm" style="background:#fff;color:#dc2626;border:1px solid #FCA5A5;font-size:11px;padding:4px 10px" onclick="deleteSiteFromJnfix(this.dataset.genba,this.dataset.loc)" data-genba="${esc(genba)}" data-loc="${esc(loc)}">🗑️ この対応先を削除</button>
         </div>
       </div>`;
     }).join('');
@@ -3510,7 +3512,7 @@ async function saveSiteRevenue(idx,genba,loc){
 // 工番修正モーダル内の「完了」チェックボックス変更ハンドラ
 async function toggleJnfixCompleted(checkbox,genba,loc,idx){
   const completed=checkbox.checked;
-  const msg=completed?`「${loc||'（現場名なし）'}」を完了にしますか？\n以後、現場名プルダウンに表示されなくなります。\n（工番・売上・既存の日報には影響しません）`:`「${loc||'（現場名なし）'}」を進行中に戻しますか？`;
+  const msg=completed?`「${loc||'（対応先名なし）'}」を完了にしますか？\n以後、対応先名プルダウンに表示されなくなります。\n（管理番号・売上・既存の業務記録には影響しません）`:`「${loc||'（対応先名なし）'}」を進行中に戻しますか？`;
   if(!confirm(msg)){checkbox.checked=!completed;return;}
   try{
     const res=await fetch(GAS_URL,{method:'POST',body:JSON.stringify({action:'update_site_status',genba,loc,completed,updatedBy:getUsername()}),headers:{'Content-Type':'text/plain'}});
@@ -3545,7 +3547,7 @@ async function toggleJnfixCompleted(checkbox,genba,loc,idx){
 
 // 工番修正モーダル内：1 現場を削除（日報参照あれば拒否、売上ありなら警告→force）
 async function deleteSiteFromJnfix(genba,loc){
-  if(!confirm(`「${genba} / ${loc||'（現場名なし）'}」を現場マスタから削除しますか？\n\n日報・アーカイブに参照があると削除できません（マージか完了フラグを使ってください）。\n\nこの操作は取り消せません。`))return;
+  if(!confirm(`「${genba} / ${loc||'（対応先名なし）'}」を対応先マスタから削除しますか？\n\n業務記録・アーカイブに参照があると削除できません（マージか完了フラグを使ってください）。\n\nこの操作は取り消せません。`))return;
   try{
     setLoading(true);
     let res=await fetch(GAS_URL,{method:'POST',body:JSON.stringify({action:'delete_site',genba,loc,updatedBy:getUsername()}),headers:{'Content-Type':'text/plain'}});
@@ -3558,7 +3560,7 @@ async function deleteSiteFromJnfix(genba,loc){
       }else{setLoading(false);return;}
     }
     if(json.status==='ok'){
-      showAlert(`✓ 「${loc||genba}」を削除しました（工番 ${json.oldJobNo||'-'}）`,'ok');
+      showAlert(`✓ 「${loc||genba}」を削除しました（管理番号 ${json.oldJobNo||'-'}）`,'ok');
       await loadData();
       await openJobNoFix(); // モーダルを再読み込み
     }else alert('エラー: '+(json.message||'不明'));
@@ -3570,13 +3572,13 @@ async function saveJobNoFix(idx,genba,loc){
   const sel=document.getElementById('jnfix-div-'+idx);
   if(!sel)return;
   const newDiv=sel.value;
-  if(!confirm(`${genba} / ${loc||'（現場名なし）'} の事業部を ${newDiv} に変更して工番を再発番します。よろしいですか？`))return;
+  if(!confirm(`${genba} / ${loc||'（対応先名なし）'} の区分を ${newDiv} に変更して管理番号を再発番します。よろしいですか？`))return;
   try{
     const res=await fetch(GAS_URL,{method:'POST',body:JSON.stringify({action:'reassign_jobno',genba,loc,newDivision:newDiv}),headers:{'Content-Type':'text/plain'}});
     const json=await res.json();
     if(json.status==='ok'){
       if(json.message){alert(json.message);return;}
-      alert(`更新完了\n旧: ${json.oldJobNo}\n新: ${json.newJobNo}\n日報: ${json.updatedRows}行 / アーカイブ: ${json.archivedUpdated||0}行`);
+      alert(`更新完了\n旧: ${json.oldJobNo}\n新: ${json.newJobNo}\n予定: ${json.updatedRows}行 / アーカイブ: ${json.archivedUpdated||0}行`);
       await loadData();
       await openJobNoFix();
     }else alert('エラー：'+json.message);
@@ -3636,7 +3638,7 @@ function renderSettings(){
       <span style="font-size:15px;flex:1">${esc(s)}</span>
       <div style="display:flex;align-items:center;gap:6px">${divSelect}${rateInput}<button class="btn btn-danger btn-sm" onclick="removeShokunin(${i})">削除</button></div>
     </div>`;
-  }).join('')||'<div style="color:#999;padding:12px;text-align:center">職人が登録されていません</div>';
+  }).join('')||'<div style="color:#999;padding:12px;text-align:center">メンバーが登録されていません</div>';
 }
 async function addShokunin(){
   const v=document.getElementById('new-shokunin').value.trim();if(!v)return;
@@ -3673,7 +3675,7 @@ function renderGenbaSettings(){
     `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #eee">
       <span style="font-size:15px">${esc(g.name)}${!g.company?'<span style="font-size:11px;color:#999;margin-left:6px">（共通）</span>':''}</span>
       <button class="btn btn-danger btn-sm" onclick="removeGenbaMaster(${i})">削除</button>
-    </div>`).join('')||'<div style="color:#999;padding:12px;text-align:center">元請が登録されていません</div>';
+    </div>`).join('')||'<div style="color:#999;padding:12px;text-align:center">取引先が登録されていません</div>';
 }
 async function addGenbaMaster(){
   const v=document.getElementById('new-genba-master').value.trim();if(!v)return;

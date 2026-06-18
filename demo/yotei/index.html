@@ -276,7 +276,7 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
 <div class="notice-bar" id="notice-bar">会社を選択して入力してください</div>
 
 <div id="screen-input" class="screen">
-<div class="page-title">日報入力</div>
+<div class="page-title">業務入力</div>
 <div class="card">
   <label>操作者（あなたの名前）<span style="color:#ff3b30;font-weight:600;margin-left:2px">*</span></label>
   <div class="select-add-wrap">
@@ -287,21 +287,21 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
     <div><label>開始日<span style="color:#ff3b30;font-weight:600;margin-left:2px">*</span></label><input type="date" id="s-date" onchange="refreshVehicleSelect('s')"></div>
     <div><label>終了日（連続入力）</label><input type="date" id="s-date-end" onchange="refreshVehicleSelect('s')"></div>
   </div>
-  <label>作業区分<span style="color:#ff3b30;font-weight:600;margin-left:2px">*</span></label>
+  <label>業務区分<span style="color:#ff3b30;font-weight:600;margin-left:2px">*</span></label>
   <select id="s-work-type" onchange="onWorkTypeChange('s')">
-    <option value="">▼ まず作業区分を選んでください</option>
-    <option value="現場作業">⛑️ 通常対応（工番発行）</option>
-    <option value="現調">📐 現調</option>
-    <option value="着打ち">🔨 着打ち</option>
-    <option value="カギ借用">🗝️ カギ借用</option>
-    <option value="材料引取・検品">📦 材料引取・検品</option>
-    <option value="撤去品返却">♻️ 撤去品返却</option>
-    <option value="前乗り">🚗 前乗り</option>
-    <option value="倉庫作業">🏭 倉庫作業</option>
+    <option value="">▼ まず業務区分を選んでください</option>
+    <option value="現場作業">⛑️ 通常対応</option>
+    <option value="現調">📐 事前確認</option>
+    <option value="着打ち">🔨 開始確認</option>
+    <option value="カギ借用">🗝️ 備品・鍵の受取</option>
+    <option value="材料引取・検品">📦 資材・備品の確認</option>
+    <option value="撤去品返却">♻️ 返却・片付け</option>
+    <option value="前乗り">🚗 前日準備</option>
+    <option value="倉庫作業">🏭 保管場所業務</option>
     <option value="休み">🏖️ 休み</option>
     <option value="その他">📋 その他</option>
   </select>
-  <div id="s-worktype-notice" style="color:#dc2626;font-size:13px;font-weight:600;background:#FEE2E2;border:1px solid #FCA5A5;border-radius:8px;padding:8px 12px;margin-bottom:12px">⚠️ 最初に「作業区分」を選択してください。選択するまで以下の項目は入力できません。</div>
+  <div id="s-worktype-notice" style="color:#dc2626;font-size:13px;font-weight:600;background:#FEE2E2;border:1px solid #FCA5A5;border-radius:8px;padding:8px 12px;margin-bottom:12px">⚠️ 最初に「業務区分」を選択してください。選択するまで以下の項目は入力できません。</div>
   <label>取引先名<span style="color:#ff3b30;font-weight:600;margin-left:2px">*</span></label>
   <div class="select-add-wrap">
     <select id="s-genba-select" onchange="onGenbaSelect('s')"><option value="">選択してください</option><option value="__manual__">直接入力する</option></select>
@@ -324,7 +324,7 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
   </div>
   <div class="jobno-hint" id="s-jobno-hint"></div>
   <div id="s-jobno-div-wrap" style="display:none;margin-bottom:12px">
-    <label style="font-size:12px;color:#666">新規対応先の工番事業部</label>
+    <label style="font-size:12px;color:#666">新規対応先の管理番号区分</label>
     <select id="s-jobno-division" onchange="this.dataset.userSet='1'">
       <option value="ICT">ICT</option>
       <option value="INF">INF</option>
@@ -336,11 +336,11 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
     <div><label>出勤</label><input type="time" id="s-start" value="08:00"></div>
     <div><label>退勤</label><input type="time" id="s-end" value="17:00"></div>
   </div>
-  <div class="toggle-row toggle-souko" id="s-souko-toggle" onclick="setMode('s','souko')"><span class="t-icon">🏭</span><span class="t-label">倉庫</span></div>
+  <div class="toggle-row toggle-souko" id="s-souko-toggle" onclick="setMode('s','souko')"><span class="t-icon">🏭</span><span class="t-label">保管場所</span></div>
   <div id="s-souko-tasks-wrap" style="display:none;background:#FFF7ED;border:2px solid #FED7AA;border-radius:10px;padding:12px;margin-bottom:10px">
-    <div style="font-size:14px;font-weight:700;color:#9A3412;margin-bottom:10px">🏭 今日の倉庫作業<span style="color:#dc2626;margin-left:6px">*</span><span style="font-size:11px;font-weight:400;color:#9A3412;margin-left:6px">(複数選択可・1つ以上必須)</span></div>
+    <div style="font-size:14px;font-weight:700;color:#9A3412;margin-bottom:10px">🏭 今日の保管場所業務<span style="color:#dc2626;margin-left:6px">*</span><span style="font-size:11px;font-weight:400;color:#9A3412;margin-left:6px">(複数選択可・1つ以上必須)</span></div>
     <div id="s-souko-tasks" style="display:flex;flex-wrap:wrap;gap:8px"></div>
-    <div id="s-souko-tasks-error" style="display:none;color:#dc2626;font-size:12px;margin-top:8px;font-weight:600">⚠️ 倉庫作業を1つ以上タップして選んでください</div>
+    <div id="s-souko-tasks-error" style="display:none;color:#dc2626;font-size:12px;margin-top:8px;font-weight:600">⚠️ 保管場所業務を1つ以上タップして選んでください</div>
   </div>
   <div class="toggle-row toggle-yakin" id="s-yakin-toggle" onclick="setMode('s','yakin')"><span class="t-icon">🌙</span><span class="t-label">夜勤</span></div>
   <div class="toggle-row toggle-yasumi" id="s-yasumi-toggle" onclick="setMode('s','yasumi')"><span class="t-icon">🏖️</span><span class="t-label">休み</span></div>
@@ -354,7 +354,7 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
   </div>
   <div class="member-section"><div class="member-label">同行メンバー（タップで選択）</div><div id="member-selector" class="member-grid"></div></div>
   <label>メモ <span style="font-size:11px;color:#999;font-weight:400">🎤 キーボードのマイクで音声入力できます</span></label>
-  <textarea id="s-memo" placeholder="作業内容など"></textarea>
+  <textarea id="s-memo" placeholder="内容など"></textarea>
   <label>カレンダーの色</label>
   <div id="s-color-picker" class="color-picker-wrap"></div>
   <div id="s-alert" class="alert"></div>
@@ -420,7 +420,7 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
       <span><span style="display:inline-block;width:10px;height:10px;background:#EAF3DE;border:1px solid #97C459;border-radius:2px;margin-right:3px"></span>空き</span>
       <span><span style="display:inline-block;width:10px;height:10px;background:#FAECE7;border:1px solid #F0997B;border-radius:2px;margin-right:3px"></span>出勤</span>
       <span><span style="display:inline-block;width:10px;height:10px;background:#FFF9E6;border:1px solid #F0D860;border-radius:2px;margin-right:3px"></span>休み</span>
-      <span><span style="display:inline-block;width:10px;height:10px;background:#F3EAE0;border:1px solid #C49A6C;border-radius:2px;margin-right:3px"></span>倉庫</span>
+      <span><span style="display:inline-block;width:10px;height:10px;background:#F3EAE0;border:1px solid #C49A6C;border-radius:2px;margin-right:3px"></span>保管場所</span>
     </div>
   </div>
 </div>
@@ -519,7 +519,7 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
 <div class="card" style="margin-top:8px">
   <div style="font-size:13px;color:#666;margin-bottom:10px;font-weight:500">CSVダウンロード</div>
   <select id="csv-sheet" style="margin-bottom:8px">
-    <option value="日報データ">日報データ</option><option value="アーカイブ">アーカイブ</option>
+    <option value="日報データ">業務データ</option><option value="アーカイブ">業務記録・アーカイブ</option>
     <option value="月別集計">月別集計</option><option value="会社別集計">会社別集計</option>
     <option value="元請マスタ">取引先マスタ</option>
     <option value="現場マスタ">対応先マスタ</option>
@@ -537,7 +537,7 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
 </div>
 <div class="archive-section" style="background:#E8F4FD;border-color:#85B7EB">
   <div class="archive-title" style="color:#0C447C">📊 スプレッドシート集計</div>
-  <div class="archive-desc" style="color:#0C447C">会社別・月別の出勤日数・人工をスプレッドシートに自動集計します。毎朝6時にも自動更新されます。</div>
+  <div class="archive-desc" style="color:#0C447C">会社別・月別の出勤日数・工数をスプレッドシートに自動集計します。毎朝6時にも自動更新されます。</div>
   <button class="btn btn-secondary btn-sm" id="summary-btn" onclick="runSummary()">集計を更新</button>
 </div>
 <div class="archive-section">
@@ -579,23 +579,23 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
 <div id="edit-modal" class="modal-bg">
 <div class="modal">
   <div class="modal-title" id="edit-title">編集</div>
-  <label>作業区分<span style="color:#ff3b30;font-weight:600;margin-left:2px">*</span></label>
+  <label>業務区分<span style="color:#ff3b30;font-weight:600;margin-left:2px">*</span></label>
   <select id="e-work-type" onchange="onWorkTypeChange('e')">
-    <option value="">▼ まず作業区分を選んでください</option>
-    <option value="現場作業">⛑️ 通常対応（工番発行）</option>
-    <option value="現調">📐 現調</option>
-    <option value="着打ち">🔨 着打ち</option>
-    <option value="カギ借用">🗝️ カギ借用</option>
-    <option value="材料引取・検品">📦 材料引取・検品</option>
-    <option value="撤去品返却">♻️ 撤去品返却</option>
-    <option value="前乗り">🚗 前乗り</option>
-    <option value="倉庫作業">🏭 倉庫作業</option>
+    <option value="">▼ まず業務区分を選んでください</option>
+    <option value="現場作業">⛑️ 通常対応</option>
+    <option value="現調">📐 事前確認</option>
+    <option value="着打ち">🔨 開始確認</option>
+    <option value="カギ借用">🗝️ 備品・鍵の受取</option>
+    <option value="材料引取・検品">📦 資材・備品の確認</option>
+    <option value="撤去品返却">♻️ 返却・片付け</option>
+    <option value="前乗り">🚗 前日準備</option>
+    <option value="倉庫作業">🏭 保管場所業務</option>
     <option value="休み">🏖️ 休み</option>
     <option value="その他">📋 その他</option>
   </select>
-  <div id="e-worktype-notice" style="display:none;color:#dc2626;font-size:13px;font-weight:600;background:#FEE2E2;border:1px solid #FCA5A5;border-radius:8px;padding:8px 12px;margin-bottom:12px">⚠️ 最初に「作業区分」を選択してください。選択するまで以下の項目は編集できません。</div>
+  <div id="e-worktype-notice" style="display:none;color:#dc2626;font-size:13px;font-weight:600;background:#FEE2E2;border:1px solid #FCA5A5;border-radius:8px;padding:8px 12px;margin-bottom:12px">⚠️ 最初に「業務区分」を選択してください。選択するまで以下の項目は編集できません。</div>
   <div id="e-date-wrap">
-    <label>作業日<span style="color:#ff3b30;font-weight:600;margin-left:2px">*</span></label>
+    <label>日付<span style="color:#ff3b30;font-weight:600;margin-left:2px">*</span></label>
     <input type="date" id="e-date" onchange="onEditDateChange()">
   </div>
   <label>取引先名</label>
@@ -619,11 +619,11 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
     <div><label>出勤</label><input type="time" id="e-start"></div>
     <div><label>退勤</label><input type="time" id="e-end"></div>
   </div>
-  <div class="toggle-row toggle-souko" id="e-souko-toggle" onclick="setMode('e','souko')"><span class="t-icon">🏭</span><span class="t-label">倉庫</span></div>
+  <div class="toggle-row toggle-souko" id="e-souko-toggle" onclick="setMode('e','souko')"><span class="t-icon">🏭</span><span class="t-label">保管場所</span></div>
   <div id="e-souko-tasks-wrap" style="display:none;background:#FFF7ED;border:2px solid #FED7AA;border-radius:10px;padding:12px;margin-bottom:10px">
-    <div style="font-size:14px;font-weight:700;color:#9A3412;margin-bottom:10px">🏭 今日の倉庫作業<span style="color:#dc2626;margin-left:6px">*</span><span style="font-size:11px;font-weight:400;color:#9A3412;margin-left:6px">(複数選択可・1つ以上必須)</span></div>
+    <div style="font-size:14px;font-weight:700;color:#9A3412;margin-bottom:10px">🏭 今日の保管場所業務<span style="color:#dc2626;margin-left:6px">*</span><span style="font-size:11px;font-weight:400;color:#9A3412;margin-left:6px">(複数選択可・1つ以上必須)</span></div>
     <div id="e-souko-tasks" style="display:flex;flex-wrap:wrap;gap:8px"></div>
-    <div id="e-souko-tasks-error" style="display:none;color:#dc2626;font-size:12px;margin-top:8px;font-weight:600">⚠️ 倉庫作業を1つ以上タップして選んでください</div>
+    <div id="e-souko-tasks-error" style="display:none;color:#dc2626;font-size:12px;margin-top:8px;font-weight:600">⚠️ 保管場所業務を1つ以上タップして選んでください</div>
   </div>
   <div class="toggle-row toggle-yakin" id="e-yakin-toggle" onclick="setMode('e','yakin')"><span class="t-icon">🌙</span><span class="t-label">夜勤</span></div>
   <div class="toggle-row toggle-yasumi" id="e-yasumi-toggle" onclick="setMode('e','yasumi')"><span class="t-icon">🏖️</span><span class="t-label">休み</span></div>
@@ -666,43 +666,43 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
   <div class="modal-title">❓ 使い方ガイド</div>
 
   <div class="help-section">
-    <h3>📝 日報入力の流れ</h3>
+    <h3>📝 業務入力の流れ</h3>
     <ol>
       <li><b>操作者</b>（自分の名前）を選択 ※初回のみ、以降は記憶</li>
-      <li><b>作業日</b>を選ぶ（連続する複数日は終了日も指定）</li>
-      <li><b>作業区分</b>を選ぶ ⚠️ <b>必須・最初に選ぶ</b>（選ぶまで以下の項目が入力できません）</li>
+      <li><b>日付</b>を選ぶ（連続する複数日は終了日も指定）</li>
+      <li><b>業務区分</b>を選ぶ ⚠️ <b>必須・最初に選ぶ</b>（選ぶまで以下の項目が入力できません）</li>
       <li><b>取引先名</b>をプルダウンから選択（なければ ➕ で追加）</li>
       <li><b>対応先名</b>をプルダウンから選ぶ／🔍検索ボックスで絞り込み（最近使った順で並ぶ）。新規は「＋ 新規対応先として追加」</li>
-      <li><b>🚗 車両</b>（任意・工番発行会社のみ・複数選択可）— 同日に他予定で予約済みは選択不可。2 台で行く時は両方の chip を ON</li>
+      <li><b>🚗 車両</b>（任意・管理番号発行会社のみ・複数選択可）— 同日に他予定で予約済みは選択不可。2 台で行く時は両方の chip を ON</li>
       <li><b>代表者</b>を選ぶ（その日の拠点責任者）</li>
       <li><b>同行者</b>（代表以外のメンバー）を選ぶ</li>
       <li><b>出勤/退勤時間</b>と<b>メモ</b>を入力</li>
-      <li>必要なら 🏭倉庫 / 🌙夜勤 / 🏖️休み / 📌予定 を選択</li>
+      <li>必要なら 🏭保管場所 / 🌙夜勤 / 🏖️休み / 📌予定 を選択</li>
       <li><b>登録する</b>ボタンで送信</li>
     </ol>
     <p style="margin-top:6px;color:#1D9E75;font-weight:600">💡 工数は<b>1日=1.0で固定</b>（休み=0、それ以外=1.0）。1日に複数対応先に行ったら自動で<b>1/Nに按分</b>されます。</p>
   </div>
 
   <div class="help-section">
-    <h3>⚠️ 作業区分ゲート <span style="color:#1D9E75;font-size:12px">🆕</span></h3>
-    <p>画面上部に赤い警告バーが出ます: 「最初に『作業区分』を選択してください」。</p>
+    <h3>⚠️ 業務区分ゲート <span style="color:#1D9E75;font-size:12px">🆕</span></h3>
+    <p>画面上部に赤い警告バーが出ます: 「最初に『業務区分』を選択してください」。</p>
     <ul>
-      <li>作業区分を選ぶまで、対応先名・メンバー・時刻・モードなど<b>下の入力欄はすべてロック</b></li>
-      <li>これは <b>対応先名の統一</b> と <b>工番の正しい発番</b> を強制するためのガード</li>
+      <li>業務区分を選ぶまで、対応先名・メンバー・時刻・モードなど<b>下の入力欄はすべてロック</b></li>
+      <li>これは <b>対応先名の統一</b> と <b>管理番号の正しい発番</b> を強制するためのガード</li>
       <li>編集モーダルでも同様の動作</li>
     </ul>
-    <p style="margin-top:6px"><b>作業区分の種類</b>:</p>
+    <p style="margin-top:6px"><b>業務区分の種類</b>:</p>
     <ul style="font-size:13px">
-      <li><b>通常対応</b>: 通常の業務稼働 → 工番発行会社なら<b>工番が発行</b>される</li>
-      <li><b>現調</b>: 現地調査 — 工番なし</li>
-      <li><b>着打ち</b>: 着工前の打合せ — 工番なし</li>
-      <li><b>カギ借用</b>: カギの貸借や立会のみ — 工番なし</li>
-      <li><b>材料引取・検品</b>: 材料・道具の搬出入＋検品 — 工番なし</li>
-      <li><b>撤去品返却</b>: 撤去物の返却作業 — 工番なし</li>
-      <li><b>前乗り</b>: 前日の移動・宿泊など実作業前の前乗り — 工番なし</li>
-      <li><b>🏭 倉庫作業</b>: 選ぶと自動的に倉庫モード ON、倉庫タスクが選べる — 工番なし</li>
-      <li><b>🏖️ 休み</b>: 選ぶと自動的に休みモード ON、他項目は不要 — 工番なし</li>
-      <li><b>その他</b>: 上記以外 — 工番なし</li>
+      <li><b>通常対応</b>: 通常の業務稼働 → 管理番号発行会社なら<b>管理番号が発行</b>される</li>
+      <li><b>事前確認</b>: 事前の現地確認・下見 — 管理番号なし</li>
+      <li><b>開始確認</b>: 開始前の打合せ — 管理番号なし</li>
+      <li><b>備品・鍵の受取</b>: 鍵・備品の受け渡しや立会のみ — 管理番号なし</li>
+      <li><b>資材・備品の確認</b>: 資材・備品の受け渡し＋確認 — 管理番号なし</li>
+      <li><b>返却・片付け</b>: 物品の返却・片付け対応 — 管理番号なし</li>
+      <li><b>前日準備</b>: 前日の移動・準備など — 管理番号なし</li>
+      <li><b>🏭 保管場所業務</b>: 選ぶと自動的に保管場所モード ON、タスクが選べる — 管理番号なし</li>
+      <li><b>🏖️ 休み</b>: 選ぶと自動的に休みモード ON、他項目は不要 — 管理番号なし</li>
+      <li><b>その他</b>: 上記以外 — 管理番号なし</li>
     </ul>
     <p style="font-size:12px;color:#666">集計（工数合計）は全区分を合算。カレンダーでは通常対応以外が黄色いタグで表示されます。</p>
   </div>
@@ -710,50 +710,50 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
   <div class="help-section">
     <h3>🏷 モードの使い分け</h3>
     <ul>
-      <li><b>🏭倉庫</b>: 倉庫作業（工番なし、工数1.0は出勤としてカウント）</li>
+      <li><b>🏭保管場所</b>: 保管場所業務（管理番号なし、工数1.0は出勤としてカウント）</li>
       <li><b>🌙夜勤</b>: 夜勤（昼勤と独立カウント。詳細は次セクション）</li>
       <li><b>🏖️休み</b>: 休暇・欠勤（工数は0）</li>
-      <li><b>📌予定</b>: 未確定の予定（集計・工番から除外）</li>
+      <li><b>📌予定</b>: 未確定の予定（集計・管理番号から除外）</li>
     </ul>
-    <p style="margin-top:8px;color:#1D9E75;font-weight:600">🆕 休み・倉庫モード時の挙動</p>
+    <p style="margin-top:8px;color:#1D9E75;font-weight:600">🆕 休み・保管場所モード時の挙動</p>
     <ul style="font-size:13px">
-      <li>🏖️休み / 🏭倉庫 をONにすると <b>取引先・対応先・時間・メモ等の入力欄が自動で無効化</b>されます</li>
+      <li>🏖️休み / 🏭保管場所 をONにすると <b>取引先・対応先・時間・メモ等の入力欄が自動で無効化</b>されます</li>
       <li>入力した後にON にすると<b>入力済みの値は自動でクリア</b>されます（操作者・日付・代表者・同行メンバーは残ります）</li>
       <li>取引先名は<b>入力不要</b>になります</li>
       <li>もう一度同じトグルを押すと解除され、入力欄が再び有効化されます</li>
     </ul>
-    <p style="margin-top:8px;color:#9A3412;font-weight:600">🆕 🏭倉庫モード時の作業内容選択</p>
+    <p style="margin-top:8px;color:#9A3412;font-weight:600">🆕 🏭保管場所モード時の業務内容選択</p>
     <ul style="font-size:13px">
-      <li>🏭倉庫 をONにすると <b>「今日の倉庫作業」セクション</b>が出現します</li>
+      <li>🏭保管場所 をONにすると <b>「今日の保管場所業務」セクション</b>が出現します</li>
       <li>選択肢: <b>🧹清掃 / 📦備品管理 / 🔧工具メンテナンス / 🚚入荷対応 / 📤出荷準備 / ♻️廃材処理</b></li>
-      <li>該当する作業を <b>1 つ以上タップ</b>して選択（複数選択可）</li>
-      <li>選んだ作業はカレンダーに「🏭 清掃、備品管理」のように表示されます</li>
-      <li>誰が何の倉庫作業をしているか後から振り返れます</li>
+      <li>該当する業務を <b>1 つ以上タップ</b>して選択（複数選択可）</li>
+      <li>選んだ業務はカレンダーに「🏭 清掃、備品管理」のように表示されます</li>
+      <li>誰が何の保管場所業務をしているか後から振り返れます</li>
     </ul>
-    <p style="margin-top:8px;color:#1D9E75;font-weight:600">🆕 工番が発行されないモード</p>
+    <p style="margin-top:8px;color:#1D9E75;font-weight:600">🆕 管理番号が発行されないモード</p>
     <ul style="font-size:13px">
-      <li>🏖️休み / 🏭倉庫 / 📌予定 のいずれかがONの場合は工番が発行されません</li>
-      <li>🌙夜勤は通常通り工番発行対象です</li>
+      <li>🏖️休み / 🏭保管場所 / 📌予定 のいずれかがONの場合は管理番号が発行されません</li>
+      <li>🌙夜勤は通常通り管理番号発行対象です</li>
     </ul>
     <p style="margin-top:8px;color:#1D9E75;font-weight:600">🆕 カレンダー表示</p>
     <ul style="font-size:13px">
-      <li>取引先名なしの休み・倉庫はカレンダーに<b>「🏖️ 休み」「🏭 倉庫」</b>と表示されます</li>
+      <li>取引先名なしの休み・保管場所はカレンダーに<b>「🏖️ 休み」「🏭 保管場所」</b>と表示されます</li>
       <li>取引先名ありの場合は<b>「🏖️ 〇〇商事」「🏭 〇〇商事」</b>のように先頭にアイコンが付きます</li>
     </ul>
   </div>
 
   <div class="help-section">
     <h3>🌙 夜勤モードの使い方</h3>
-    <p>夜から翌朝にかけての作業はこのモードでON。</p>
+    <p>夜から翌朝にかけての業務はこのモードでON。</p>
     <ol>
-      <li><b>作業日</b>: 作業を<b>始める日</b>を選ぶ（翌朝5時に終わる場合は前日）</li>
+      <li><b>日付</b>: 業務を<b>始める日</b>を選ぶ（翌朝5時に終わる場合は前日）</li>
       <li><b>🌙夜勤モード</b> をON</li>
       <li><b>出勤・退勤時間</b>: 実際の時刻をそのまま入力（例 22:00 〜 05:00）</li>
     </ol>
     <p style="color:#1D9E75">✓ 退勤＜出勤エラーは夜勤モード時は<b>免除</b>されます</p>
     <p style="color:#1D9E75">✓ 翌日のカレンダー・空き確認にも自動で「⏰前日から」表示（集計には影響なし）</p>
     <p style="color:#1D9E75">✓ 同日に昼勤+夜勤を別登録すると合計2工数（独立カウント）</p>
-    <p style="color:#c00;font-size:12px;margin-top:6px">❌ よくあるミス: 作業日を翌日にしてしまう / 夜勤モードOFFのまま22:00→05:00入力 / 9-18のまま登録</p>
+    <p style="color:#c00;font-size:12px;margin-top:6px">❌ よくあるミス: 日付を翌日にしてしまう / 夜勤モードOFFのまま22:00→05:00入力 / 9-18のまま登録</p>
   </div>
 
   <div class="help-section">
@@ -777,7 +777,7 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
       <li>連続入力（複数日）の場合は、その期間中いずれかの日で予約済みなら選択不可</li>
       <li>編集モーダルでも同じ動作（自分自身のグループは除外して判定）</li>
       <li>複数選んだ場合、シート・詳細・共有テキストには「メビウス、ヤリス」のようにカンマ区切りで保存</li>
-      <li>🏖️休み / 🏭倉庫 をONにすると車両セレクタも自動でロック＆クリア</li>
+      <li>🏖️休み / 🏭保管場所 をONにすると車両セレクタも自動でロック＆クリア</li>
     </ul>
     <p style="color:#1D9E75;font-size:12px;margin-top:6px">登録できる車両: ダブルキャブ / ユニック / 高所作業車 / ハイエース（白・シルバー・白2）/ タウンエース / ProBox / ジムニー / クリッパー（シルバー）</p>
   </div>
@@ -796,13 +796,13 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
   </div>
 
   <div class="help-section">
-    <h3>🔢 工番事業部セレクタ（工番発行会社のみ）</h3>
-    <p>新規対応先を「通常対応」で入力すると「新規対応先の工番事業部」セレクタが表示されます。</p>
+    <h3>🔢 管理番号区分セレクタ（管理番号発行会社のみ）</h3>
+    <p>新規対応先を「通常対応」で入力すると「新規対応先の管理番号区分」セレクタが表示されます。</p>
     <ul>
       <li>デフォルトは<b>代表者の事業部</b></li>
       <li>初日だけ他事業部の人が代表する場合は手動で変更OK</li>
-      <li>選んだ事業部が工番の頭文字になります（例: ICT-26-001）</li>
-      <li><b>工番が発行されないケース</b>: 作業区分が「通常対応」以外 / 🏭倉庫 / 🏖️休み / 📌予定</li>
+      <li>選んだ区分が管理番号の頭文字になります（例: ICT-26-001）</li>
+      <li><b>管理番号が発行されないケース</b>: 業務区分が「通常対応」以外 / 🏭保管場所 / 🏖️休み / 📌予定</li>
     </ul>
   </div>
 
@@ -829,7 +829,7 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
     <h3>📖 予定詳細フルスクリーン画面</h3>
     <p>日別モーダルでカードをタップで開きます。</p>
     <ul>
-      <li>表示項目: 対応先名/期間/モードバッジ/作業区分/メンバー/工数/会社/工番/メモ/最終更新者</li>
+      <li>表示項目: 対応先名/期間/モードバッジ/業務区分/メンバー/工数/会社/管理番号/メモ/最終更新者</li>
       <li>メモ内のURL（http(s)://）はタップ可能なリンクに自動変換</li>
       <li>左上「←」または<b>右スワイプ</b>で戻る</li>
       <li><b>左スワイプ</b>で同じ日の次の予定にループ</li>
@@ -850,11 +850,11 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
 
   <div class="help-section">
     <h3>👥 空き確認タブ</h3>
-    <p>指定週の全メンバーの空き状況を一覧表示。休み・倉庫は色分け表示。左右スワイプで前週/次週切替。</p>
+    <p>指定週の全メンバーの空き状況を一覧表示。休み・保管場所は色分け表示。左右スワイプで前週/次週切替。</p>
   </div>
 
   <div class="help-section">
-    <h3>🚗 車確認タブ（工番発行会社のみ） <span style="color:#1D9E75;font-size:12px">🆕</span></h3>
+    <h3>🚗 車確認タブ（管理番号発行会社のみ） <span style="color:#1D9E75;font-size:12px">🆕</span></h3>
     <p>週次の <b>車両×日付マトリクス</b> で予約状況を一目で確認できます。</p>
     <ul>
       <li>空きは「○」、使用中は<b>代表者名と行先</b>が表示される</li>
@@ -878,7 +878,7 @@ textarea{resize:vertical;min-height:64px;font-size:15px}
     <h3>🆘 困ったら</h3>
     <ul>
       <li><b>入力が反映されない</b> → 「現在他の人が更新中」が出ていたら数秒待って再送信</li>
-      <li><b>間違えた日報を消したい</b> → 該当日タップ → 予定カードタップ → 詳細画面右上 🗑️</li>
+      <li><b>間違えた予定を消したい</b> → 該当日タップ → 予定カードタップ → 詳細画面右上 🗑️</li>
       <li><b>予定を実績に変更</b> → 編集画面で 📌予定 を解除して保存</li>
       <li><b>会社が違って表示される</b> → 「会社を選択してください」モーダルで自分の会社をタップ</li>
       <li><b>夜勤予定が翌日にも出る</b> → 仕様通り。集計は元の日にだけ計上されます</li>
@@ -960,6 +960,8 @@ window.fetch=async function(url,opts){
 /* ===== この会社の設定（開通時にここだけ変える）===== */
 const COMPANIES = (window.APP_CONFIG&&APP_CONFIG.COMPANIES&&APP_CONFIG.COMPANIES.length)?APP_CONFIG.COMPANIES:[];  // 値は config.js（COMPANIES）に集約
 const PRIMARY_COMPANY = '';            // 工番を発行する会社名。無ければ '' （工番・車両機能オフ）
+const WT_DISP={'現場作業':'通常対応','現調':'事前確認','着打ち':'開始確認','カギ借用':'備品・鍵の受取','材料引取・検品':'資材・備品の確認','材料引き取り':'資材・備品の確認','撤去品返却':'返却・片付け','前乗り':'前日準備','倉庫作業':'保管場所業務'};
+function wtDisp(v){return WT_DISP[v]||v;}  // 表示用ラベル（値・保存・集計は元のまま）
 /* ================================================= */
 const MODES=['souko','yakin','yasumi','yotei'];
 const VEHICLES=[
@@ -1666,7 +1668,7 @@ function populateLocationSelect(p){
   locs.forEach(l=>{
     html+=`<option value="${esc(l)}"${l===currentVal?' selected':''}>${esc(l)}</option>`;
   });
-  html+='<option value="__new__" style="color:#1D9E75;font-weight:600">＋ 新規現場として追加</option>';
+  html+='<option value="__new__" style="color:#1D9E75;font-weight:600">＋ 新規対応先として追加</option>';
   sel.innerHTML=html;
   // 現在値がリストにない場合 → 新規入力モード扱い
   const input=document.getElementById(p+'-location');
@@ -1738,7 +1740,7 @@ function showSimilarSuggest(p){
     }
   });
   if(matches.length===0){sim.style.display='none';sim.innerHTML='';return;}
-  let html='<div style="font-weight:600;margin-bottom:4px">⚠️ 似ている既存の現場があります。同じ現場ならタップして選んでください:</div>';
+  let html='<div style="font-weight:600;margin-bottom:4px">⚠️ 似ている既存の対応先があります。同じ対応先ならタップして選んでください:</div>';
   matches.slice(0,5).forEach(m=>{
     html+=`<button type="button" onclick="pickSimilarLoc('${p}','${esc(m).replace(/'/g,"&apos;")}')" style="display:block;width:100%;text-align:left;background:#fff;border:1px solid #FCD34D;border-radius:6px;padding:6px 10px;margin-top:4px;cursor:pointer;font-size:13px">📌 ${esc(m)}</button>`;
   });
@@ -1766,7 +1768,7 @@ function checkLocationJobNo(){
   if(loc&&genba){
     const match=allNippos.find(n=>n.genba===genba&&n.loc===loc&&n.jobNo);
     if(match){
-      hint.textContent='既存の工番 '+match.jobNo+' を使用します';
+      hint.textContent='既存の管理番号 '+match.jobNo+' を使用します';
       hint.style.display='block';
       if(divWrap)divWrap.style.display='none';
     }else{
@@ -1844,13 +1846,13 @@ async function submitNippo(){
   if(!dateStart){showAlert('開始日は必須です','err');return;}
   if(dateEnd&&dateEnd<dateStart){showAlert('終了日が開始日より前です。日付を確認してください','err');return;}
   const _wtVal=(document.getElementById('s-work-type')||{}).value||'';
-  if(!_wtVal){showAlert('作業区分を選択してください','err');return;}
-  if(!yasumi && !souko && !genba){showAlert('元請名は必須です（休み・倉庫モード時は不要）','err');return;}
+  if(!_wtVal){showAlert('業務区分を選択してください','err');return;}
+  if(!yasumi && !souko && !genba){showAlert('取引先名は必須です（休み・保管場所モード時は不要）','err');return;}
   // 倉庫モードのとき、倉庫作業タスクが1つ以上選ばれているか（メモ欄に格納）
   if(souko){
     const tasks=parseSoukoTasks(memo);
     if(tasks.length===0){
-      showAlert('倉庫作業を1つ以上選んでください','err');
+      showAlert('保管場所業務を1つ以上選んでください','err');
       const err=document.getElementById('s-souko-tasks-error');
       if(err)err.style.display='';
       return;
@@ -2143,13 +2145,13 @@ function renderCalendar(){
       // タスク格納先は メモ欄が現行仕様。旧データで loc に入っているケースは loc にフォールバック
       let label;
       if(g.yasumi)label='🏖️ 休み';
-      else if(g.souko){const t=g.memo||g.loc||'';label=t?`🏭 ${t}`:'🏭 倉庫';}
+      else if(g.souko){const t=g.memo||g.loc||'';label=t?`🏭 ${t}`:'🏭 保管場所';}
       else{
         label=g.loc||g.genba;
         if(!label){
           if(g.yotei)label='📌 予定';
           else if(g.yakin)label='🌙 夜勤';
-          else label='（現場名なし）';
+          else label='（対応先名なし）';
         }
       }
       eventsHtml+=`<div class="cal-event" style="background:${bg}">${esc(label)}</div>`;
@@ -2185,7 +2187,7 @@ function openCalDay(dateStr){
       // 休み/倉庫は元請名を表示せず「休み」「倉庫」で統一
       let titleText;
       if(g.yasumi)titleText='休み';
-      else if(g.souko)titleText='倉庫';
+      else if(g.souko)titleText='保管場所';
       else{
         titleText=esc(g.genba)+(g.loc?'　'+esc(g.loc):'');
         if(!titleText){
@@ -2198,7 +2200,7 @@ function openCalDay(dateStr){
       const wt=g.workType||'現場作業';
       const wtEmoji=wtMap[wt]||'🏷️';
       const wtCls=wt==='現場作業'?'worktype-chip worktype-default':'worktype-chip';
-      const wtChip=(g.yasumi||g.souko||g.yotei)?'':`<span class="${wtCls}">${wtEmoji} ${esc(wt)}</span>`;
+      const wtChip=(g.yasumi||g.souko||g.yotei)?'':`<span class="${wtCls}">${wtEmoji} ${esc(wtDisp(wt))}</span>`;
       const vehicleLine=g.vehicle?`<div class="yotei-vehicle">🚗 ${esc(g.vehicle)}</div>`:'';
       return`<div class="yotei-card yotei-card-min${g.isGhost?' yotei-card-ghost':''}" style="border-left:4px solid ${esc(color)}" onclick="openEventDetail(${idx})">
         <div class="yotei-card-title">${titleLine}${wtChip}</div>
@@ -2253,7 +2255,7 @@ function renderEventDetail(){
   const memberLine=(leader?`<b>${esc(leader.name)}</b>（代表）`:'')+(fellows.length>0?(leader?'<br>':'')+fellows.map(m=>esc(m.name)).join('　'):'');
   const totalKo=(g.kosu*g.members.length).toFixed(1);
   const badges=[];
-  if(g.souko)badges.push('🏭 倉庫');
+  if(g.souko)badges.push('🏭 保管場所');
   if(g.yakin)badges.push('🌙 夜勤');
   if(g.yasumi)badges.push('🏖️ 休み');
   if(g.yotei)badges.push('📌 予定');
@@ -2262,7 +2264,7 @@ function renderEventDetail(){
   // タスク格納先は メモ欄が現行仕様。旧データで loc に入っているケースは loc にフォールバック
   let detailTitle;
   if(g.yasumi)detailTitle='🏖️ 休み';
-  else if(g.souko){const t=g.memo||g.loc||'';detailTitle=t?`🏭 ${esc(t)}`:'🏭 倉庫';}
+  else if(g.souko){const t=g.memo||g.loc||'';detailTitle=t?`🏭 ${esc(t)}`:'🏭 保管場所';}
   else{
     detailTitle=esc(g.genba);
     if(!detailTitle){
@@ -2281,13 +2283,13 @@ function renderEventDetail(){
     </div>
     <div class="detail-period">${dateStr}　${esc(g.start||'')}〜${esc(g.end||'')}</div>
     ${badges.length?`<div style="padding:0 0 8px 18px">${badges.map(b=>`<span style="display:inline-block;padding:3px 10px;border-radius:12px;font-size:12px;background:#f2f2f7;margin-right:6px">${b}</span>`).join('')}</div>`:''}
-    ${g.loc&&!g.souko?`<div class="detail-row"><div class="detail-row-icon">📍</div><div class="detail-row-content"><div class="detail-row-label">現場名</div>${esc(g.loc)}</div></div>`:''}
-    <div class="detail-row"><div class="detail-row-icon">🏷️</div><div class="detail-row-content"><div class="detail-row-label">作業区分</div>${esc(wt)}</div></div>
+    ${g.loc&&!g.souko?`<div class="detail-row"><div class="detail-row-icon">📍</div><div class="detail-row-content"><div class="detail-row-label">対応先名</div>${esc(g.loc)}</div></div>`:''}
+    <div class="detail-row"><div class="detail-row-icon">🏷️</div><div class="detail-row-content"><div class="detail-row-label">業務区分</div>${esc(wtDisp(wt))}</div></div>
     <div class="detail-row"><div class="detail-row-icon">👥</div><div class="detail-row-content"><div class="detail-row-label">メンバー（${g.members.length}人）</div>${memberLine||'—'}</div></div>
-    ${(g.yasumi||g.yotei)?'':`<div class="detail-row"><div class="detail-row-icon">🔢</div><div class="detail-row-content"><div class="detail-row-label">人工</div>${totalKo}</div></div>`}
+    ${(g.yasumi||g.yotei)?'':`<div class="detail-row"><div class="detail-row-icon">🔢</div><div class="detail-row-content"><div class="detail-row-label">工数</div>${totalKo}</div></div>`}
     ${g.company?`<div class="detail-row"><div class="detail-row-icon">🏢</div><div class="detail-row-content"><div class="detail-row-label">会社</div>${esc(g.company)}</div></div>`:''}
     ${g.vehicle?`<div class="detail-row"><div class="detail-row-icon">🚗</div><div class="detail-row-content"><div class="detail-row-label">車両</div>${esc(g.vehicle)}</div></div>`:''}
-    ${displayJobNo?`<div class="detail-row"><div class="detail-row-icon">🔖</div><div class="detail-row-content"><div class="detail-row-label">工番</div>${esc(displayJobNo)}${masterJobNo&&!g.jobNo?` <span style="color:#888;font-size:11px;margin-left:6px">（現場マスタ参照）</span>`:''}</div></div>`:''}
+    ${displayJobNo?`<div class="detail-row"><div class="detail-row-icon">🔖</div><div class="detail-row-content"><div class="detail-row-label">管理番号</div>${esc(displayJobNo)}${masterJobNo&&!g.jobNo?` <span style="color:#888;font-size:11px;margin-left:6px">（対応先マスタ参照）</span>`:''}</div></div>`:''}
     ${g.memo&&!g.souko?`<div class="detail-row"><div class="detail-row-icon">📝</div><div class="detail-row-content"><div class="detail-row-label">メモ</div>${linkify(esc(g.memo).replace(/\n/g,'<br>'))}</div></div>`:''}
     ${g.updatedBy||g.timestamp?`<div class="detail-row"><div class="detail-row-icon">🔄</div><div class="detail-row-content"><div class="detail-row-label">最終更新</div>${esc(g.updatedBy||'')}${g.timestamp?` <span style="color:#666;font-size:12px;margin-left:6px">${esc(formatTimestamp(g.timestamp))}</span>`:''}</div></div>`:''}
     ${renderSiteCompletionRow_(g)}
@@ -2314,16 +2316,16 @@ function renderSiteCompletionRow_(g){
   const completed=!!(j&&j.completed);
   if(completed){
     const btn=canMark?`<button class="btn btn-secondary btn-sm" onclick="toggleSiteCompletion_('${esc(g.genba)}','${esc(g.loc)}',false)" style="margin-left:8px;font-size:12px;padding:4px 10px">進行中に戻す</button>`:'';
-    return `<div class="detail-row"><div class="detail-row-icon">✅</div><div class="detail-row-content"><div class="detail-row-label">現場ステータス</div><span style="color:#1D9E75;font-weight:600">完了済み</span>${btn}</div></div>`;
+    return `<div class="detail-row"><div class="detail-row-icon">✅</div><div class="detail-row-content"><div class="detail-row-label">対応先ステータス</div><span style="color:#1D9E75;font-weight:600">完了済み</span>${btn}</div></div>`;
   }
   if(canMark){
-    return `<div class="detail-row"><div class="detail-row-icon">🚧</div><div class="detail-row-content"><div class="detail-row-label">現場ステータス</div>進行中<button class="btn btn-secondary btn-sm" onclick="toggleSiteCompletion_('${esc(g.genba)}','${esc(g.loc)}',true)" style="margin-left:8px;font-size:12px;padding:4px 10px">この現場を完了にする</button></div></div>`;
+    return `<div class="detail-row"><div class="detail-row-icon">🚧</div><div class="detail-row-content"><div class="detail-row-label">対応先ステータス</div>進行中<button class="btn btn-secondary btn-sm" onclick="toggleSiteCompletion_('${esc(g.genba)}','${esc(g.loc)}',true)" style="margin-left:8px;font-size:12px;padding:4px 10px">この対応先を完了にする</button></div></div>`;
   }
   return ''; // マーク権限ない一般ユーザーには非表示
 }
 
 async function toggleSiteCompletion_(genba,loc,completed){
-  const msg=completed?`「${loc}」を完了にしますか？\n以後、新規の予定登録で現場プルダウンに出なくなります。\n（工番・既存の日報・集計には影響しません）`:`「${loc}」を進行中に戻しますか？`;
+  const msg=completed?`「${loc}」を完了にしますか？\n以後、新規の予定登録で対応先プルダウンに出なくなります。\n（管理番号・既存の業務記録・集計には影響しません）`:`「${loc}」を進行中に戻しますか？`;
   if(!confirm(msg))return;
   // 押下中表示：button を少しの間だけ無効化（連打防止）
   const detailBody=document.getElementById('detail-fs-body');
@@ -2375,7 +2377,7 @@ async function deleteFromDetail(){
     const orig=findOriginalGroup(g.originalId);
     if(orig)g=orig;
   }
-  if(!confirm('この日報を削除しますか？'))return;
+  if(!confirm('この予定を削除しますか？'))return;
   setLoading(true);
   try{
     const res=await fetch(getGasUrl(),{method:'POST',body:JSON.stringify({action:'delete',ids:[...new Set(g.ids)],updatedBy:getUsername()}),headers:{'Content-Type':'text/plain'}});
@@ -2445,7 +2447,7 @@ async function calDeleteGroup(idx){
   const groups=getCalDayGroups();
   let g=groups[idx];if(!g)return;
   if(g.isGhost){const orig=findOriginalGroup(g.originalId);if(orig)g=orig;}
-  if(!confirm('この日報を削除しますか？'))return;
+  if(!confirm('この予定を削除しますか？'))return;
   const ids=[...new Set(g.ids)];
   setLoading(true);
   try{
@@ -2470,7 +2472,7 @@ function getDisplayedGroups(){
 async function deleteGroup(idx){
   const groups=getDisplayedGroups();
   const g=groups[idx];if(!g)return;
-  if(!confirm('この日報を削除しますか？'))return;
+  if(!confirm('この予定を削除しますか？'))return;
   const ids=[...new Set(g.ids)];
   setLoading(true);
   try{
@@ -2560,13 +2562,13 @@ async function saveEdit(){
   const yasumi=mode==='yasumi';const yakin=mode==='yakin';const souko=mode==='souko';const yotei=mode==='yotei';
   const effectiveKosu=yasumi?0:kosu;
   const _eWtVal=(document.getElementById('e-work-type')||{}).value||'';
-  if(!_eWtVal){alert('作業区分を選択してください');return;}
-  if(!yasumi && !souko && !genba){alert('元請名は必須です（休み・倉庫モード時は不要）');return;}
+  if(!_eWtVal){alert('業務区分を選択してください');return;}
+  if(!yasumi && !souko && !genba){alert('取引先名は必須です（休み・保管場所モード時は不要）');return;}
   // 倉庫モードのとき、倉庫作業タスクが1つ以上選ばれているか（メモ欄に格納）
   if(souko){
     const tasks=parseSoukoTasks(memo);
     if(tasks.length===0){
-      alert('倉庫作業を1つ以上選んでください');
+      alert('保管場所業務を1つ以上選んでください');
       const err=document.getElementById('e-souko-tasks-error');
       if(err)err.style.display='';
       return;
@@ -2592,7 +2594,7 @@ async function saveEdit(){
     dates=editDates;
   }else{
     const editedDate=document.getElementById('e-date').value;
-    if(!editedDate){alert('作業日が空です');return;}
+    if(!editedDate){alert('日付が空です');return;}
     dates=[editedDate];
   }
   const excludeIds=new Set(editIds||[]);
@@ -2689,7 +2691,7 @@ function updateGmSelects(){
   const genbas=[...new Set(nippos.map(n=>n.genba).filter(Boolean))].sort();
   const gSel=document.getElementById('gm-genba');
   const curG=gSel.value;
-  gSel.innerHTML='<option value="">元請を選択</option>'+genbas.map(g=>`<option value="${esc(g)}"${g===curG?' selected':''}>${esc(g)}</option>`).join('');
+  gSel.innerHTML='<option value="">取引先を選択</option>'+genbas.map(g=>`<option value="${esc(g)}"${g===curG?' selected':''}>${esc(g)}</option>`).join('');
   // 月セレクタを populate
   const mSel=document.getElementById('gm-month');
   if(mSel){
@@ -2712,9 +2714,9 @@ function onGmGenbaChange(){
   const hasNoLoc=nippos.some(n=>!n.loc);
   const lSel=document.getElementById('gm-location');
   const curL=lSel.value;
-  let opts='<option value="">現場を選択</option>';
+  let opts='<option value="">対応先を選択</option>';
   opts+=locs.map(l=>`<option value="${esc(l)}"${l===curL?' selected':''}>${esc(l)}</option>`).join('');
-  if(hasNoLoc)opts+=`<option value="__noloc__"${curL==='__noloc__'?' selected':''}>（現場名なし）</option>`;
+  if(hasNoLoc)opts+=`<option value="__noloc__"${curL==='__noloc__'?' selected':''}>（対応先名なし）</option>`;
   lSel.innerHTML=opts;
   if(locs.length===1&&!hasNoLoc)lSel.value=locs[0];
   renderGmList();
@@ -2743,7 +2745,7 @@ function renderGmList(){
     const badges=[];
     if(g.yakin)badges.push('<span class="yakin-badge">🌙夜勤</span>');
     if(g.yasumi)badges.push('<span class="yasumi-badge">🏖️休み</span>');
-    if(g.souko)badges.push('<span class="souko-badge">🏭倉庫</span>');
+    if(g.souko)badges.push('<span class="souko-badge">🏭保管場所</span>');
     if(g.yotei)badges.push('<span class="yotei-badge-tag">📌予定</span>');
     const updaterHtml = g.updatedBy ? `<span style="font-size:11px;color:#999;margin-left:8px;">🔄 更新: ${esc(g.updatedBy)}</span>` : '';
     const _overdueStyle=(gmMode==='pin'&&pinFilterMode==='overdue')?' style="border-left:3px solid #ff3b30;padding-left:12px"':'';
@@ -2965,7 +2967,7 @@ function renderAvailList(){
     const rows=[];
     if(buckets.busy.length>0)rows.push({label:'出勤',cls:'status-busy',names:buckets.busy});
     if(buckets.yasumi.length>0)rows.push({label:'休み',cls:'status-yasumi',names:buckets.yasumi});
-    if(buckets.souko.length>0)rows.push({label:'倉庫',cls:'status-souko',names:buckets.souko});
+    if(buckets.souko.length>0)rows.push({label:'保管場所',cls:'status-souko',names:buckets.souko});
     if(buckets.free.length>0)rows.push({label:'空き',cls:'status-free',names:buckets.free});
     rows.forEach(r=>{
       html+=`<div class="day-row"><div class="day-row-main">${r.names.map(esc).join('、')}</div><div class="day-row-status ${r.cls}">${r.label} ${r.names.length}</div></div>`;
@@ -3079,7 +3081,7 @@ function renderVehicleWeek(){
 function updateGenbaFilter(){
   const gs=[...new Set(filteredNippos().map(n=>n.genba).filter(Boolean))].sort();
   const gf=document.getElementById('j-genba-filter');const cur=gf.value;
-  gf.innerHTML='<option value="">全元請</option>'+gs.map(g=>`<option${g===cur?' selected':''}>${esc(g)}</option>`).join('');
+  gf.innerHTML='<option value="">全取引先</option>'+gs.map(g=>`<option${g===cur?' selected':''}>${esc(g)}</option>`).join('');
 }
 
 function calcEffectiveKosu(nippos){
@@ -3113,7 +3115,7 @@ function updateJimu(){
   document.getElementById('j-total-ko').textContent=totalKo.toFixed(1);
   const entries=Object.entries(byName).sort((a,b)=>b[1].kosu-a[1].kosu);
   document.getElementById('j-shokunin-tbl').innerHTML=entries.length?
-    entries.map(([name,v])=>`<tr><td>${esc(name)}</td><td>${v.days}日</td><td>${v.kosu.toFixed(1)}人工</td></tr>`).join(''):
+    entries.map(([name,v])=>`<tr><td>${esc(name)}</td><td>${v.days}日</td><td>${v.kosu.toFixed(1)} 工数</td></tr>`).join(''):
     `<tr><td colspan="3" class="empty">データなし</td></tr>`;
 }
 
@@ -3183,7 +3185,7 @@ function renderSettings(){
       <span style="font-size:15px;flex:1">${esc(s)}</span>
       <div style="display:flex;align-items:center;gap:6px">${divSelect}${deleteBtn}</div>
     </div>`;
-  }).join('')||'<div style="color:#999;padding:12px;text-align:center">職人が登録されていません</div>';
+  }).join('')||'<div style="color:#999;padding:12px;text-align:center">メンバーが登録されていません</div>';
 }
 
 async function addShokunin(){
@@ -3306,7 +3308,7 @@ function renderGenbaSettings(){
     `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #eee">
       <span style="font-size:15px">${esc(g.name)}${!g.company?'<span style="font-size:11px;color:#999;margin-left:6px">（共通）</span>':''}</span>
       ${deleteBtn(i)}
-    </div>`).join('')||'<div style="color:#999;padding:12px;text-align:center">元請が登録されていません</div>';
+    </div>`).join('')||'<div style="color:#999;padding:12px;text-align:center">取引先が登録されていません</div>';
 }
 
 async function addGenbaMaster(){
@@ -3495,15 +3497,15 @@ async function shareGroup(g){
   const lines=[];
   lines.push(`【${dateStr} の予定】`);
   if(g.yasumi)lines.push('🏖️ 休み');
-  else if(g.souko){const t=g.memo||g.loc||'';lines.push(t?`🏭 倉庫: ${t}`:'🏭 倉庫');}
+  else if(g.souko){const t=g.memo||g.loc||'';lines.push(t?`🏭 保管場所: ${t}`:'🏭 保管場所');}
   else{
-    if(g.genba)lines.push(`元請: ${g.genba}`);
-    if(g.loc)lines.push(`現場: ${g.loc}`);
+    if(g.genba)lines.push(`取引先: ${g.genba}`);
+    if(g.loc)lines.push(`対応先: ${g.loc}`);
     if(g.start||g.end)lines.push(`時間: ${g.start||''}〜${g.end||''}`);
   }
   if(memberLine)lines.push(`メンバー: ${memberLine}`);
   if(g.vehicle)lines.push(`🚗 車両: ${g.vehicle}`);
-  // 倉庫モードのメモは上の「🏭 倉庫: ...」行に既に出ているので重複表示しない
+  // 倉庫モードのメモは上の「🏭 保管場所: ...」行に既に出ているので重複表示しない
   if(g.memo && !g.souko)lines.push(`メモ: ${g.memo}`);
   const text=lines.join('\n');
   try{

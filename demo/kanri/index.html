@@ -1081,7 +1081,10 @@
           + '<td>' + esc(m.name) + '</td>'
           + '<td>' + linkedLabel + '</td>'
           + '<td><select class="member-role-sel" data-name="' + esc(m.name) + '">' + opts + '</select></td>'
-          + '<td><button class="member-save-btn prim-btn" data-name="' + esc(m.name) + '" style="padding:4px 12px;font-size:12px;">保存</button></td>'
+          + '<td>'
+          +   '<button class="member-save-btn prim-btn" data-name="' + esc(m.name) + '" style="padding:4px 12px;font-size:12px;">保存</button>'
+          +   '<button class="member-del-btn" data-name="' + esc(m.name) + '" style="padding:4px 12px;font-size:12px;margin-left:6px;background:#fff;color:#c0392b;border:1px solid #c0392b;border-radius:4px;cursor:pointer;">削除</button>'
+          + '</td>'
           + '</tr>';
       }).join('');
       body.innerHTML = '<table><thead><tr>'
@@ -1115,6 +1118,31 @@
         btn.disabled = false;
         btn.textContent = '保存';
         msg.innerHTML = '<span class="err">通信に失敗しました。</span>';
+      });
+  }
+
+  function deleteMember(name, btn){
+    var msg = document.getElementById('staff-msg');
+    if (!window.confirm(name + ' さんをメンバーから削除します。よろしいですか？\n（LINEで「登録 ' + name + '」を送れば再登録できます）')) return;
+    btn.disabled = true;
+    btn.textContent = '削除中…';
+    if (msg) msg.textContent = '';
+    api('delete_member', '&name=' + encodeURIComponent(name))
+      .then(function(res){
+        if (res && res.ok){
+          if (msg) msg.textContent = '✓ 削除しました（' + esc(name) + '）';
+          loadStaff();
+          setTimeout(function(){ if (msg) msg.textContent = ''; }, 3000);
+        } else {
+          btn.disabled = false;
+          btn.textContent = '削除';
+          if (msg) msg.innerHTML = '<span class="err">削除できませんでした（' + esc((res && res.error) || '不明') + '）</span>';
+        }
+      })
+      .catch(function(){
+        btn.disabled = false;
+        btn.textContent = '削除';
+        if (msg) msg.innerHTML = '<span class="err">通信に失敗しました。</span>';
       });
   }
 
@@ -1331,8 +1359,10 @@
       };
     });
 
-    // 社員タブ：役割保存ボタン（委譲）
+    // 社員タブ：役割保存／削除ボタン（委譲）
     document.getElementById('proj-staff').addEventListener('click', function(e){
+      var delBtn = e.target.closest ? e.target.closest('.member-del-btn') : null;
+      if (delBtn) { deleteMember(delBtn.getAttribute('data-name'), delBtn); return; }
       var btn = e.target.closest ? e.target.closest('.member-save-btn') : null;
       if (!btn) return;
       var name = btn.getAttribute('data-name');

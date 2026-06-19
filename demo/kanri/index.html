@@ -345,22 +345,18 @@
     </div></main>
   </div>
 
-  <!-- 社員（読み取り専用デモ表示・編集機能なし） -->
+  <!-- 社員（list_members で実データを取得。役割は select で選んで set_member_role で保存） -->
   <div id="proj-staff" class="hidden">
     <main><div class="panel">
       <div id="staff-title" style="font-weight:700;margin-bottom:4px;">LINE登録された社員の一覧</div>
       <div class="note">役職ごとに利用できる機能を管理。</div>
       <div style="display:flex;gap:18px;margin:12px 0;flex-wrap:wrap;font-size:14px;">
-        <span>登録済み <b>3</b></span>
+        登録済み <b id="staff-count">—</b>
         <span>承認待ち <b>0</b></span>
         <span>停止中 <b>0</b></span>
       </div>
-      <table><thead><tr><th class="lbl-member">社員</th><th>LINE</th><th>部門</th><th>利用できる機能</th><th>状態</th></tr></thead>
-      <tbody>
-        <tr><td>デモ太郎</td><td>✅ 連携済み</td><td data-mdept="field">現場</td><td>一般</td><td>利用中</td></tr>
-        <tr><td>デモ花子</td><td>✅ 連携済み</td><td data-mdept="office">事務</td><td>経費確認</td><td>利用中</td></tr>
-        <tr><td>デモ社長</td><td>✅ 連携済み</td><td data-mdept="exec">社長</td><td>経営閲覧</td><td>利用中</td></tr>
-      </tbody></table>
+      <div id="staff-msg" class="note" style="margin:4px 0;min-height:18px;"></div>
+      <div id="staff-body"><div class="note">読み込み中…</div></div>
     </div></main>
   </div>
 
@@ -1057,6 +1053,71 @@
     v.innerHTML = html;
   }
 
+  // ===== 👥 社員タブ：list_members で実データ取得 / set_member_role で役割保存 =====
+  var ROLE_OPTIONS = ['社長', '職長', '事務', '一般'];
+
+  function loadStaff(){
+    var body = document.getElementById('staff-body');
+    var countEl = document.getElementById('staff-count');
+    body.innerHTML = '<div class="note">読み込み中…</div>';
+    api('list_members').then(function(res){
+      if (!res || res.ok === false){
+        body.innerHTML = '<div class="err">読み込めませんでした（' + esc(res && res.error || '不明') + '）。</div>';
+        return;
+      }
+      var members = res.members || [];
+      if (countEl) countEl.textContent = members.length;
+      if (!members.length){
+        body.innerHTML = '<div class="note">まだLINE登録された' + L('memberWord') + 'がいません。LINEで「登録 苗字」を送ると、ここに表示されます。</div>';
+        return;
+      }
+      var rows = members.map(function(m){
+        var linkedLabel = m.linked ? '✅ 連携済み' : '未連携';
+        var currentRole = (ROLE_OPTIONS.indexOf(m.role) >= 0) ? m.role : '一般';
+        var opts = ROLE_OPTIONS.map(function(r){
+          return '<option value="' + r + '"' + (r === currentRole ? ' selected' : '') + '>' + r + '</option>';
+        }).join('');
+        return '<tr>'
+          + '<td>' + esc(m.name) + '</td>'
+          + '<td>' + linkedLabel + '</td>'
+          + '<td><select class="member-role-sel" data-name="' + esc(m.name) + '">' + opts + '</select></td>'
+          + '<td><button class="member-save-btn prim-btn" data-name="' + esc(m.name) + '" style="padding:4px 12px;font-size:12px;">保存</button></td>'
+          + '</tr>';
+      }).join('');
+      body.innerHTML = '<table><thead><tr>'
+        + '<th class="lbl-member">' + L('memberWord') + '</th>'
+        + '<th>LINE</th>'
+        + '<th>役割</th>'
+        + '<th>操作</th>'
+        + '</tr></thead><tbody>' + rows + '</tbody></table>';
+    }).catch(function(){
+      body.innerHTML = '<div class="err">通信に失敗しました。</div>';
+    });
+  }
+
+  function saveMemberRole(name, role, btn){
+    var msg = document.getElementById('staff-msg');
+    btn.disabled = true;
+    btn.textContent = '保存中…';
+    msg.textContent = '';
+    api('set_member_role', '&name=' + encodeURIComponent(name) + '&role=' + encodeURIComponent(role))
+      .then(function(res){
+        btn.disabled = false;
+        btn.textContent = '保存';
+        if (res && res.ok){
+          msg.textContent = '✓ 保存しました（' + esc(name) + ' → ' + esc(role) + '）';
+          setTimeout(function(){ if (msg) msg.textContent = ''; }, 3000);
+        } else {
+          msg.innerHTML = '<span class="err">保存できませんでした（' + esc((res && res.error) || '不明') + '）</span>';
+        }
+      })
+      .catch(function(){
+        btn.disabled = false;
+        btn.textContent = '保存';
+        msg.innerHTML = '<span class="err">通信に失敗しました。</span>';
+      });
+  }
+
   // ===== 💴 経費タブ：expense_summary アクションで人別サマリを取得して表示 =====
   function renderKeihi() {
     // 管理者アプリURL：CONFIG値（テナント別）から読む。未設定なら直書きせずリンクを出さない。
@@ -1264,9 +1325,20 @@
         }
         else if (proj === 'staff'){
           document.getElementById('proj-staff').classList.remove('hidden');
+          loadStaff();
         }
         else { document.getElementById('proj-soon').classList.remove('hidden'); }
       };
+    });
+
+    // 社員タブ：役割保存ボタン（委譲）
+    document.getElementById('proj-staff').addEventListener('click', function(e){
+      var btn = e.target.closest ? e.target.closest('.member-save-btn') : null;
+      if (!btn) return;
+      var name = btn.getAttribute('data-name');
+      var sel = document.querySelector('.member-role-sel[data-name="' + name.replace(/"/g, '\\"') + '"]');
+      var role = sel ? sel.value : '一般';
+      saveMemberRole(name, role, btn);
     });
 
     // Excel出力ボタン
